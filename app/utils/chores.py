@@ -1,26 +1,11 @@
-from utils.sql_handlers import write_chore_to_table, get_chores
+from utils.sql_handlers import write_chore_to_table, get_chores, get_workloads
+from utils.balancer import balance_load, set_rotation_group
+from utils.models import Chore
 from tabulate import tabulate
 import os, sys
 
 def cls():
     os.system('cls' if os.name=='nt' else 'clear')
-
-class Chore:
-    def __init__(self, name, cadence, shared, assignee, mins):
-        self.name = name
-        self.cadence = cadence
-        self.shared = shared
-        self.assignee = assignee
-        self.mins = mins
-
-    def __repr__(self):
-        return(f"""
-        Chore name: {self.name}
-        Cadence: {self.cadence}
-        Shared? {self.shared}
-        Assignee: {self.assignee if self.assignee is not None else 'N/A'}
-        Time to complete: {self.mins}
-        """)    
 
 def add_chore():
     assignee = None
@@ -64,8 +49,15 @@ def add_chore():
             print('Invalid choice. Please enter a number greater than 0')
 
     new_chore = Chore(name, cadence, shared, assignee, mins)
-    write_chore_to_table(new_chore)
-    res = input('(Enter) - Continue \n(q) - Quit to Main Menu > ')
+    
+    # assign to balanced group 
+    if shared:
+        workloads = get_workloads(cadence)
+        set_rotation_group(new_chore, workloads)
+    
+    last_row = write_chore_to_table(new_chore)
+    print(f"Chore successfully added with ID {last_row}")
+    res = input('(Enter) - Continue to Main Menu \n(q) - Exit program > ')
     if res.lower() == 'q':
         sys.exit()
     else:
@@ -73,19 +65,19 @@ def add_chore():
     
 
 def view_chores():
-    page_size = 2
+    page_size = 5
     offset = 0
 
     while True:
         cls()
         rows = get_chores(page_size, offset)
         next_row = get_chores(1, page_size + offset)
-        print(tabulate(rows, headers = ['ID', 'Chore', 'd/m/w', 'Shared?', 'Assignee', 'est time']))
+        print(tabulate(rows, headers = ['ID', 'Chore', 'd/m/w', 'Shared?', 'Assignee', 'Rotation Group', 'est time']))
         if next_row:
             reply = input('\n(Enter) - Show more results \n(q) - Quit to Main Menu\n')
             if reply == 'q':
                 break
-            offset += 2
+            offset += 5
             continue
         else:
             reply = input('End of results.\n(s) - Start from beginning\n(q) - Quit to Main Menu\n').lower()
