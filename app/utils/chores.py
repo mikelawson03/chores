@@ -1,4 +1,9 @@
-from utils.sql_handlers import write_chore_to_table
+from utils.sql_handlers import write_chore_to_table, get_chores
+from tabulate import tabulate
+import os, sys
+
+def cls():
+    os.system('cls' if os.name=='nt' else 'clear')
 
 class Chore:
     def __init__(self, name, cadence, shared, assignee, mins):
@@ -15,12 +20,13 @@ class Chore:
         Shared? {self.shared}
         Assignee: {self.assignee if self.assignee is not None else 'N/A'}
         Time to complete: {self.mins}
-        """)
+        """)    
 
 def add_chore():
     assignee = None
     mins = 0
 
+    cls()
     print('Add chore')
     print('-------------- \n')
     name = input('Chore name > ')
@@ -34,7 +40,7 @@ def add_chore():
         cadence = 'd'
     elif cadence == 'weekly':
         cadence = 'w'
-    elif cdence == 'monthly':
+    elif cadence == 'monthly':
         cadence = 'm'
         
     shared_choice = input('Is this chore shared (Y/N)? ').lower()
@@ -59,4 +65,38 @@ def add_chore():
 
     new_chore = Chore(name, cadence, shared, assignee, mins)
     write_chore_to_table(new_chore)
-    return new_chore
+    res = input('(Enter) - Continue \n(q) - Quit to Main Menu > ')
+    if res.lower() == 'q':
+        sys.exit()
+    else:
+        return
+    
+
+def view_chores():
+    page_size = 2
+    offset = 0
+
+    while True:
+        cls()
+        rows = get_chores(page_size, offset)
+        next_row = get_chores(1, page_size + offset)
+        print(tabulate(rows, headers = ['ID', 'Chore', 'd/m/w', 'Shared?', 'Assignee', 'est time']))
+        if next_row:
+            reply = input('\n(Enter) - Show more results \n(q) - Quit to Main Menu\n')
+            if reply == 'q':
+                break
+            offset += 2
+            continue
+        else:
+            reply = input('End of results.\n(s) - Start from beginning\n(q) - Quit to Main Menu\n').lower()
+            while True:
+                if reply not in ('s', 'q'):
+                    reply = input('Invalid selection. Please choose (s) to start from beginning or (q) to quit to Main Menu \n')
+                    continue
+                else:
+                    break
+            if reply == 's':
+                offset = 0
+                continue
+            elif reply == 'q':
+                break
