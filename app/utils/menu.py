@@ -1,4 +1,4 @@
-from utils.chores import add_chore, view_chores
+from utils.chores import add_chore, view_chores, balance_chores
 import sys
 
 def menu():
@@ -19,7 +19,7 @@ def menu_handler(choice):
     if choice == 1:
         add_chore()
     elif choice == 2:
-        return
+        balance_chores()
     elif choice == 3:
         return
         # updated_chore = edit_chore()

@@ -1,58 +1,96 @@
 import sqlite3
+from utils.models import Chore, Workload
 
 db = 'chores.db'
 
 def create_table():
-    conn = sqlite3.connect(db)
-    c = conn.cursor()
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS chores (
-        ID INTEGER PRIMARY KEY ASC,
-        CHORE TEXT UNIQUE,
-        CADENCE TEXT,
-        SHARED INTEGER,
-        ASSIGNEE TEXT,
-        ROTATION_GROUP TEXT,
-        TIME INT
+    with sqlite3.connect(db) as conn:
+        c = conn.cursor()
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS chores (
+            CHORE_ID INTEGER PRIMARY KEY ASC,
+            CHORE TEXT UNIQUE,
+            CADENCE TEXT,
+            SHARED INTEGER,
+            ASSIGNEE TEXT,
+            ROTATION_GROUP TEXT,
+            TIME INT
+            )
+        ''')
+        
+def row_to_chore(row):
+    chore = Chore(
+        row['CHORE'],
+        row['CADENCE'],
+        row['SHARED'],
+        row['ASSIGNEE'],
+        row['TIME'],
+        row['ROTATION_GROUP'],
+        row['ID']
         )
-    ''')
-    conn.commit()
-    conn.close()
+    return chore
+
+def row_to_workload(row):
+    workload = Workload(
+        row['ROTATION_GROUP'],
+        row['sum(TIME)']
+    )
+    return workload
 
 def write_chore_to_table(chore):
     try:
-        conn = sqlite3.connect(db)
-        c = conn.cursor()
-        c.execute(
-            'INSERT INTO chores (CHORE, CADENCE, SHARED, ASSIGNEE, ROTATION_GROUP, TIME) VALUES (?, ?, ?, ?, ?, ?)',
-            (chore.name, chore.cadence, chore.shared, chore.assignee, chore.rotation_group, chore.mins)
-            )
-        conn.commit()
-        conn.close()
-        return c.lastrowid
+        with sqlite3.connect(db) as conn:
+            c = conn.cursor()
+            c.execute(
+                'INSERT INTO chores (CHORE, CADENCE, SHARED, ASSIGNEE, ROTATION_GROUP, TIME) VALUES (?, ?, ?, ?, ?, ?)',
+                (chore.name, chore.cadence, chore.shared, chore.assignee, chore.rotation_group, chore.time)
+                )
+            
+            return c.lastrowid
     except sqlite3.Error as e:
-        conn.rollback()
         print(f"Database error: {e}")
-        conn.close()
 
+def update_rotation_group(deltas):
+    print(deltas)
+    try:
+        with sqlite3.connect(db) as conn:
+            c = conn.cursor()
+            c.executemany('''
+                UPDATE chores
+                SET ROTATION_GROUP = ?
+                WHERE ID = ?
+                ''',
+                deltas
+                )
+            return c.rowcount
+    except sqlite3.Error as e:
+        return e
 
-def get_chores(page_size, offset):
-    conn = sqlite3.connect(db)
-    c = conn.cursor()
-    rows = c.execute(
-        'SELECT * FROM chores ORDER BY ID LIMIT ? OFFSET ?',
-        (page_size, offset)
-    ).fetchall()
-    conn.close()
-    return rows
+def get_all_chores():
+    with sqlite3.connect(db) as conn:
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+        rows = c.execute('SELECT * FROM chores ORDER BY ID'
+        ).fetchall()
+        return [row_to_chore(row) for row in rows]
+
+def get_chores_page(page_size, offset):
+    with sqlite3.connect(db) as conn:
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+        rows = c.execute(
+            'SELECT * FROM chores ORDER BY ID LIMIT ? OFFSET ?',
+            (page_size, offset)
+        ).fetchall()
+        return [row_to_chore(row) for row in rows]
 
 def get_workloads(cadence = 'g'):
-    conn = sqlite3.connect(db)
-    c = conn.cursor()
-    if cadence == 'g':
-        rows = c.execute('SELECT ROTATION_GROUP, ASSIGNEE, TIME FROM chores GROUP BY ROTATION_GROUP, ASSIGNEE').fetchall()
-    else:
-        rows = c.execute('SELECT ROTATION_GROUP, ASSIGNEE, TIME FROM chores WHERE CADENCE = ? GROUP BY ROTATION_GROUP, ASSIGNEE', cadence).fetchall()
-    conn.close()
-    return rows
-    
+    with sqlite3.connect(db) as conn:
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+        if cadence == 'g':
+            rows = c.execute('SELECT ROTATION_GROUP, sum(TIME) FROM chores GROUP BY ROTATION_GROUP').fetchall()
+        else:
+            rows = c.execute('SELECT ROTATION_GROUP, CADENCE, sum(TIME) FROM chores WHERE CADENCE = ? GROUP BY ROTATION_GROUP', cadence).fetchall()
+        return [row_to_workload(row) for row in rows]
+
