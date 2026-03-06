@@ -1,4 +1,4 @@
-from utils.sql_handlers import write_chore_to_table, get_chores_page, get_all_chores, get_workloads, update_rotation_group
+from utils.sql_handlers import write_chore_to_table, get_chores_page, get_all_chores, get_workloads, update_rotation_group, search_chores
 from utils.balancer import get_new_groups, set_rotation_group, get_fairness_score
 from utils.models import Chore
 from tabulate import tabulate
@@ -35,7 +35,7 @@ def add_chore():
         shared_choice = input('Is this chore shared (Y/N)? ').lower()
 
     if shared_choice in ['y', 'yes']:
-        shared = True;
+        shared = True
     else:
         shared = False
 
@@ -86,13 +86,13 @@ def view_chores():
         ]
         print(tabulate(chore_list, headers = ['ID', 'Chore', 'd/m/w', 'Shared?', 'Assignee', 'Rotation Group', 'est time']))
         if next_row:
-            reply = input('\n(Enter) - Show more results \n(q) - Quit to Main Menu\n')
+            reply = input('\n(Enter) - Show more results \n(q) - Return to previous menu\n')
             if reply == 'q':
                 break
             offset += 5
             continue
         else:
-            reply = input('End of results.\n(s) - Start from beginning\n(q) - Quit to Main Menu\n').lower()
+            reply = input('End of results.\n(s) - Start from beginning\n(q) - Return to previous menu\n').lower()
             while True:
                 if reply not in ('s', 'q'):
                     reply = input('Invalid selection. Please choose (s) to start from beginning or (q) to quit to Main Menu \n')
@@ -141,7 +141,93 @@ def balance_chores():
         else:
             updated_workloads = get_workloads()
             updated_score = get_fairness_score(updated_workloads)
-            print(f'Chore balancing complete\nNew fairness score: {updated_score}')
+            cls()
+            print(f'Chore balancing complete\nNew fairness score: {updated_score['score'] * 100}%')
     input('Press Enter to return to Main Menu')
         
+def update_chore():
+    while True:
+        cls()
+        print('Edit Chore')
+        print('---------------')
+        print('Please enter the name of the chore you\'d like to update\n')
+        print('V - View chores \n')
+        print('Q - Return to Main Menu')
+        print('X - Exit program')
+        choice = input('> ').lower()
+
+        if choice == 'v':
+            view_chores()
+            continue
+
+        if choice == 'q':
+            return
+
+        if choice == 'x':
+            sys.exit()
     
+        res = search_chores(choice)
+        chore_list = [
+        [
+            chore.name, 
+            chore.chore_id, 
+            chore.cadence, 
+            chore.shared, 
+            chore.assignee, 
+            chore.rotation_group, 
+            chore.time
+        ]
+        for chore in res
+    ]
+        cls()
+        print(f'\nResults for "{choice}"')
+        print('---------------\n')
+        
+        if len(chore_list) == 0:
+            print('No results found.\n')
+
+            while True:
+                print('S - Search again')
+                print('Q - Return to Main Menu')
+                print('X - Exit program')
+                choice = input('> ').lower()
+                if choice == 's':
+                    cls()
+                    break
+                elif choice == 'q':
+                    return
+                elif choice == 'x':
+                    sys.exit()
+                else:
+                    cls()
+                    print('Invalid choice. Please choose from the menu below.\n')
+
+        
+        if len(chore_list) == 1:
+            while True:
+                print(res[0], '\n')
+                print('E - Edit this chore\n')
+                print('S - Search again')
+                print('Q - Return to Main Menu')
+                print('X - Exit program\n')
+                choice = input('> ').lower()
+                if choice == 'e':
+                    return
+                if choice == 's':
+                    cls()
+                    break
+                elif choice == 'q':
+                    return
+                elif choice == 'x':
+                    sys.exit()
+                else:
+                    cls()
+                    print('Invalid choice. Please choose from the menu below.\n')
+
+
+        if len(chore_list) > 1:
+            print(tabulate(chore_list, headers = ['Chore', 'ID', 'd/m/w', 'Shared?', 'Assignee', 'Rotation Group', 'est time'], showindex=range(1, len(chore_list)+1)))
+            print(f'\n{len(chore_list)} results found\nPlease enter the row number (1-{len(chore_list)}) of the chore you\'d like to edit or press (s) to search again.')
+            id_to_edit = input('>').lower()
+            if id_to_edit== 's':
+                continue

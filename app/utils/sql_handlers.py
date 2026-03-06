@@ -51,7 +51,6 @@ def write_chore_to_table(chore):
         print(f"Database error: {e}")
 
 def update_rotation_group(deltas):
-    print(deltas)
     try:
         with sqlite3.connect(db) as conn:
             c = conn.cursor()
@@ -94,3 +93,15 @@ def get_workloads(cadence = 'g'):
             rows = c.execute('SELECT ROTATION_GROUP, CADENCE, sum(TIME) FROM chores WHERE CADENCE = ? GROUP BY ROTATION_GROUP', cadence).fetchall()
         return [row_to_workload(row) for row in rows]
 
+def search_chores(query_term):
+    words = query_term.split()
+    conditions = " AND ".join(["CHORE LIKE ?" for _ in words])
+    parameters = [f"%{word}%" for word in words]
+
+    query = f"SELECT * from chores WHERE {conditions}"
+
+    with sqlite3.connect(db) as conn:
+        conn.row_factory = sqlite3.Row
+        c = conn.cursor()
+        rows = c.execute(query, parameters).fetchall()
+        return [row_to_chore(row) for row in rows]
