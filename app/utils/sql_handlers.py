@@ -90,10 +90,10 @@ def get_workloads(cadence = 'g'):
         if cadence == 'g':
             rows = c.execute('SELECT ROTATION_GROUP, sum(TIME) FROM chores GROUP BY ROTATION_GROUP').fetchall()
         else:
-            rows = c.execute('SELECT ROTATION_GROUP, CADENCE, sum(TIME) FROM chores WHERE CADENCE = ? GROUP BY ROTATION_GROUP', cadence).fetchall()
+            rows = c.execute('SELECT ROTATION_GROUP, CADENCE, sum(TIME) FROM chores WHERE CADENCE = ? GROUP BY ROTATION_GROUP', [cadence]).fetchall()
         return [row_to_workload(row) for row in rows]
 
-def search_chores(query_term):
+def query_chores(query_term):
     words = query_term.split()
     conditions = " AND ".join(["CHORE LIKE ?" for _ in words])
     parameters = [f"%{word}%" for word in words]
@@ -105,3 +105,27 @@ def search_chores(query_term):
         c = conn.cursor()
         rows = c.execute(query, parameters).fetchall()
         return [row_to_chore(row) for row in rows]
+
+def update_chore(chore):
+    try:
+        with sqlite3.connect(db) as conn:
+            c = conn.cursor()
+            c.execute('''
+                UPDATE chores
+                SET CHORE = ?, CADENCE = ?, SHARED = ?, ASSIGNEE = ?, ROTATION_GROUP = ?, TIME = ?
+                WHERE ID = ?
+                ''',
+                (chore.name, chore.cadence, chore.shared, chore.assignee, chore.rotation_group, chore.time, chore.chore_id)
+                )
+            return c.rowcount
+    except sqlite3.Error as e:
+        return e
+
+def delete_chore(chore):
+    try:
+        with sqlite3.connect(db) as conn:
+            c = conn.cursor()
+            c.execute('DELETE FROM chores WHERE ID = ?', (chore.chore_id,))
+            return c.rowcount
+    except sqlite3.Error as e:
+        return e

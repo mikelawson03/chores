@@ -1,5 +1,5 @@
 class Chore:
-    def __init__(self, name, cadence, shared, assignee, time, rotation_group = None, chore_id = None):
+    def __init__(self, name=None, cadence=None, shared=True, assignee=None, time=0, rotation_group = None, chore_id = None):
         self.chore_id = chore_id
         self.name = name
         self.cadence = cadence

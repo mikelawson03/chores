@@ -1,30 +1,27 @@
 import time, os, sys
-from utils.menu import menu, menu_handler
+from utils.chores import add_chore, view_chores, balance_chores, edit_delete_chore
+from utils.menu import run_menu
 
 from utils.sql_handlers import create_table
 
 def cls():
     os.system('cls' if os.name=='nt' else 'clear')
 
-def week_type():
-    week = int(time.strftime('%U'))
-    week_type = ''
+def main_menu():
+    options = {
+        '1': ('Add chore', add_chore),
+        '2': ('Edit or Delete chore', edit_delete_chore),
+        '3': ('Balance chores', balance_chores),
+        '4': ('View chores', view_chores),
+        'x': ('Exit program', sys.exit)
+    }
 
-    if week % 2 == 0:
-        week_type = 'even'
-
-    else:
-        week_type = 'odd'
-    
-    print(week_type)
+    run_menu('Main Menu', options)
 
 def main():
     if not os.path.exists('chores.db'):
         create_table()
-    while True:
-        cls()
-        choice = menu()
-        menu_handler(choice)
-    
+    main_menu()
+
 if __name__ == '__main__':
     main()

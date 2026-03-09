@@ -1,67 +1,74 @@
-from utils.sql_handlers import write_chore_to_table, get_chores_page, get_all_chores, get_workloads, update_rotation_group, search_chores
+
+from utils.sql_handlers import write_chore_to_table, get_chores_page, get_all_chores, get_workloads, update_rotation_group, query_chores, update_chore, delete_chore
 from utils.balancer import get_new_groups, set_rotation_group, get_fairness_score
 from utils.models import Chore
+from utils.menu import run_menu
+from utils.field_editors import set_name, set_cadence, set_shared, set_assignee, set_time
 from tabulate import tabulate
 import os, sys
+import copy
 
 def cls():
     os.system('cls' if os.name=='nt' else 'clear')
+
+def search_by_name():
+    cls()
+    print('Search Chores')
+    print('---------------')
+    print('Please enter the name of the chore you\'d like to find\n')
+    choice = input('> ').lower()
+
+    rows = query_chores(choice)
+    return (choice, rows)
+
+
+def display_chores(chore_list):
+    l = [
+        [
+            chore.name, 
+            chore.chore_id, 
+            chore.cadence, 
+            chore.shared, 
+            chore.assignee, 
+            chore.rotation_group, 
+            chore.time
+        ]
+        for chore in chore_list
+    ]
+    if len(l) == 0:
+        input('No results found. Press Enter to continue')
+        return
+    print(tabulate(l, headers = ['Row #', 'Chore', 'ID', 'd/m/w', 'Shared?', 'Assignee', 'Rotation Group', 'est time'], showindex=range(1, len(chore_list)+1)))
+    print(f'\n{len(l)} result{'s' if len(l) > 1 else ''} found')
+    
+
+
 
 def add_chore():
     assignee = None
     time = 0
 
-    cls()
+    cls()    
     print('Add chore')
     print('-------------- \n')
-    name = input('Chore name > ')
-    cadence = input('Cadence (Daily/Weekly/Monthly) > ').lower()
-
-    while cadence not in ['d', 'daily', 'w', 'weekly', 'm', 'monthly']:
-        print('Invalid choice. Please choose daily, weeekly, or monthly')
-        cadence = input('Cadence (Daily/Weekly/Monthly) > ').lower()
+    new_chore = Chore()
+    set_name(new_chore)
+    set_cadence(new_chore)   
+    set_time(new_chore)
     
-    if cadence == 'daily':
-        cadence = 'd'
-    elif cadence == 'weekly':
-        cadence = 'w'
-    elif cadence == 'monthly':
-        cadence = 'm'
-        
-    shared_choice = input('Is this chore shared (Y/N)? ').lower()
+    #Will implement shared chores later
+    # set_shared(new_chore)
 
-    while shared_choice not in ['y', 'n', 'yes', 'no']:
-        print('Invalid choice. Please choose either Y or N')
-        shared_choice = input('Is this chore shared (Y/N)? ').lower()
-
-    if shared_choice in ['y', 'yes']:
-        shared = True
-    else:
-        shared = False
-
-    if not shared :
-        assignee = input('Who should this chore be assigned to? ').lower()
-
-    while isinstance(time, int) and time <= 0:
-        try:
-            time = int(input('How long in minutes should this chore take? '))
-        except:
-            print('Invalid choice. Please enter a number greater than 0')
-
-    new_chore = Chore(name, cadence, shared, assignee, time)
+    # if not new_chore.shared :
+    #     set_assignee(new_chore)        
     
     # assign to balanced group 
-    if shared:
-        workloads = get_workloads(cadence)
-        new_chore.rotation_group = set_rotation_group(new_chore, workloads)
-    
+    workloads = get_workloads(new_chore.cadence)
+    new_chore.rotation_group = set_rotation_group(new_chore, workloads)
+
     last_row = write_chore_to_table(new_chore)
-    print(f"Chore successfully added with ID {last_row}")
-    res = input('(Enter) - Continue to Main Menu \n(x) - Exit program > ')
-    if res.lower() == 'x':
-        sys.exit()
-    else:
-        return
+    print(f'\nChore successfully added with ID {last_row}')
+    input('Press Enter to continue')
     
 
 def view_chores():
@@ -144,90 +151,81 @@ def balance_chores():
             cls()
             print(f'Chore balancing complete\nNew fairness score: {updated_score['score'] * 100}%')
     input('Press Enter to return to Main Menu')
-        
-def update_chore():
-    while True:
-        cls()
-        print('Edit Chore')
-        print('---------------')
-        print('Please enter the name of the chore you\'d like to update\n')
-        print('V - View chores \n')
-        print('Q - Return to Main Menu')
-        print('X - Exit program')
-        choice = input('> ').lower()
 
-        if choice == 'v':
-            view_chores()
-            continue
 
-        if choice == 'q':
-            return
 
-        if choice == 'x':
-            sys.exit()
+
+def edit_delete_chore():
+    res = None
+    options = {
+        's': ('Search for chore', search_by_name),
+        'v': ('View chores', view_chores),
+        'q': ('Return to previous menu', lambda: 'back'),
+        'x': ('Exit program', sys.exit)
+    }
+
     
-        res = search_chores(choice)
-        chore_list = [
-        [
-            chore.name, 
-            chore.chore_id, 
-            chore.cadence, 
-            chore.shared, 
-            chore.assignee, 
-            chore.rotation_group, 
-            chore.time
-        ]
-        for chore in res
-    ]
+    while True:
+        res = run_menu('Edit or delete chore', options, True)
+        if res =='back':
+            return
+    
         cls()
-        print(f'\nResults for "{choice}"')
+        print(f'\nResults for "{res[0]}"')
         print('---------------\n')
-        
-        if len(chore_list) == 0:
-            print('No results found.\n')
-
-            while True:
-                print('S - Search again')
-                print('Q - Return to Main Menu')
-                print('X - Exit program')
-                choice = input('> ').lower()
-                if choice == 's':
-                    cls()
-                    break
-                elif choice == 'q':
-                    return
-                elif choice == 'x':
-                    sys.exit()
-                else:
-                    cls()
-                    print('Invalid choice. Please choose from the menu below.\n')
-
-        
-        if len(chore_list) == 1:
-            while True:
-                print(res[0], '\n')
-                print('E - Edit this chore\n')
-                print('S - Search again')
-                print('Q - Return to Main Menu')
-                print('X - Exit program\n')
-                choice = input('> ').lower()
-                if choice == 'e':
-                    return
-                if choice == 's':
-                    cls()
-                    break
-                elif choice == 'q':
-                    return
-                elif choice == 'x':
-                    sys.exit()
-                else:
-                    cls()
-                    print('Invalid choice. Please choose from the menu below.\n')
-
+        chore_list = res[1]
+        display_chores(chore_list)
 
         if len(chore_list) > 1:
-            print(tabulate(chore_list, headers = ['Chore', 'ID', 'd/m/w', 'Shared?', 'Assignee', 'Rotation Group', 'est time'], showindex=range(1, len(chore_list)+1)))
-            print(f'\n{len(chore_list)} results found\nPlease enter the row number (1-{len(chore_list)}) of the chore you\'d like to edit or press (s) to search again.')
-            id_to_edit = input('>').lower()
-            if id_to_edit== 's':
-                continue
+            options = {
+                str(i): (f"Edit chore #{i}", lambda i=i: chore_list[i-1])
+                for i in range(1, len(chore_list) + 1)
+            }
+            options['q'] = ('Return to previous menu', lambda: 'back')
+            options['x'] = ('Exit program', sys.exit)
+            chore = run_menu(None, options, True)
+        else:
+            chore = chore_list[0]
+        if chore == 'back':
+            break
+        
+        working_chore = copy.copy(chore)
+
+        options = {
+            '1': ('Edit name', lambda: set_name(working_chore)),
+            '2': ('Edit cadence', lambda: set_cadence(working_chore)),
+            '3': ('Edit estimated time', lambda: set_time(working_chore)),
+            's': ('Save updates', lambda: 'save'),
+            'd': ('Delete chore', lambda: 'delete'),
+            'q': ('Return to previous menu', lambda: 'back'),
+            'x': ('Quit program', sys.exit)
+        }
+
+        while True:
+            res = run_menu('Edit or delete chore', options, True)
+            
+            if res == 'back':
+                break
+            if res == 'save':
+                res = update_chore(working_chore)
+                if isinstance(res, Exception):
+                    print(f'Database error: {res}')
+                elif res == 1:
+                    print(f'Chore updated successfully.')
+                else:
+                    print(f'Chore failed to update')
+                print('Press Enter to continue')
+                input()
+                return
+            
+            if res == 'delete':
+                res = delete_chore(working_chore)
+                if isinstance(res, Exception):
+                    print(f'Database error: {res}')
+                elif res == 1:
+                    print(f'Chore deleted successfully.')
+                else:
+                    print(f'Chore failed to delete')
+                print('Press Enter to continue')
+                input()
+                return

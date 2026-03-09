@@ -1,38 +1,32 @@
-from utils.chores import add_chore, view_chores, balance_chores, update_chore
 import os, sys
 
 def cls():
     os.system('cls' if os.name=='nt' else 'clear')
 
-def menu():
-    print('Main Menu')
-    print('-----------------')
-    print('What would you like to do?')
-    print('1. Add a chore')
-    print('2. Balance chores')
-    print('3. Edit a chore')
-    print('4. Remove a chore')
-    print('5. View chores')
-    print('-----------------\n')
-    print('6. Exit')
-    choice = input('> ')
-    return choice
+def run_menu(title, options, return_result = False):
+    while True:
+        if title is not None:
+            cls()
+            print(title)
+            print('-' * len(title))
+        for key, (label, _) in options.items():
+            print(f'{key.upper()} - {label}')
 
-def menu_handler(choice):
-    if choice == '1':
-        add_chore()
-    elif choice == '2':
-        balance_chores()
-    elif choice == '3':
-        update_chore()
-    elif choice == '4':
-        cls()
-        return
-    elif choice == '5':
-        view_chores()
-        return
-    elif choice == '6':
-        sys.exit()
-    else:
-        cls()
-        print(f'\nInvalid choice. Please make a valid selection')
+        choice = input('> ').lower()
+
+        
+
+        if choice not in options:
+            print('\nInvalid choice.')
+            input('Press Enter to continue')
+            continue
+    
+        action = options[choice][1]
+        result = action()
+
+        if return_result:
+            return result
+
+        if result == 'back':
+            return
+
