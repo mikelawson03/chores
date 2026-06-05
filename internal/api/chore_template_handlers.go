@@ -91,5 +91,4 @@ func (cfg *apiCfg) handlerDeleteChoreTemplate(w http.ResponseWriter, r *http.Req
 	}
 
 	w.WriteHeader(http.StatusNoContent)
-	return
 }
