@@ -40,7 +40,7 @@ func (cfg *apiCfg) handlerGetChoreTemplates(w http.ResponseWriter, r *http.Reque
 func (cfg *apiCfg) handlerAddChoreTemplate(w http.ResponseWriter, r *http.Request) {
 	req, err := CreateChoreTeplateRequest(r)
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Error decoding JSON: ", err)
+		RespondWithError(w, http.StatusInternalServerError, "Request Error: ", err)
 		return
 	}
 

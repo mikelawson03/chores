@@ -14,7 +14,8 @@ type apiCfg struct {
 func NewApiConfig() apiCfg {
 	return apiCfg{
 		App: &app.App{
-			Chores: make(map[string]domain.ChoreTemplate),
+			Templates:   make(map[string]domain.ChoreTemplate),
+			Assignments: make([]domain.Assignment, 0),
 		},
 	}
 }
@@ -26,4 +27,7 @@ func (cfg *apiCfg) RegisterRoutes(mux *http.ServeMux) {
 	mux.Handle("POST /chore-templates", middlewareAuth(http.HandlerFunc(cfg.handlerAddChoreTemplate)))
 	mux.Handle("PUT /chore-templates/{id}", middlewareAuth(http.HandlerFunc(cfg.handlerEditChoreTemplate)))
 	mux.Handle("DELETE /chore-templates/{id}", middlewareAuth(http.HandlerFunc(cfg.handlerDeleteChoreTemplate)))
+
+	// assigned chores
+	mux.Handle("POST /assignments", middlewareAuth(http.HandlerFunc(cfg.handlerCreateAssignmentForUser)))
 }
