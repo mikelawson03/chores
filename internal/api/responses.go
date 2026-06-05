@@ -1,4 +1,4 @@
-package main
+package api
 
 import (
 	"encoding/json"
@@ -7,17 +7,17 @@ import (
 	"net/http"
 )
 
-func respondWithError(w http.ResponseWriter, code int, msg string, err error) {
+func RespondWithError(w http.ResponseWriter, code int, msg string, err error) {
 	type errorResponse struct {
 		Error string `json:"error"`
 	}
 
-	respondWithJSON(w, code, errorResponse{
-		Error: fmt.Sprintf(msg, err),
+	RespondWithJSON(w, code, errorResponse{
+		Error: fmt.Sprint(msg, err),
 	})
 }
 
-func respondWithJSON(w http.ResponseWriter, code int, payload any) {
+func RespondWithJSON(w http.ResponseWriter, code int, payload any) {
 	w.WriteHeader(code)
 	if code != http.StatusNoContent {
 		err := json.NewEncoder(w).Encode(payload)
