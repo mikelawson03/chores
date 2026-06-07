@@ -44,3 +44,70 @@ func (cfg *apiCfg) handlerCreateAssignmentForUser(w http.ResponseWriter, r *http
 
 	RespondWithJSON(w, http.StatusCreated, assignment)
 }
+
+func (cfg *apiCfg) handlerGetAllAssignments(w http.ResponseWriter, r *http.Request) {
+	assignments, err := cfg.App.GetAllAssignments()
+
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Error retrieving assignments: ", err)
+		return
+	}
+
+	RespondWithJSON(w, http.StatusOK, assignments)
+}
+
+func (cfg *apiCfg) handlerGetAssignmentByID(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	assignment, err := cfg.App.GetAssignmentByID(id)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Error retrieving assignment: ", err)
+		return
+	}
+
+	RespondWithJSON(w, http.StatusOK, assignment)
+}
+
+func (cfg *apiCfg) handlerEditAssignment(w http.ResponseWriter, r *http.Request) {
+	assignmentID := r.PathValue("id")
+	req, err := CreateNewAssignmentRequest(r)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Request Error: ", err)
+		return
+	}
+
+	requesterID := r.Header.Get("X-User-ID")
+	res, err := cfg.App.EditAssignment(requesterID, assignmentID, req.ChoreID, req.AssignedUserID, req.ScheduleDate)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Error editing assignment: ", err)
+		return
+	}
+
+	RespondWithJSON(w, http.StatusOK, res)
+}
+
+func (cfg *apiCfg) handlerDeleteAssignment(w http.ResponseWriter, r *http.Request) {
+	assignmentID := r.PathValue("id")
+	requesterID := r.Header.Get("X-User-ID")
+
+	err := cfg.App.DeleteAssignment(assignmentID, requesterID)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Error deleting assignment: ", err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func (cfg *apiCfg) handlerCompleteAssignment(w http.ResponseWriter, r *http.Request) {
+	assignmentID := r.PathValue("id")
+	requesterID := r.Header.Get("X-User-ID")
+
+	assignment, err := cfg.App.CompleteAssignment(assignmentID, requesterID)
+
+	if err != nil {
+		RespondWithError(w, http.StatusInsufficientStorage, "Error completing assignment: ", err)
+		return
+	}
+
+	RespondWithJSON(w, http.StatusOK, assignment)
+}

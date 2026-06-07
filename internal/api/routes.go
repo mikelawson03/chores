@@ -30,4 +30,9 @@ func (cfg *apiCfg) RegisterRoutes(mux *http.ServeMux) {
 
 	// assigned chores
 	mux.Handle("POST /assignments", middlewareAuth(http.HandlerFunc(cfg.handlerCreateAssignmentForUser)))
+	mux.Handle("POST /assignments/{id}/complete", middlewareAuth(http.HandlerFunc(cfg.handlerCompleteAssignment)))
+	mux.Handle("GET /assignments", middlewareAuth(http.HandlerFunc(cfg.handlerGetAllAssignments)))
+	mux.Handle("GET /assignments/{id}", middlewareAuth(http.HandlerFunc(cfg.handlerGetAssignmentByID)))
+	mux.Handle("PUT /assignments/{id}", middlewareAuth(http.HandlerFunc(cfg.handlerEditAssignment)))
+	mux.Handle("DELETE /assignments/{id}", middlewareAuth(http.HandlerFunc(cfg.handlerDeleteAssignment)))
 }

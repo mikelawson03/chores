@@ -3,6 +3,7 @@ package app
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -30,6 +31,15 @@ func (a *App) validateAssignmentRequest(choreID string, assignedUserID string, s
 	return nil
 }
 
+func (a *App) findAssignmentIndex(id string) int {
+	for i, assignment := range a.Assignments {
+		if assignment.ID == id {
+			return i
+		}
+	}
+	return -1
+}
+
 func (a *App) AddAssignment(choreID string, assignedUserID string, scheduleDate *time.Time) domain.Assignment {
 	id := uuid.NewString()
 	assignment := domain.Assignment{
@@ -52,7 +62,7 @@ func (a *App) CreateAssignmentForUser(requesterID string, choreID string, assign
 		return domain.Assignment{}, err
 	}
 
-	// check authorization
+	// check authorization (may only assign to self)
 	if requesterID != assignedUserID {
 		return domain.Assignment{}, fmt.Errorf("Requester %s may not assign chores to user %s", requesterID, assignedUserID)
 	}
@@ -65,4 +75,80 @@ func (a *App) CreateAssignmentForUser(requesterID string, choreID string, assign
 	assignment := a.AddAssignment(choreID, assignedUserID, scheduleDate)
 
 	return assignment, nil
+}
+
+func (a *App) GetAllAssignments() ([]domain.Assignment, error) {
+	return a.Assignments, nil
+}
+
+func (a *App) GetAssignmentByID(id string) (domain.Assignment, error) {
+	idx := a.findAssignmentIndex(id)
+	if idx == -1 {
+		return domain.Assignment{}, fmt.Errorf("Assignment with ID %s not found.", id)
+	}
+
+	return a.Assignments[idx], nil
+}
+
+func (a *App) EditAssignment(requesterID string, assignmentID string, choreID string, assignedUserID string, scheduleDate *time.Time) (domain.Assignment, error) {
+	idx := a.findAssignmentIndex(assignmentID)
+	if idx == -1 {
+		return domain.Assignment{}, fmt.Errorf("Assignment with ID %s not found.", assignmentID)
+	}
+
+	if a.Assignments[idx].AssignedUserID != requesterID {
+		return domain.Assignment{}, fmt.Errorf("Requester %s may not edit assigned chores for user %s.", requesterID, a.Assignments[idx].AssignedUserID)
+	}
+
+	err := a.validateAssignmentRequest(choreID, assignedUserID, scheduleDate)
+	if err != nil {
+		return domain.Assignment{}, err
+	}
+
+	assignment := domain.Assignment{
+		ID:             assignmentID,
+		ChoreID:        choreID,
+		AssignedUserID: assignedUserID,
+		ScheduledFor:   *scheduleDate,
+		Completed:      a.Assignments[idx].Completed,
+		CreatedAt:      a.Assignments[idx].CreatedAt,
+		UpdatedAt:      time.Now(),
+	}
+
+	a.Assignments[idx] = assignment
+
+	return assignment, nil
+}
+
+func (a *App) DeleteAssignment(assignmentID string, requesterID string) error {
+	idx := a.findAssignmentIndex(assignmentID)
+
+	if idx == -1 {
+		return fmt.Errorf("Assignment with ID %s not found.", assignmentID)
+	}
+
+	if a.Assignments[idx].AssignedUserID != requesterID {
+		return fmt.Errorf("Requester %s may not edit assigned chores for user %s.", requesterID, a.Assignments[idx].AssignedUserID)
+	}
+
+	a.Assignments = slices.Delete(a.Assignments, idx, idx+1)
+
+	return nil
+}
+
+func (a *App) CompleteAssignment(assignmentID string, requesterID string) (domain.Assignment, error) {
+	idx := a.findAssignmentIndex(assignmentID)
+
+	if idx == -1 {
+		return domain.Assignment{}, fmt.Errorf("Assignment with ID %s not found.", assignmentID)
+	}
+
+	if a.Assignments[idx].AssignedUserID != requesterID {
+		return domain.Assignment{}, fmt.Errorf("Requester %s may not edit assigned chores for user %s.", requesterID, a.Assignments[idx].AssignedUserID)
+	}
+
+	a.Assignments[idx].Completed = true
+	a.Assignments[idx].CompletedAt = time.Now()
+
+	return a.Assignments[idx], nil
 }

@@ -10,4 +10,5 @@ type Assignment struct {
 	Completed      bool
 	CreatedAt      time.Time
 	UpdatedAt      time.Time
+	CompletedAt    time.Time
 }
