@@ -4,7 +4,7 @@ import "time"
 
 type Assignment struct {
 	ID             string
-	ChoreID        string
+	TemplateID     string
 	AssignedUserID string
 	ScheduledFor   time.Time
 	Completed      bool

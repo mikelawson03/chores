@@ -113,3 +113,19 @@ func (a *App) DeleteChoreTemplate(id string) error {
 	delete(a.Templates, id)
 	return nil
 }
+
+func (a *App) GetAssignmentsByTemplateID(id string) ([]domain.Assignment, error) {
+	assignments := make([]domain.Assignment, 0)
+
+	if !a.choreExists(id) {
+		return assignments, fmt.Errorf("Chore template %s not found", id)
+	}
+
+	for _, assignment := range a.Assignments {
+		if assignment.TemplateID == id {
+			assignments = append(assignments, assignment)
+		}
+	}
+
+	return assignments, nil
+}

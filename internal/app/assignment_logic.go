@@ -44,7 +44,7 @@ func (a *App) AddAssignment(choreID string, assignedUserID string, scheduleDate 
 	id := uuid.NewString()
 	assignment := domain.Assignment{
 		ID:             id,
-		ChoreID:        choreID,
+		TemplateID:     choreID,
 		AssignedUserID: assignedUserID,
 		ScheduledFor:   *scheduleDate,
 		CreatedAt:      time.Now(),
@@ -107,7 +107,7 @@ func (a *App) EditAssignment(requesterID string, assignmentID string, choreID st
 
 	assignment := domain.Assignment{
 		ID:             assignmentID,
-		ChoreID:        choreID,
+		TemplateID:     choreID,
 		AssignedUserID: assignedUserID,
 		ScheduledFor:   *scheduleDate,
 		Completed:      a.Assignments[idx].Completed,

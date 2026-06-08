@@ -24,6 +24,7 @@ func (cfg *apiCfg) RegisterRoutes(mux *http.ServeMux) {
 	// chore templates
 	mux.Handle("GET /chore-templates", middlewareAuth(http.HandlerFunc(cfg.handlerGetChoreTemplates)))
 	mux.Handle("GET /chore-templates/{id}", middlewareAuth(http.HandlerFunc(cfg.handlerGetChoreTemplateByID)))
+	mux.Handle("GET /chore-templates/{id}/assignments", middlewareAuth(http.HandlerFunc(cfg.handlerGetAssignmentsByTemplateID)))
 	mux.Handle("POST /chore-templates", middlewareAuth(http.HandlerFunc(cfg.handlerAddChoreTemplate)))
 	mux.Handle("PUT /chore-templates/{id}", middlewareAuth(http.HandlerFunc(cfg.handlerEditChoreTemplate)))
 	mux.Handle("DELETE /chore-templates/{id}", middlewareAuth(http.HandlerFunc(cfg.handlerDeleteChoreTemplate)))

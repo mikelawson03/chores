@@ -74,7 +74,7 @@ func (cfg *apiCfg) handlerEditChoreTemplate(w http.ResponseWriter, r *http.Reque
 
 	c, err := cfg.App.EditChoreTemplate(id, req.Name, req.Cadence, req.Shared, req.Assignee, req.Duration)
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Error updating chore: ", err)
+		RespondWithError(w, http.StatusNotFound, "Error updating chore: ", err)
 		return
 	}
 
@@ -86,9 +86,21 @@ func (cfg *apiCfg) handlerDeleteChoreTemplate(w http.ResponseWriter, r *http.Req
 
 	err := cfg.App.DeleteChoreTemplate(id)
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Error deleting chore: ", err)
+		RespondWithError(w, http.StatusNotFound, "Error deleting chore: ", err)
 		return
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (cfg *apiCfg) handlerGetAssignmentsByTemplateID(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+
+	assignments, err := cfg.App.GetAssignmentsByTemplateID(id)
+	if err != nil {
+		RespondWithError(w, http.StatusNotFound, "Error retrieving assignments: ", err)
+		return
+	}
+
+	RespondWithJSON(w, http.StatusOK, assignments)
 }
