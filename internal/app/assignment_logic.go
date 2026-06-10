@@ -3,7 +3,6 @@ package app
 import (
 	"errors"
 	"fmt"
-	"slices"
 	"strings"
 	"time"
 
@@ -42,13 +41,14 @@ func (a *App) findAssignmentIndex(id string) int {
 
 func (a *App) AddAssignment(choreID string, assignedUserID string, scheduleDate *time.Time) domain.Assignment {
 	id := uuid.NewString()
+	now := time.Now()
 	assignment := domain.Assignment{
 		ID:             id,
 		TemplateID:     choreID,
 		AssignedUserID: assignedUserID,
 		ScheduledFor:   *scheduleDate,
-		CreatedAt:      time.Now(),
-		UpdatedAt:      time.Now(),
+		CreatedAt:      now,
+		UpdatedAt:      now,
 	}
 
 	a.Assignments = append(a.Assignments, assignment)
@@ -77,8 +77,8 @@ func (a *App) CreateAssignmentForUser(requesterID string, choreID string, assign
 	return assignment, nil
 }
 
-func (a *App) GetAllAssignments() ([]domain.Assignment, error) {
-	return a.Assignments, nil
+func (a *App) GetAllAssignments() []domain.Assignment {
+	return a.Assignments
 }
 
 func (a *App) GetAssignmentByID(id string) (domain.Assignment, error) {
@@ -131,7 +131,11 @@ func (a *App) DeleteAssignment(assignmentID string, requesterID string) error {
 		return fmt.Errorf("Requester %s may not edit assigned chores for user %s.", requesterID, a.Assignments[idx].AssignedUserID)
 	}
 
-	a.Assignments = slices.Delete(a.Assignments, idx, idx+1)
+	now := time.Now()
+
+	a.Assignments[idx].Canceled = true
+	a.Assignments[idx].CanceledAt = now
+	a.Assignments[idx].UpdatedAt = now
 
 	return nil
 }
@@ -147,8 +151,11 @@ func (a *App) CompleteAssignment(assignmentID string, requesterID string) (domai
 		return domain.Assignment{}, fmt.Errorf("Requester %s may not edit assigned chores for user %s.", requesterID, a.Assignments[idx].AssignedUserID)
 	}
 
+	now := time.Now()
+
 	a.Assignments[idx].Completed = true
-	a.Assignments[idx].CompletedAt = time.Now()
+	a.Assignments[idx].CompletedAt = now
+	a.Assignments[idx].UpdatedAt = now
 
 	return a.Assignments[idx], nil
 }

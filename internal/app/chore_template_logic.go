@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
@@ -9,11 +10,6 @@ import (
 	"github.com/google/uuid"
 	domain "github.com/mikelawson03/chores/internal/domain"
 )
-
-type App struct {
-	Templates   map[string]domain.ChoreTemplate
-	Assignments []domain.Assignment
-}
 
 func (a *App) choreExists(id string) bool {
 	if _, exists := a.Templates[id]; exists {
@@ -61,7 +57,10 @@ func (a *App) CreateChoreTemplate(name string, cadence string, shared *bool, ass
 		UpdatedAt: time.Now(),
 	}
 
-	a.Templates[id] = chore
+	err = a.Store.CreateTemplate(context.Background(), chore)
+	if err != nil {
+		return domain.ChoreTemplate{}, err
+	}
 
 	return chore, nil
 }
@@ -99,7 +98,9 @@ func (a *App) EditChoreTemplate(id string, name string, cadence string, shared *
 			CreatedAt: a.Templates[id].CreatedAt,
 			UpdatedAt: time.Now(),
 		}
+
 		a.Templates[id] = chore
+
 		return chore, nil
 	}
 

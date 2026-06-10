@@ -12,8 +12,12 @@ func RespondWithError(w http.ResponseWriter, code int, msg string, err error) {
 		Error string `json:"error"`
 	}
 
+	if err != nil {
+		msg = fmt.Sprintf("%s: %v", msg, err)
+	}
+
 	RespondWithJSON(w, code, errorResponse{
-		Error: fmt.Sprint(msg, err),
+		Error: msg,
 	})
 }
 

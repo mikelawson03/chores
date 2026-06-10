@@ -46,12 +46,7 @@ func (cfg *apiCfg) handlerCreateAssignmentForUser(w http.ResponseWriter, r *http
 }
 
 func (cfg *apiCfg) handlerGetAllAssignments(w http.ResponseWriter, r *http.Request) {
-	assignments, err := cfg.App.GetAllAssignments()
-
-	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Error retrieving assignments: ", err)
-		return
-	}
+	assignments := cfg.App.GetAllAssignments()
 
 	RespondWithJSON(w, http.StatusOK, assignments)
 }
