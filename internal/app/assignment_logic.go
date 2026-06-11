@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
@@ -55,7 +56,7 @@ func (a *App) AddAssignment(choreID string, assignedUserID string, scheduleDate 
 	return assignment
 }
 
-func (a *App) CreateAssignmentForUser(requesterID string, choreID string, assignedUserID string, scheduleDate *time.Time) (domain.Assignment, error) {
+func (a *App) CreateAssignmentForUser(ctx context.Context, requesterID string, choreID string, assignedUserID string, scheduleDate *time.Time) (domain.Assignment, error) {
 	// validate request body
 	err := a.validateAssignmentRequest(choreID, assignedUserID, scheduleDate)
 	if err != nil {
@@ -68,7 +69,8 @@ func (a *App) CreateAssignmentForUser(requesterID string, choreID string, assign
 	}
 
 	// check that chore template exists
-	if !a.choreExists(choreID) {
+	_, err = a.GetChoreTemplateByID(ctx, choreID)
+	if err != nil {
 		return domain.Assignment{}, fmt.Errorf("Unknown chore ID: %s", choreID)
 	}
 

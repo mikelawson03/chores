@@ -20,9 +20,7 @@ func NewApiConfig(dbConn *sql.DB) apiCfg {
 				Db:      dbConn,
 				Queries: db.New(dbConn),
 			},
-			Templates:   make(map[string]domain.ChoreTemplate),
 			Assignments: make([]domain.Assignment, 0),
-			Users:       make([]domain.User, 0),
 		},
 	}
 }

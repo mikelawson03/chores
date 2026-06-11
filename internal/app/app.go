@@ -7,7 +7,5 @@ import (
 
 type App struct {
 	Store       *store.Store
-	Templates   map[string]domain.ChoreTemplate
 	Assignments []domain.Assignment
-	Users       []domain.User
 }

@@ -5,6 +5,7 @@
 package db
 
 import (
+	"database/sql"
 	"time"
 )
 
@@ -13,7 +14,7 @@ type ChoreTemplate struct {
 	Name      string
 	Cadence   string
 	Shared    bool
-	Assignee  string
+	Assignee  sql.NullString
 	Duration  int64
 	CreatedAt time.Time
 	UpdatedAt time.Time

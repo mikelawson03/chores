@@ -12,7 +12,7 @@ import (
 )
 
 func (a *App) UsernameExists(ctx context.Context, username string) (bool, error) {
-	_, err := a.Store.GetUserByUsername(context.Background(), username)
+	_, err := a.Store.GetUserByUsername(ctx, username)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		return false, nil
@@ -24,16 +24,6 @@ func (a *App) UsernameExists(ctx context.Context, username string) (bool, error)
 
 	return true, nil
 
-}
-
-func (a *App) FindUserIndex(id string) int {
-	for i, user := range a.Users {
-		if user.ID == id {
-			return i
-		}
-	}
-
-	return -1
 }
 
 func (a *App) CreateNewUser(ctx context.Context, username string) (domain.User, error) {

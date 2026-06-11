@@ -34,8 +34,9 @@ func (cfg *apiCfg) handlerCreateAssignmentForUser(w http.ResponseWriter, r *http
 	// call app layer for authorization and assignment creation
 
 	requesterID := r.Header.Get("X-User-ID")
+	ctx := r.Context()
 
-	assignment, err := cfg.App.CreateAssignmentForUser(requesterID, req.ChoreID, req.AssignedUserID, req.ScheduleDate)
+	assignment, err := cfg.App.CreateAssignmentForUser(ctx, requesterID, req.ChoreID, req.AssignedUserID, req.ScheduleDate)
 
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Error assigning chore: ", err)

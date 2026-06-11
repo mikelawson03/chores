@@ -8,7 +8,7 @@ func (cfg *apiCfg) RegisterRoutes(mux *http.ServeMux) {
 	// chore templates
 	mux.Handle("GET /chore-templates", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerGetChoreTemplates)))
 	mux.Handle("GET /chore-templates/{id}", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerGetChoreTemplateByID)))
-	mux.Handle("GET /chore-templates/{id}/assignments", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerGetAssignmentsByTemplateID)))
+	mux.Handle("GET /chore-templates/{id}/assignments", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerGetAssignmentsByChoreTemplateID)))
 	mux.Handle("POST /chore-templates", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerAddChoreTemplate)))
 	mux.Handle("PUT /chore-templates/{id}", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerEditChoreTemplate)))
 	mux.Handle("DELETE /chore-templates/{id}", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerDeleteChoreTemplate)))

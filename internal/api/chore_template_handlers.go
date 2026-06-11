@@ -28,8 +28,11 @@ func CreateChoreTeplateRequest(r *http.Request) (*ChoreTemplateRequest, error) {
 }
 
 func (cfg *apiCfg) handlerGetChoreTemplates(w http.ResponseWriter, r *http.Request) {
-	// TODO: replace with logic to call list of chores once they have been created
-	chores := cfg.App.GetChoreTemplates()
+	ctx := r.Context()
+	chores, err := cfg.App.GetChoreTemplates(ctx)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Error retrieving chore templates:", err)
+	}
 	if len(chores) == 0 {
 		RespondWithJSON(w, http.StatusOK, []domain.ChoreTemplate{})
 		return
@@ -38,13 +41,15 @@ func (cfg *apiCfg) handlerGetChoreTemplates(w http.ResponseWriter, r *http.Reque
 }
 
 func (cfg *apiCfg) handlerAddChoreTemplate(w http.ResponseWriter, r *http.Request) {
+	requesterID := r.PathValue("X-User-ID")
 	req, err := CreateChoreTeplateRequest(r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Request Error: ", err)
 		return
 	}
 
-	chore, err := cfg.App.CreateChoreTemplate(req.Name, req.Cadence, req.Shared, req.Assignee, req.Duration)
+	ctx := r.Context()
+	chore, err := cfg.App.CreateChoreTemplate(ctx, requesterID, req.Name, req.Cadence, req.Assignee, req.Shared, req.Duration)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Error adding chore: ", err)
 		return
@@ -55,7 +60,8 @@ func (cfg *apiCfg) handlerAddChoreTemplate(w http.ResponseWriter, r *http.Reques
 
 func (cfg *apiCfg) handlerGetChoreTemplateByID(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
-	c, err := cfg.App.GetChoreByID(id)
+	ctx := r.Context()
+	c, err := cfg.App.GetChoreTemplateByID(ctx, id)
 	if err != nil {
 		RespondWithError(w, http.StatusNotFound, "", err)
 		return
@@ -65,14 +71,14 @@ func (cfg *apiCfg) handlerGetChoreTemplateByID(w http.ResponseWriter, r *http.Re
 
 func (cfg *apiCfg) handlerEditChoreTemplate(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
-
+	requesterID := r.Header.Get("X-User-ID")
 	req, err := CreateChoreTeplateRequest(r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Error decoding JSON: ", err)
 		return
 	}
-
-	c, err := cfg.App.EditChoreTemplate(id, req.Name, req.Cadence, req.Shared, req.Assignee, req.Duration)
+	ctx := r.Context()
+	c, err := cfg.App.EditChoreTemplate(ctx, requesterID, id, req.Name, req.Cadence, req.Assignee, req.Shared, req.Duration)
 	if err != nil {
 		RespondWithError(w, http.StatusNotFound, "Error updating chore: ", err)
 		return
@@ -83,8 +89,10 @@ func (cfg *apiCfg) handlerEditChoreTemplate(w http.ResponseWriter, r *http.Reque
 
 func (cfg *apiCfg) handlerDeleteChoreTemplate(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
+	requesterID := r.Header.Get("X-User-ID")
+	ctx := r.Context()
 
-	err := cfg.App.DeleteChoreTemplate(id)
+	err := cfg.App.DeleteChoreTemplate(ctx, id, requesterID)
 	if err != nil {
 		RespondWithError(w, http.StatusNotFound, "Error deleting chore: ", err)
 		return
@@ -93,10 +101,11 @@ func (cfg *apiCfg) handlerDeleteChoreTemplate(w http.ResponseWriter, r *http.Req
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (cfg *apiCfg) handlerGetAssignmentsByTemplateID(w http.ResponseWriter, r *http.Request) {
+func (cfg *apiCfg) handlerGetAssignmentsByChoreTemplateID(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
+	ctx := r.Context()
 
-	assignments, err := cfg.App.GetAssignmentsByTemplateID(id)
+	assignments, err := cfg.App.GetAssignmentsByTemplateID(ctx, id)
 	if err != nil {
 		RespondWithError(w, http.StatusNotFound, "Error retrieving assignments: ", err)
 		return
