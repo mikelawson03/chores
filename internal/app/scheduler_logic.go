@@ -83,7 +83,7 @@ func (a *App) RunScheduler(ctx context.Context) error {
 	// retrieve existing assignments
 	existingAssignments, err := a.Store.GetAssignmentsByDateRange(ctx, horizonStart, horizonEnd)
 	if err != nil {
-		return fmt.Errorf("Error retrieving assignments - %s")
+		return fmt.Errorf("Error retrieving assignments - %s", err)
 	}
 
 	// run schedulers by cadence
