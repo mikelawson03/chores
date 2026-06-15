@@ -83,7 +83,7 @@ func (a *App) CreateChoreTemplate(ctx context.Context, requesterID, name, cadenc
 	chore := domain.ChoreTemplate{
 		ID:        id,
 		Name:      name,
-		Cadence:   cadence,
+		Cadence:   domain.Cadence(cadence),
 		Shared:    *shared,
 		Assignee:  assignee,
 		Duration:  *duration,
@@ -147,7 +147,7 @@ func (a *App) EditChoreTemplate(ctx context.Context, requesterID, id, name, cade
 	updatedTmp := domain.ChoreTemplate{
 		ID:        id,
 		Name:      name,
-		Cadence:   cadence,
+		Cadence:   domain.Cadence(cadence),
 		Shared:    *shared,
 		Assignee:  assignee,
 		Duration:  *duration,

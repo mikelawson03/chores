@@ -12,21 +12,22 @@ type AssignmentRequest struct {
 	ScheduleDate   *time.Time `json:"schedule_date"`
 }
 
-func CreateNewAssignmentRequest(r *http.Request) (*AssignmentRequest, error) {
+type EditAssignmentRequest struct {
+	AssignedUserID string     `json:"assigned_user_id"`
+	ScheduleDate   *time.Time `json:"schedule_date"`
+}
+
+func decodeRequest(r *http.Request, target any) error {
 	d := json.NewDecoder(r.Body)
-	req := &AssignmentRequest{}
+	d.DisallowUnknownFields()
 
-	err := d.Decode(req)
-	if err != nil {
-		return &AssignmentRequest{}, err
-	}
-
-	return req, nil
+	return d.Decode(target)
 }
 
 func (cfg *apiCfg) handlerCreateAssignmentForUser(w http.ResponseWriter, r *http.Request) {
 	// Decode request into assignment request struct (make helper for this)
-	req, err := CreateNewAssignmentRequest(r)
+	req := AssignmentRequest{}
+	err := decodeRequest(r, &req)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Request Error: ", err)
 		return
@@ -47,14 +48,20 @@ func (cfg *apiCfg) handlerCreateAssignmentForUser(w http.ResponseWriter, r *http
 }
 
 func (cfg *apiCfg) handlerGetAllAssignments(w http.ResponseWriter, r *http.Request) {
-	assignments := cfg.App.GetAllAssignments()
+	ctx := r.Context()
+	assignments, err := cfg.App.GetAllAssignments(ctx)
+
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Error retrieving assignments:", err)
+	}
 
 	RespondWithJSON(w, http.StatusOK, assignments)
 }
 
 func (cfg *apiCfg) handlerGetAssignmentByID(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
-	assignment, err := cfg.App.GetAssignmentByID(id)
+	ctx := r.Context()
+	assignment, err := cfg.App.GetAssignmentByID(ctx, id)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Error retrieving assignment: ", err)
 		return
@@ -65,14 +72,16 @@ func (cfg *apiCfg) handlerGetAssignmentByID(w http.ResponseWriter, r *http.Reque
 
 func (cfg *apiCfg) handlerEditAssignment(w http.ResponseWriter, r *http.Request) {
 	assignmentID := r.PathValue("id")
-	req, err := CreateNewAssignmentRequest(r)
+	req := EditAssignmentRequest{}
+	err := decodeRequest(r, &req)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Request Error: ", err)
 		return
 	}
 
 	requesterID := r.Header.Get("X-User-ID")
-	res, err := cfg.App.EditAssignment(requesterID, assignmentID, req.ChoreID, req.AssignedUserID, req.ScheduleDate)
+	ctx := r.Context()
+	res, err := cfg.App.EditAssignment(ctx, requesterID, assignmentID, req.AssignedUserID, req.ScheduleDate)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Error editing assignment: ", err)
 		return
@@ -81,27 +90,29 @@ func (cfg *apiCfg) handlerEditAssignment(w http.ResponseWriter, r *http.Request)
 	RespondWithJSON(w, http.StatusOK, res)
 }
 
-func (cfg *apiCfg) handlerDeleteAssignment(w http.ResponseWriter, r *http.Request) {
+func (cfg *apiCfg) handlerCancelAssignment(w http.ResponseWriter, r *http.Request) {
 	assignmentID := r.PathValue("id")
 	requesterID := r.Header.Get("X-User-ID")
+	ctx := r.Context()
 
-	err := cfg.App.DeleteAssignment(assignmentID, requesterID)
+	assignment, err := cfg.App.CancelAssignment(ctx, assignmentID, requesterID)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Error deleting assignment: ", err)
 		return
 	}
 
-	w.WriteHeader(http.StatusNoContent)
+	RespondWithJSON(w, http.StatusOK, assignment)
 }
 
 func (cfg *apiCfg) handlerCompleteAssignment(w http.ResponseWriter, r *http.Request) {
 	assignmentID := r.PathValue("id")
 	requesterID := r.Header.Get("X-User-ID")
+	ctx := r.Context()
 
-	assignment, err := cfg.App.CompleteAssignment(assignmentID, requesterID)
+	assignment, err := cfg.App.CompleteAssignment(ctx, assignmentID, requesterID)
 
 	if err != nil {
-		RespondWithError(w, http.StatusInsufficientStorage, "Error completing assignment: ", err)
+		RespondWithError(w, http.StatusInternalServerError, "Error completing assignment: ", err)
 		return
 	}
 

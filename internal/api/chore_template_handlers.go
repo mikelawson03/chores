@@ -41,7 +41,7 @@ func (cfg *apiCfg) handlerGetChoreTemplates(w http.ResponseWriter, r *http.Reque
 }
 
 func (cfg *apiCfg) handlerAddChoreTemplate(w http.ResponseWriter, r *http.Request) {
-	requesterID := r.PathValue("X-User-ID")
+	requesterID := r.Header.Get("X-User-ID")
 	req, err := CreateChoreTeplateRequest(r)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Request Error: ", err)

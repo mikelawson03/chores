@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"strings"
@@ -14,13 +15,33 @@ import (
 // Compare requesting user to user assignment and ensure they match (return error if not)
 // Make and call helper to build Assignment add App.Assignments
 
-func (a *App) validateAssignmentRequest(choreID string, assignedUserID string, scheduleDate *time.Time) error {
-	if strings.TrimSpace(choreID) == "" {
-		return errors.New("Missing required chore ID")
+func (a *App) validateTemplateID(ctx context.Context, templateID string) error {
+	if strings.TrimSpace(templateID) == "" {
+		return errors.New("Missing required template ID")
 	}
+
+	_, err := a.GetChoreTemplateByID(ctx, templateID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (a *App) validateAssignedUserID(ctx context.Context, assignedUserID string) error {
 	if strings.TrimSpace(assignedUserID) == "" {
 		return errors.New("Missing required assigned user ID")
 	}
+
+	_, err := a.GetUserByID(ctx, assignedUserID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func validateScheduleDate(scheduleDate *time.Time) error {
 	if scheduleDate == nil {
 		return errors.New("Missing required schedule date")
 	}
@@ -40,124 +61,202 @@ func (a *App) findAssignmentIndex(id string) int {
 	return -1
 }
 
-func (a *App) AddAssignment(choreID string, assignedUserID string, scheduleDate *time.Time) domain.Assignment {
+func (a *App) createNewAssignment(templateID string, assignedUserID string, scheduleDate *time.Time) domain.Assignment {
 	id := uuid.NewString()
 	now := time.Now()
 	assignment := domain.Assignment{
 		ID:             id,
-		TemplateID:     choreID,
+		TemplateID:     templateID,
 		AssignedUserID: assignedUserID,
 		ScheduledFor:   *scheduleDate,
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	}
 
-	a.Assignments = append(a.Assignments, assignment)
 	return assignment
 }
 
-func (a *App) CreateAssignmentForUser(ctx context.Context, requesterID string, choreID string, assignedUserID string, scheduleDate *time.Time) (domain.Assignment, error) {
-	// validate request body
-	err := a.validateAssignmentRequest(choreID, assignedUserID, scheduleDate)
+func (a *App) CreateAssignmentForUser(ctx context.Context, requesterID, templateID, assignedUserID string, scheduleDate *time.Time) (domain.Assignment, error) {
+	// validate that templateID is provided and exists
+	err := a.validateTemplateID(ctx, templateID)
+	if err != nil {
+		return domain.Assignment{}, err
+	}
+
+	// validate that assignedUserID is provided and exists
+	err = a.validateAssignedUserID(ctx, assignedUserID)
+	if err != nil {
+		return domain.Assignment{}, err
+	}
+
+	// validate schedule date exists and is in the future
+	err = validateScheduleDate(scheduleDate)
 	if err != nil {
 		return domain.Assignment{}, err
 	}
 
 	// check authorization (may only assign to self)
 	if requesterID != assignedUserID {
-		return domain.Assignment{}, fmt.Errorf("Requester %s may not assign chores to user %s", requesterID, assignedUserID)
+		return domain.Assignment{}, errors.New("may not assign chores to other users")
 	}
 
 	// check that chore template exists
-	_, err = a.GetChoreTemplateByID(ctx, choreID)
-	if err != nil {
-		return domain.Assignment{}, fmt.Errorf("Unknown chore ID: %s", choreID)
-	}
-
-	assignment := a.AddAssignment(choreID, assignedUserID, scheduleDate)
-
-	return assignment, nil
-}
-
-func (a *App) GetAllAssignments() []domain.Assignment {
-	return a.Assignments
-}
-
-func (a *App) GetAssignmentByID(id string) (domain.Assignment, error) {
-	idx := a.findAssignmentIndex(id)
-	if idx == -1 {
-		return domain.Assignment{}, fmt.Errorf("Assignment with ID %s not found.", id)
-	}
-
-	return a.Assignments[idx], nil
-}
-
-func (a *App) EditAssignment(requesterID string, assignmentID string, choreID string, assignedUserID string, scheduleDate *time.Time) (domain.Assignment, error) {
-	idx := a.findAssignmentIndex(assignmentID)
-	if idx == -1 {
-		return domain.Assignment{}, fmt.Errorf("Assignment with ID %s not found.", assignmentID)
-	}
-
-	if a.Assignments[idx].AssignedUserID != requesterID {
-		return domain.Assignment{}, fmt.Errorf("Requester %s may not edit assigned chores for user %s.", requesterID, a.Assignments[idx].AssignedUserID)
-	}
-
-	err := a.validateAssignmentRequest(choreID, assignedUserID, scheduleDate)
+	_, err = a.GetChoreTemplateByID(ctx, templateID)
 	if err != nil {
 		return domain.Assignment{}, err
 	}
 
-	assignment := domain.Assignment{
-		ID:             assignmentID,
-		TemplateID:     choreID,
-		AssignedUserID: assignedUserID,
-		ScheduledFor:   *scheduleDate,
-		Completed:      a.Assignments[idx].Completed,
-		CreatedAt:      a.Assignments[idx].CreatedAt,
-		UpdatedAt:      time.Now(),
-	}
+	assignment := a.createNewAssignment(templateID, assignedUserID, scheduleDate)
 
-	a.Assignments[idx] = assignment
+	err = a.Store.AddAssignment(ctx, assignment)
+	if err != nil {
+		return domain.Assignment{}, err
+	}
 
 	return assignment, nil
 }
 
-func (a *App) DeleteAssignment(assignmentID string, requesterID string) error {
-	idx := a.findAssignmentIndex(assignmentID)
-
-	if idx == -1 {
-		return fmt.Errorf("Assignment with ID %s not found.", assignmentID)
+func (a *App) GetAllAssignments(ctx context.Context) ([]domain.Assignment, error) {
+	assignments, err := a.Store.GetAllAssignments(ctx)
+	if err != nil {
+		return []domain.Assignment{}, err
 	}
 
-	if a.Assignments[idx].AssignedUserID != requesterID {
-		return fmt.Errorf("Requester %s may not edit assigned chores for user %s.", requesterID, a.Assignments[idx].AssignedUserID)
-	}
-
-	now := time.Now()
-
-	a.Assignments[idx].Canceled = true
-	a.Assignments[idx].CanceledAt = now
-	a.Assignments[idx].UpdatedAt = now
-
-	return nil
+	return assignments, nil
 }
 
-func (a *App) CompleteAssignment(assignmentID string, requesterID string) (domain.Assignment, error) {
-	idx := a.findAssignmentIndex(assignmentID)
-
-	if idx == -1 {
-		return domain.Assignment{}, fmt.Errorf("Assignment with ID %s not found.", assignmentID)
+func (a *App) GetAssignmentByID(ctx context.Context, id string) (domain.Assignment, error) {
+	assignment, err := a.Store.GetAssignmentByID(ctx, id)
+	if errors.Is(err, sql.ErrNoRows) {
+		return domain.Assignment{}, fmt.Errorf("Assignment with ID %s not found.", id)
 	}
 
-	if a.Assignments[idx].AssignedUserID != requesterID {
-		return domain.Assignment{}, fmt.Errorf("Requester %s may not edit assigned chores for user %s.", requesterID, a.Assignments[idx].AssignedUserID)
+	if err != nil {
+		return domain.Assignment{}, err
+	}
+
+	return assignment, nil
+}
+
+func (a *App) EditAssignment(ctx context.Context, requesterID, assignmentID, assignedUserID string, scheduleDate *time.Time) (domain.Assignment, error) {
+	// check assignment exists
+	existing, err := a.GetAssignmentByID(ctx, assignmentID)
+	if err != nil {
+		return domain.Assignment{}, err
+	}
+
+	// check user owns assignment
+	if existing.AssignedUserID != requesterID {
+		return domain.Assignment{}, errors.New("may not edit chores belonging to other users")
+	}
+
+	// check that userID is provided and valid
+	err = a.validateAssignedUserID(ctx, assignedUserID)
+	if err != nil {
+		return domain.Assignment{}, err
+	}
+
+	// check that scheduleDate is provided and in future
+	err = validateScheduleDate(scheduleDate)
+	if err != nil {
+		return domain.Assignment{}, err
+	}
+
+	// check assignment is to self
+	if requesterID != assignedUserID {
+		return domain.Assignment{}, errors.New("may not assign chores to other users")
+	}
+
+	assignment := domain.Assignment{
+		ID:             assignmentID,
+		TemplateID:     existing.TemplateID,
+		AssignedUserID: assignedUserID,
+		ScheduledFor:   *scheduleDate,
+		Completed:      existing.Completed,
+		Canceled:       existing.Canceled,
+		CreatedAt:      existing.CreatedAt,
+		UpdatedAt:      time.Now(),
+		CompletedAt:    existing.CompletedAt,
+		CanceledAt:     existing.CanceledAt,
+	}
+
+	err = a.Store.EditAssignment(ctx, assignment)
+	if err != nil {
+		return domain.Assignment{}, err
+	}
+
+	return assignment, nil
+}
+
+func (a *App) CancelAssignment(ctx context.Context, assignmentID, requesterID string) (domain.Assignment, error) {
+	existing, err := a.GetAssignmentByID(ctx, assignmentID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return domain.Assignment{}, errors.New("Assignment not found")
+	}
+
+	if err != nil {
+		return domain.Assignment{}, err
+	}
+
+	if existing.AssignedUserID != requesterID {
+		return domain.Assignment{}, errors.New("May not cancel other user's assignments")
 	}
 
 	now := time.Now()
 
-	a.Assignments[idx].Completed = true
-	a.Assignments[idx].CompletedAt = now
-	a.Assignments[idx].UpdatedAt = now
+	assignment := domain.Assignment{
+		ID:             assignmentID,
+		TemplateID:     existing.TemplateID,
+		AssignedUserID: existing.AssignedUserID,
+		ScheduledFor:   existing.ScheduledFor,
+		Completed:      existing.Completed,
+		Canceled:       true,
+		CreatedAt:      existing.CreatedAt,
+		UpdatedAt:      now,
+		CompletedAt:    existing.CompletedAt,
+		CanceledAt:     now,
+	}
 
-	return a.Assignments[idx], nil
+	err = a.Store.CancelAssignment(ctx, assignment)
+	if err != nil {
+		return domain.Assignment{}, err
+	}
+
+	return assignment, nil
+}
+
+func (a *App) CompleteAssignment(ctx context.Context, assignmentID, requesterID string) (domain.Assignment, error) {
+	existing, err := a.GetAssignmentByID(ctx, assignmentID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return domain.Assignment{}, errors.New("Assignment not found")
+	}
+
+	if err != nil {
+		return domain.Assignment{}, err
+	}
+
+	if existing.AssignedUserID != requesterID {
+		return domain.Assignment{}, errors.New("May not complete other user's assignments")
+	}
+	now := time.Now()
+
+	assignment := domain.Assignment{
+		ID:             assignmentID,
+		TemplateID:     existing.TemplateID,
+		AssignedUserID: existing.AssignedUserID,
+		ScheduledFor:   existing.ScheduledFor,
+		Completed:      true,
+		Canceled:       existing.Canceled,
+		CreatedAt:      existing.CreatedAt,
+		UpdatedAt:      now,
+		CompletedAt:    now,
+		CanceledAt:     existing.CanceledAt,
+	}
+
+	err = a.Store.CancelAssignment(ctx, assignment)
+	if err != nil {
+		return domain.Assignment{}, err
+	}
+
+	return assignment, nil
 }
