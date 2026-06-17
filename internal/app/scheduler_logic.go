@@ -184,6 +184,6 @@ func (a *App) RunScheduler(ctx context.Context) error {
 	// print new assignments created to console for debugging
 	fmt.Printf("Daily Assignments created: %d\n", len(newDailyAssignments))
 	fmt.Printf("Weekly Assignments created: %d\n", len(newWeeklyAssignments))
-	fmt.Printf("MonthlyAssignments created: %d\n", len(newMonthlyAssignments))
+	fmt.Printf("Monthly Assignments created: %d\n", len(newMonthlyAssignments))
 	return nil
 }

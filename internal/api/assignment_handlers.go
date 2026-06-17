@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 	"time"
+
+	"github.com/mikelawson03/chores/internal/domain"
 )
 
 type AssignmentRequest struct {
@@ -47,9 +49,28 @@ func (cfg *apiCfg) handlerCreateAssignmentForUser(w http.ResponseWriter, r *http
 	RespondWithJSON(w, http.StatusCreated, assignment)
 }
 
-func (cfg *apiCfg) handlerGetAllAssignments(w http.ResponseWriter, r *http.Request) {
+func (cfg *apiCfg) handlerGetAssignments(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	assignments, err := cfg.App.GetAllAssignments(ctx)
+	template_id := r.URL.Query().Get("template_id")
+	user_id := r.URL.Query().Get("user_id")
+
+	if template_id != "" && user_id != "" {
+		RespondWithError(w, http.StatusBadRequest, "may only specify one assignment filter", nil)
+	}
+
+	var (
+		assignments []domain.Assignment
+		err         error
+	)
+
+	switch {
+	case template_id != "":
+		assignments, err = cfg.App.GetAssignmentsByTemplateID(ctx, template_id)
+	case user_id != "":
+		assignments, err = cfg.App.GetAssignmentsByUserID(ctx, user_id)
+	default:
+		assignments, err = cfg.App.GetAllAssignments(ctx)
+	}
 
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Error retrieving assignments:", err)

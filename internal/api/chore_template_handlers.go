@@ -100,16 +100,3 @@ func (cfg *apiCfg) handlerDeleteChoreTemplate(w http.ResponseWriter, r *http.Req
 
 	w.WriteHeader(http.StatusNoContent)
 }
-
-func (cfg *apiCfg) handlerGetAssignmentsByChoreTemplateID(w http.ResponseWriter, r *http.Request) {
-	id := r.PathValue("id")
-	ctx := r.Context()
-
-	assignments, err := cfg.App.GetAssignmentsByTemplateID(ctx, id)
-	if err != nil {
-		RespondWithError(w, http.StatusNotFound, "Error retrieving assignments: ", err)
-		return
-	}
-
-	RespondWithJSON(w, http.StatusOK, assignments)
-}

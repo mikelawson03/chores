@@ -10,3 +10,10 @@ BUT the server will create the DB and run the migrations automatically on start
 
 
 Endpoints
+
+
+## Scheduling
+
+The scheduler automatically generates daily, weekly, and monthly chore assignments within a configurable planning horizon.
+
+See `docs/scheduler.md` for detailed scheduling behavior and cadence rules.

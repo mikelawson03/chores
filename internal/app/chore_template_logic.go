@@ -180,20 +180,3 @@ func (a *App) DeleteChoreTemplate(ctx context.Context, id, requesterID string) e
 	}
 	return nil
 }
-
-func (a *App) GetAssignmentsByTemplateID(ctx context.Context, id string) ([]domain.Assignment, error) {
-	assignments := make([]domain.Assignment, 0)
-
-	_, err := a.GetChoreTemplateByID(ctx, id)
-	if err != nil {
-		return []domain.Assignment{}, err
-	}
-
-	for _, assignment := range a.Assignments {
-		if assignment.TemplateID == id {
-			assignments = append(assignments, assignment)
-		}
-	}
-
-	return assignments, nil
-}

@@ -8,7 +8,6 @@ func (cfg *apiCfg) RegisterRoutes(mux *http.ServeMux) {
 	// chore templates
 	mux.Handle("GET /chore-templates", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerGetChoreTemplates)))
 	mux.Handle("GET /chore-templates/{id}", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerGetChoreTemplateByID)))
-	mux.Handle("GET /chore-templates/{id}/assignments", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerGetAssignmentsByChoreTemplateID)))
 	mux.Handle("POST /chore-templates", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerAddChoreTemplate)))
 	mux.Handle("PUT /chore-templates/{id}", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerEditChoreTemplate)))
 	mux.Handle("DELETE /chore-templates/{id}", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerDeleteChoreTemplate)))
@@ -17,7 +16,7 @@ func (cfg *apiCfg) RegisterRoutes(mux *http.ServeMux) {
 	mux.Handle("POST /assignments", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerCreateAssignmentForUser)))
 	mux.Handle("POST /assignments/{id}/complete", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerCompleteAssignment)))
 	mux.Handle("POST /assignments/{id}/cancel", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerCancelAssignment)))
-	mux.Handle("GET /assignments", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerGetAllAssignments)))
+	mux.Handle("GET /assignments", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerGetAssignments)))
 	mux.Handle("GET /assignments/{id}", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerGetAssignmentByID)))
 	mux.Handle("PUT /assignments/{id}", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerEditAssignment)))
 

@@ -241,3 +241,83 @@ func (q *Queries) GetAssignmentsByDateRange(ctx context.Context, arg GetAssignme
 	}
 	return items, nil
 }
+
+const getAssignmentsByTemplateID = `-- name: GetAssignmentsByTemplateID :many
+SELECT id, template_id, assigned_user_id, scheduled_for, completed, canceled, created_at, updated_at, completed_at, canceled_at
+FROM assignments
+WHERE template_id = ?
+`
+
+func (q *Queries) GetAssignmentsByTemplateID(ctx context.Context, templateID string) ([]Assignment, error) {
+	rows, err := q.db.QueryContext(ctx, getAssignmentsByTemplateID, templateID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Assignment
+	for rows.Next() {
+		var i Assignment
+		if err := rows.Scan(
+			&i.ID,
+			&i.TemplateID,
+			&i.AssignedUserID,
+			&i.ScheduledFor,
+			&i.Completed,
+			&i.Canceled,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.CompletedAt,
+			&i.CanceledAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getAssignmentsByUserID = `-- name: GetAssignmentsByUserID :many
+SELECT id, template_id, assigned_user_id, scheduled_for, completed, canceled, created_at, updated_at, completed_at, canceled_at
+FROM assignments
+WHERE assigned_user_id = ?
+`
+
+func (q *Queries) GetAssignmentsByUserID(ctx context.Context, assignedUserID string) ([]Assignment, error) {
+	rows, err := q.db.QueryContext(ctx, getAssignmentsByUserID, assignedUserID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Assignment
+	for rows.Next() {
+		var i Assignment
+		if err := rows.Scan(
+			&i.ID,
+			&i.TemplateID,
+			&i.AssignedUserID,
+			&i.ScheduledFor,
+			&i.Completed,
+			&i.Canceled,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.CompletedAt,
+			&i.CanceledAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

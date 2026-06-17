@@ -128,3 +128,31 @@ func (s *Store) CompleteAssignment(ctx context.Context, assignment domain.Assign
 
 	return nil
 }
+
+func (s *Store) GetAssignmentsByTemplateID(ctx context.Context, id string) ([]domain.Assignment, error) {
+	dbAssignments, err := s.Queries.GetAssignmentsByTemplateID(ctx, id)
+	if err != nil {
+		return []domain.Assignment{}, err
+	}
+
+	var assignments []domain.Assignment
+	for _, assignment := range dbAssignments {
+		assignments = append(assignments, dbAssignmentToDomainAssignment(assignment))
+	}
+
+	return assignments, nil
+}
+
+func (s *Store) GetAssignmentsByUserID(ctx context.Context, id string) ([]domain.Assignment, error) {
+	dbAssignments, err := s.Queries.GetAssignmentsByUserID(ctx, id)
+	if err != nil {
+		return []domain.Assignment{}, err
+	}
+
+	var assignments []domain.Assignment
+	for _, assignment := range dbAssignments {
+		assignments = append(assignments, dbAssignmentToDomainAssignment(assignment))
+	}
+
+	return assignments, nil
+}

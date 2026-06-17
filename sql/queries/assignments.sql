@@ -48,3 +48,13 @@ SELECT *
 FROM assignments
 WHERE scheduled_for >= ?
 AND scheduled_for < ?;
+
+-- name: GetAssignmentsByTemplateID :many
+SELECT *
+FROM assignments
+WHERE template_id = ?;
+
+-- name: GetAssignmentsByUserID :many
+SELECT *
+FROM assignments
+WHERE assigned_user_id = ?;

@@ -260,3 +260,31 @@ func (a *App) CompleteAssignment(ctx context.Context, assignmentID, requesterID 
 
 	return assignment, nil
 }
+
+func (a *App) GetAssignmentsByTemplateID(ctx context.Context, id string) ([]domain.Assignment, error) {
+	_, err := a.GetChoreTemplateByID(ctx, id)
+	if err != nil {
+		return []domain.Assignment{}, err
+	}
+
+	assignments, err := a.Store.GetAssignmentsByTemplateID(ctx, id)
+	if err != nil {
+		return []domain.Assignment{}, err
+	}
+
+	return assignments, nil
+}
+
+func (a *App) GetAssignmentsByUserID(ctx context.Context, id string) ([]domain.Assignment, error) {
+	_, err := a.GetUserByID(ctx, id)
+	if err != nil {
+		return []domain.Assignment{}, err
+	}
+
+	assignments, err := a.Store.GetAssignmentsByUserID(ctx, id)
+	if err != nil {
+		return []domain.Assignment{}, err
+	}
+
+	return assignments, nil
+}
