@@ -157,8 +157,13 @@ func (s *Store) GetAssignmentsByUserID(ctx context.Context, id string) ([]domain
 	return assignments, nil
 }
 
-func (s *Store) GetAssignmentsWithMetadata(ctx context.Context) ([]domain.AssignmentWithMetadata, error) {
-	dbAssignmentsWithMetadata, err := s.Queries.GetAssignmentsWithMetadata(ctx)
+func (s *Store) GetAssignmentsForBalancing(ctx context.Context, horizonStart, horizonEnd, monthlyPlanningEnd time.Time) ([]domain.AssignmentWithMetadata, error) {
+	dbAssignmentsWithMetadata, err := s.Queries.GetAssignmentsWithMetadataForDateRange(ctx, db.GetAssignmentsWithMetadataForDateRangeParams{
+		ScheduledFor:   horizonStart,
+		ScheduledFor_2: horizonEnd,
+		ScheduledFor_3: horizonStart,
+		ScheduledFor_4: monthlyPlanningEnd,
+	})
 	if err != nil {
 		return []domain.AssignmentWithMetadata{}, err
 	}
@@ -199,4 +204,30 @@ func (s *Store) GetAssignmentsWithMetadata(ctx context.Context) ([]domain.Assign
 
 	return assignments, nil
 
+}
+
+func (s *Store) BulkUpdateAssignments(ctx context.Context, assignments []domain.Assignment) error {
+	tx, err := s.Db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+
+	defer tx.Rollback()
+
+	qtx := s.Queries.WithTx(tx)
+
+	for _, assignment := range assignments {
+		err := qtx.EditAssignment(ctx, db.EditAssignmentParams{
+			AssignedUserID: assignment.AssignedUserID,
+			ScheduledFor:   assignment.ScheduledFor,
+			CreatedAt:      assignment.CreatedAt,
+			UpdatedAt:      time.Now(),
+			ID:             assignment.ID,
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
 }

@@ -94,6 +94,25 @@ The scheduler must always be able to retrieve every assignment it is capable of 
 
 If assignment generation extends beyond the planning horizon, the lookup window must be extended accordingly.
 
+## Date Range Conventions
+The application uses inclusive-start, exclusive-end date ranges.
+
+Example:
+    Start: 2026-07-01
+    End:   2026-08-01
+
+Includes:
+    2026-07-01 through 2026-07-31
+
+Excludes:
+    2026-08-01
+
+This convention is used by:
+- Scheduler horizon calculations
+- Monthly planning windows
+- Assignment retrieval queries
+- Balancer assignment scope
+
 ## Planned Future Enhancements
 - Enable multiple occurrences within cadence window (e.g., 3X/week or 2X/month)
 - Create interval scheduling (e.g., every 3 days, every other week, quarterly)

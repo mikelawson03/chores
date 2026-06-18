@@ -59,7 +59,15 @@ SELECT *
 FROM assignments
 WHERE assigned_user_id = ?;
 
--- name: GetAssignmentsWithMetadata :many
+-- name: GetAssignmentsWithMetadataForDateRange :many
 SELECT a.*, ct.duration, ct.cadence
 FROM assignments a
-JOIN chore_templates ct ON a.template_id = ct.id;
+JOIN chore_templates ct ON a.template_id = ct.id
+WHERE (ct.cadence IN ("daily", "weekly") 
+    AND a.scheduled_for >= ?
+    AND a.scheduled_for < ?
+    AND a.canceled = false)
+OR (ct.cadence = "monthly"
+    AND a.scheduled_for >= ?
+    AND a.scheduled_for < ?
+    AND a.canceled = false);

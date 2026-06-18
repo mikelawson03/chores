@@ -116,18 +116,7 @@ func (a *App) monthlyScheduler(horizonStart, horizonEnd time.Time, templates []d
 
 func (a *App) RunScheduler(ctx context.Context) error {
 	// calculate current scheduling horizon
-	now := time.Now()
-	current_day := now.Weekday()
-	daysSinceWeekStart := (int(current_day) + 6) % 7
-	startOfWeek := now.AddDate(0, 0, -daysSinceWeekStart)
-	horizonStart := time.Date(
-		startOfWeek.Year(),
-		startOfWeek.Month(),
-		startOfWeek.Day(),
-		0, 0, 0, 0,
-		startOfWeek.Location(),
-	)
-	horizonEnd := horizonStart.AddDate(0, 0, 28)
+	horizonStart, horizonEnd := a.getHorizonWindow()
 
 	// retrieve users
 	users, err := a.Store.GetAllUsers(ctx)

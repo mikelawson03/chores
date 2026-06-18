@@ -11,5 +11,5 @@ func (cfg *apiCfg) handlerRunBalancer(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	RespondWithJSON(w, http.StatusOK, "balancer run successfully")
+	RespondWithJSON(w, http.StatusOK, "balancer run successful")
 }

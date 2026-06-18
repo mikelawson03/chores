@@ -100,8 +100,11 @@ Ensures assignments exist within the planning horizon. Creates missing assignmen
 Reference:
 See `./docs/scheduler.md`
 
-### Balancer (Future)
+### Balancer
 Distributes unassigned chores among users.
+
+Reference:
+See `./docs/balancer.md`
 
 ### Scheduler/Balancer Relationship
 Scheduler does not invoke Balancer. Balancer does not invoke Scheduler.

@@ -322,13 +322,28 @@ func (q *Queries) GetAssignmentsByUserID(ctx context.Context, assignedUserID str
 	return items, nil
 }
 
-const getAssignmentsWithMetadata = `-- name: GetAssignmentsWithMetadata :many
+const getAssignmentsWithMetadataForDateRange = `-- name: GetAssignmentsWithMetadataForDateRange :many
 SELECT a.id, a.template_id, a.assigned_user_id, a.scheduled_for, a.completed, a.canceled, a.created_at, a.updated_at, a.completed_at, a.canceled_at, ct.duration, ct.cadence
 FROM assignments a
 JOIN chore_templates ct ON a.template_id = ct.id
+WHERE (ct.cadence IN ("daily", "weekly") 
+    AND a.scheduled_for >= ?
+    AND a.scheduled_for < ?
+    AND a.canceled = false)
+OR (ct.cadence = "monthly"
+    AND a.scheduled_for >= ?
+    AND a.scheduled_for < ?
+    AND a.canceled = false)
 `
 
-type GetAssignmentsWithMetadataRow struct {
+type GetAssignmentsWithMetadataForDateRangeParams struct {
+	ScheduledFor   time.Time
+	ScheduledFor_2 time.Time
+	ScheduledFor_3 time.Time
+	ScheduledFor_4 time.Time
+}
+
+type GetAssignmentsWithMetadataForDateRangeRow struct {
 	ID             string
 	TemplateID     string
 	AssignedUserID string
@@ -343,15 +358,20 @@ type GetAssignmentsWithMetadataRow struct {
 	Cadence        string
 }
 
-func (q *Queries) GetAssignmentsWithMetadata(ctx context.Context) ([]GetAssignmentsWithMetadataRow, error) {
-	rows, err := q.db.QueryContext(ctx, getAssignmentsWithMetadata)
+func (q *Queries) GetAssignmentsWithMetadataForDateRange(ctx context.Context, arg GetAssignmentsWithMetadataForDateRangeParams) ([]GetAssignmentsWithMetadataForDateRangeRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAssignmentsWithMetadataForDateRange,
+		arg.ScheduledFor,
+		arg.ScheduledFor_2,
+		arg.ScheduledFor_3,
+		arg.ScheduledFor_4,
+	)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetAssignmentsWithMetadataRow
+	var items []GetAssignmentsWithMetadataForDateRangeRow
 	for rows.Next() {
-		var i GetAssignmentsWithMetadataRow
+		var i GetAssignmentsWithMetadataForDateRangeRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.TemplateID,
