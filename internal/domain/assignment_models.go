@@ -1,6 +1,8 @@
 package domain
 
-import "time"
+import (
+	"time"
+)
 
 type Assignment struct {
 	ID             string
@@ -13,4 +15,10 @@ type Assignment struct {
 	UpdatedAt      time.Time
 	CompletedAt    time.Time
 	CanceledAt     time.Time
+}
+
+type AssignmentWithMetadata struct {
+	Assignment      Assignment
+	DurationMinutes int
+	Cadence         Cadence
 }

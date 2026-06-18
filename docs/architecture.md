@@ -95,13 +95,18 @@ Acts upon:
 - Editing
 
 ### Scheduler
-Ensures assignments exist within the planning horizon.
+Ensures assignments exist within the planning horizon. Creates missing assignments.
 
 Reference:
 See `./docs/scheduler.md`
 
 ### Balancer (Future)
 Distributes unassigned chores among users.
+
+### Scheduler/Balancer Relationship
+Scheduler does not invoke Balancer. Balancer does not invoke Scheduler.
+
+Automated jobs may run both sequentially.
 
 ## Design Principles
 

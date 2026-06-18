@@ -321,3 +321,60 @@ func (q *Queries) GetAssignmentsByUserID(ctx context.Context, assignedUserID str
 	}
 	return items, nil
 }
+
+const getAssignmentsWithMetadata = `-- name: GetAssignmentsWithMetadata :many
+SELECT a.id, a.template_id, a.assigned_user_id, a.scheduled_for, a.completed, a.canceled, a.created_at, a.updated_at, a.completed_at, a.canceled_at, ct.duration, ct.cadence
+FROM assignments a
+JOIN chore_templates ct ON a.template_id = ct.id
+`
+
+type GetAssignmentsWithMetadataRow struct {
+	ID             string
+	TemplateID     string
+	AssignedUserID string
+	ScheduledFor   time.Time
+	Completed      bool
+	Canceled       bool
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+	CompletedAt    sql.NullTime
+	CanceledAt     sql.NullTime
+	Duration       int64
+	Cadence        string
+}
+
+func (q *Queries) GetAssignmentsWithMetadata(ctx context.Context) ([]GetAssignmentsWithMetadataRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAssignmentsWithMetadata)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetAssignmentsWithMetadataRow
+	for rows.Next() {
+		var i GetAssignmentsWithMetadataRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.TemplateID,
+			&i.AssignedUserID,
+			&i.ScheduledFor,
+			&i.Completed,
+			&i.Canceled,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.CompletedAt,
+			&i.CanceledAt,
+			&i.Duration,
+			&i.Cadence,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

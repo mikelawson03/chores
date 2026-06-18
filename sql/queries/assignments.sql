@@ -58,3 +58,8 @@ WHERE template_id = ?;
 SELECT *
 FROM assignments
 WHERE assigned_user_id = ?;
+
+-- name: GetAssignmentsWithMetadata :many
+SELECT a.*, ct.duration, ct.cadence
+FROM assignments a
+JOIN chore_templates ct ON a.template_id = ct.id;

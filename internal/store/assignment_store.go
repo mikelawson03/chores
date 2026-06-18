@@ -156,3 +156,47 @@ func (s *Store) GetAssignmentsByUserID(ctx context.Context, id string) ([]domain
 
 	return assignments, nil
 }
+
+func (s *Store) GetAssignmentsWithMetadata(ctx context.Context) ([]domain.AssignmentWithMetadata, error) {
+	dbAssignmentsWithMetadata, err := s.Queries.GetAssignmentsWithMetadata(ctx)
+	if err != nil {
+		return []domain.AssignmentWithMetadata{}, err
+	}
+
+	var assignments []domain.AssignmentWithMetadata
+	for _, dbAssignmentWithMetadata := range dbAssignmentsWithMetadata {
+		var completedAt time.Time
+		var canceledAt time.Time
+		if dbAssignmentWithMetadata.CompletedAt.Valid {
+			completedAt = dbAssignmentWithMetadata.CompletedAt.Time
+		}
+
+		if dbAssignmentWithMetadata.CanceledAt.Valid {
+			canceledAt = dbAssignmentWithMetadata.CanceledAt.Time
+		}
+
+		assignment := domain.Assignment{
+			ID:             dbAssignmentWithMetadata.ID,
+			TemplateID:     dbAssignmentWithMetadata.TemplateID,
+			AssignedUserID: dbAssignmentWithMetadata.AssignedUserID,
+			ScheduledFor:   dbAssignmentWithMetadata.ScheduledFor,
+			Completed:      dbAssignmentWithMetadata.Completed,
+			Canceled:       dbAssignmentWithMetadata.Canceled,
+			CreatedAt:      dbAssignmentWithMetadata.CreatedAt,
+			UpdatedAt:      dbAssignmentWithMetadata.UpdatedAt,
+			CompletedAt:    completedAt,
+			CanceledAt:     canceledAt,
+		}
+
+		assignmentWithDuration := domain.AssignmentWithMetadata{
+			Assignment:      assignment,
+			DurationMinutes: int(dbAssignmentWithMetadata.Duration),
+			Cadence:         domain.Cadence(dbAssignmentWithMetadata.Cadence),
+		}
+
+		assignments = append(assignments, assignmentWithDuration)
+	}
+
+	return assignments, nil
+
+}
