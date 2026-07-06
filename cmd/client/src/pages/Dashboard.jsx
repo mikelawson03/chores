@@ -3,7 +3,7 @@ import TaskCard from "../components/TaskCard";
 import TaskListCard from "../components/TaskListCard";
 import { Grid, Stack, Typography } from "@mui/material"
 
-export default function Dashboard({tasks, onToggle}) {
+export default function Dashboard({tasks, onToggleComplete}) {
 
   const weeklyTasks = tasks.filter(
     task => task.cadence === "weekly" && !task.completed
@@ -30,21 +30,21 @@ export default function Dashboard({tasks, onToggle}) {
         tasks={weeklyTasks}
         maxItems={3}
         footerText="View planner →"
-        onToggle={onToggle}
+        onToggleComplete={onToggleComplete}
       />
       <TaskListCard 
         cardName="Monthly Tasks"
         tasks={monthlyTasks}
         maxItems={3}
         footerText="View planner →"
-        onToggle={onToggle}
+        onToggleComplete={onToggleComplete}
       />
       <TaskListCard 
         cardName="Completed Tasks"
         tasks={completedTasks}
         maxItems={3}
         footerText="View completed →"
-        onToggle={onToggle}
+        onToggleComplete={onToggleComplete}
       />
     </Stack>
     <Typography variant="h4" sx={{ marginBottom: 4, marginTop: 8}}>Today's Tasks</Typography>
@@ -57,7 +57,7 @@ export default function Dashboard({tasks, onToggle}) {
           assignee={task.assignee}
           duration={task.duration}
           completed={task.completed}
-          onToggle={onToggle}
+          onToggleComplete={onToggleComplete}
           />
         </Grid>
     ))}

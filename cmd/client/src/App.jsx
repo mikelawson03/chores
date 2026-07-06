@@ -2,6 +2,7 @@ import AppLayout from "./layouts/AppLayout";
 import Dashboard from "./pages/Dashboard";
 import Sidebar from "./components/Sidebar";
 import WeeklyPlanner from "./pages/WeeklyPlanner";
+import TaskDetails from "./components/TaskDetails"
 import { Box, Stack } from "@mui/material";
 import { useState } from "react";
 
@@ -14,7 +15,7 @@ function App() {
       assignee: "Mike",
       cadence: "daily",
       duration: "10 mins",
-      scheduled_for: "2026-07-04",
+      scheduledFor: "2026-07-04",
       completed: false
     },
     {
@@ -23,7 +24,7 @@ function App() {
       assignee: "Mike",
       cadence: "daily",
       duration: "1 hour",
-      scheduled_for: "2026-07-04",
+      scheduledFor: "2026-07-04",
       completed: false
     },
     {
@@ -32,7 +33,7 @@ function App() {
       assignee: "Mike",
       cadence: "daily",
       duration: "30 mins",
-      scheduled_for: "2026-07-04",
+      scheduledFor: "2026-07-04",
       completed: false
     },
     {
@@ -41,6 +42,7 @@ function App() {
       assignee: "Mike",
       cadence: "weekly",
       duration: "30 mins",
+      scheduledFor: "",
       completed: false
     },
     {
@@ -49,6 +51,7 @@ function App() {
       assignee: "Mike",
       cadence: "weekly",
       duration: "30 mins",
+      scheduledFor: "",
       completed: false
     },
     {
@@ -57,6 +60,7 @@ function App() {
       assignee: "Mike",
       cadence: "weekly",
       duration: "20 mins",
+      scheduledFor: "",
       completed: false
     },
     {
@@ -65,6 +69,7 @@ function App() {
       assignee: "Mike",
       cadence: "monthly",
       duration: "10 mins",
+      scheduledFor: "",
       completed: false
     },
     {
@@ -73,6 +78,7 @@ function App() {
       assignee: "Mike",
       cadence: "monthly",
       duration: "10 mins",
+      scheduledFor: "",
       completed: false
     },
     {
@@ -81,6 +87,7 @@ function App() {
       assignee: "Mike",
       cadence: "monthly",
       duration: "10 mins",
+      scheduledFor: "",
       completed: false
     },
     {
@@ -89,6 +96,7 @@ function App() {
       assignee: "Mike",
       cadence: "monthly",
       duration: "45 mins",
+      scheduledFor: "",
       completed: true
     },
     {
@@ -97,7 +105,7 @@ function App() {
       assignee: "Mike",
       cadence: "daily",
       duration: "10 mins",
-      scheduled_for: "2026-07-02",
+      scheduledFor: "2026-07-02",
       completed: true
     },
     {
@@ -106,7 +114,7 @@ function App() {
       assignee: "Mike",
       cadence: "one-off",
       duration: "10 mins",
-      scheduled_for: "2026-07-02",
+      scheduledFor: "2026-07-02",
       completed: true
     },
     {
@@ -115,13 +123,12 @@ function App() {
       assignee: "Mike",
       cadence: "daily",
       duration: "10 mins",
-      scheduled_for: "2026-07-01",
+      scheduledFor: "2026-07-01",
       completed: true
     },
   ])
 
-  function onToggle(id) {
-    console.log(`Clicked task ${id}`);
+  function onToggleComplete(id) {
     setTasks(
       tasks.map(task => {
         if (task.id == id) {
@@ -141,12 +148,19 @@ function App() {
     //     <Stack direction="row">
     //       <Sidebar />
     //       <Box sx={{ flexGrow: 1 }}>
-    //         <Dashboard tasks={tasks} onToggle={onToggle}/>
+    //         <Dashboard tasks={tasks} onToggleComplete={onToggleComplete}/>
     //       </Box>
     //     </Stack>
     // </AppLayout>
-    <AppLayout>
-      <WeeklyPlanner tasks={tasks} onToggle={onToggle}/>
+    <AppLayout maxWidth={false}>
+       {/* Temporary until routing determines layout variant. */}
+      <Stack direction="row">
+        <Sidebar />
+        <Box sx={{ flexGrow: 1 }}>
+          <WeeklyPlanner tasks={tasks} onToggleComplete={onToggleComplete}/>
+        </Box>
+        <TaskDetails />
+      </Stack>
     </AppLayout>
   );
 }

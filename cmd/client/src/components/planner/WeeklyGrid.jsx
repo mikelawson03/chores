@@ -1,27 +1,29 @@
 import { Box, Stack } from "@mui/material"
 import DayColumn from "./DayColumn"
 
-export default function WeeklyGrid({weekStart, weekEnd, days, tasks, onToggle}) {
+export default function WeeklyGrid({weekStart, weekEnd, plannerDays, onToggleComplete}) {
   return (
     <Stack 
       direction="row" 
       sx = {{
         border: 1,
-        borderColor: "divider"
+        borderColor: "divider",
+        minHeight: 600
       }}>
-      {days.map((day, index) => (
+      {plannerDays.map(({ day, tasks }, index) => (
         <Box
           key={day.format("YYYY-MM-DD")}
           sx={{ 
-            flex: 1
+            flex: 1,
+            
           }}
           
         >
           <DayColumn 
             day={day}
             tasks={tasks}
-            onToggle={onToggle}
-            isLast={index === days.length - 1}    
+            onToggleComplete={onToggleComplete}
+            isLast={index === plannerDays.length - 1}    
           />
         </Box>
       ))}

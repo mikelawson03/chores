@@ -1,10 +1,7 @@
 import { Box, Stack, Typography } from "@mui/material";
 import PlannerTaskCard from "./PlannerTaskCard";
 
-export default function DayColumn({ day, tasks, onToggle, isLast}) {
-  const dailyTasks = tasks.filter(
-    task => task.scheduled_for === day.format("YYYY-MM-DD")
-  );
+export default function DayColumn({ day, tasks, onToggleComplete, isLast}) {
 
   return (
 
@@ -12,9 +9,9 @@ export default function DayColumn({ day, tasks, onToggle, isLast}) {
       direction="column" 
       sx={{
         flex: 1,
+        height: "100%",
         borderRight: isLast ? 0 : 1,
-        borderColor: "divider",
-        minHeight: 600
+        borderColor: "divider"
       }}
     >
       <Box
@@ -24,7 +21,6 @@ export default function DayColumn({ day, tasks, onToggle, isLast}) {
           py: 1,
           display: "flex",
           alignItems: "center",
-          display: "flex",
           flexDirection: "column"
         }}
       >
@@ -44,7 +40,7 @@ export default function DayColumn({ day, tasks, onToggle, isLast}) {
         gap: 0.75,
       }}
     >
-      {dailyTasks.map( task => (
+      {tasks.map( task => (
         <PlannerTaskCard 
           key={task.id}
           id={task.id} 
@@ -52,7 +48,8 @@ export default function DayColumn({ day, tasks, onToggle, isLast}) {
           assignee={task.assignee}
           duration={task.duration}
           completed={task.completed}
-          onToggle={onToggle}
+          onToggleComplete={onToggleComplete}
+          width="100%"
           />
       ) )}
     </Box>

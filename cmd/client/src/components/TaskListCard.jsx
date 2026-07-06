@@ -1,7 +1,7 @@
 import { Card, Checkbox, List, ListItem, ListItemIcon, ListItemText, Typography } from "@mui/material";
 
 
-export default function TaskListCard({ cardName, tasks, maxItems, footerText, onToggle}) {
+export default function TaskListCard({ cardName, tasks, maxItems, footerText, onToggleComplete}) {
   return (
     <Card sx={{
         width: "100%",
@@ -19,7 +19,7 @@ export default function TaskListCard({ cardName, tasks, maxItems, footerText, on
           .map(task => (
             <ListItem key={task.id}>
               <ListItemIcon>
-                <Checkbox checked={task.completed} onChange={() => {onToggle(task.id);}}/>
+                <Checkbox checked={task.completed} onChange={() => {onToggleComplete(task.id);}}/>
               </ListItemIcon>
               <ListItemText primary={task.title} sx = {{ color: task.completed ? "text.secondary" : "text.primary", textDecoration: task.completed ? "line-through" : "none"}} />
             </ListItem>

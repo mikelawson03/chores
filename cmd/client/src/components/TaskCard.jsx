@@ -3,7 +3,7 @@ import { Typography } from "@mui/material";
 import { Stack } from "@mui/material";
 import { Checkbox } from "@mui/material";
 
-export default function TaskCard({ id, title, assignee, duration, completed, onToggle }) {
+export default function TaskCard({ id, title, assignee, duration, completed, onToggleComplete }) {
   return (
     <Card sx= {{ 
       width: "100%",
@@ -29,7 +29,7 @@ export default function TaskCard({ id, title, assignee, duration, completed, onT
         <Typography variant="body2" sx={{ color: 'text.secondary', textDecoration: completed ? "line-through" : "none" }}>
           {duration}
         </Typography>
-        <Checkbox checked={completed} sx={{ p: 0 }} onChange={() => {onToggle(id);}} />
+        <Checkbox checked={completed} sx={{ p: 0 }} onChange={() => {onToggleComplete(id);}} />
       </Stack>
     </Card>
     );

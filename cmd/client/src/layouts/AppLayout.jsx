@@ -1,8 +1,8 @@
 import { Container } from "@mui/material";
 
-export default function AppLayout({ children }) {
+export default function AppLayout({ children, maxWidth }) {
     return (
-        <Container maxWidth="lg">
+        <Container maxWidth={maxWidth}>
             {children}
         </Container>
     );
