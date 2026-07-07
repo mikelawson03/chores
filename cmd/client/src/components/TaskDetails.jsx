@@ -1,7 +1,7 @@
 import { Box, Button, Drawer, Stack, TextField, Typography } from "@mui/material";
 import DetailRow from "../components/DetailRow"
 
-export default function TaskDetails({task, open, closeTaskDetails}) {
+export default function TaskDetails({task, open, closeTaskDetails, toggleTaskComplete}) {
     const TASK_DETAIL_WIDTH=680
     return (
         <Drawer 
@@ -29,9 +29,11 @@ export default function TaskDetails({task, open, closeTaskDetails}) {
               </Stack>
               <Stack>
                 <Typography variant="body1">Notes</Typography>
-                <TextField id="notes"  variant="outlined" multiline={true} rows={5} />
+                <TextField id="notes"  variant="outlined" multiline={true} rows={5} defaultValue={task.notes} />
               </Stack>
-              <Button variant="contained">Complete Task</Button>
+              <Button variant="contained" onClick={() => {toggleTaskComplete(task); closeTaskDetails(); }}>
+                {task.completed ? "Reopen Task" : "Complete Task"}
+              </Button>
               <Button variant="text">Cancel Task</Button>
               
             </Stack>

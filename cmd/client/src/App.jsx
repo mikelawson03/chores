@@ -5,7 +5,6 @@ import WeeklyPlanner from "./pages/WeeklyPlanner";
 import TaskDetails from "./components/TaskDetails"
 import { Box, Stack } from "@mui/material";
 import { useState } from "react";
-import DrawerTest from "./components/DrawerTest";
 
 function App() {
 
@@ -20,6 +19,7 @@ function App() {
       assignee: "Mike",
       cadence: "daily",
       duration: "10 mins",
+      notes: "Ruby only ate half her food this morning",
       scheduledFor: "2026-07-04",
       completed: false
     },
@@ -29,6 +29,7 @@ function App() {
       assignee: "Mike",
       cadence: "daily",
       duration: "1 hour",
+      notes: "",
       scheduledFor: "2026-07-04",
       completed: false
     },
@@ -38,6 +39,7 @@ function App() {
       assignee: "Mike",
       cadence: "daily",
       duration: "30 mins",
+      notes: "",
       scheduledFor: "2026-07-04",
       completed: false
     },
@@ -47,6 +49,7 @@ function App() {
       assignee: "Mike",
       cadence: "weekly",
       duration: "30 mins",
+      notes: "",
       scheduledFor: "",
       completed: false
     },
@@ -56,6 +59,7 @@ function App() {
       assignee: "Mike",
       cadence: "weekly",
       duration: "30 mins",
+      notes: "",
       scheduledFor: "",
       completed: false
     },
@@ -65,6 +69,7 @@ function App() {
       assignee: "Mike",
       cadence: "weekly",
       duration: "20 mins",
+      notes: "",
       scheduledFor: "",
       completed: false
     },
@@ -74,6 +79,7 @@ function App() {
       assignee: "Mike",
       cadence: "monthly",
       duration: "10 mins",
+      notes: "",
       scheduledFor: "",
       completed: false
     },
@@ -83,6 +89,7 @@ function App() {
       assignee: "Mike",
       cadence: "monthly",
       duration: "10 mins",
+      notes: "",
       scheduledFor: "",
       completed: false
     },
@@ -92,6 +99,7 @@ function App() {
       assignee: "Mike",
       cadence: "monthly",
       duration: "10 mins",
+      notes: "",
       scheduledFor: "",
       completed: false
     },
@@ -101,6 +109,7 @@ function App() {
       assignee: "Mike",
       cadence: "monthly",
       duration: "45 mins",
+      notes: "",
       scheduledFor: "",
       completed: true
     },
@@ -110,6 +119,7 @@ function App() {
       assignee: "Mike",
       cadence: "daily",
       duration: "10 mins",
+      notes: "",
       scheduledFor: "2026-07-02",
       completed: true
     },
@@ -119,6 +129,7 @@ function App() {
       assignee: "Mike",
       cadence: "one-off",
       duration: "10 mins",
+      notes: "",
       scheduledFor: "2026-07-02",
       completed: true
     },
@@ -128,6 +139,7 @@ function App() {
       assignee: "Mike",
       cadence: "daily",
       duration: "10 mins",
+      notes: "",
       scheduledFor: "2026-07-01",
       completed: true
     },
@@ -140,6 +152,12 @@ function App() {
 
   function closeTaskDetails() {
     setOpen(false);
+    // TODO: expand to save notes
+  }
+
+  function toggleTaskComplete(task) {
+    onToggleComplete(task.id);
+    // TODO: expand to add activity log entry, save to backend, and render undo toast
   }
 
   function onToggleComplete(id) {
@@ -183,6 +201,7 @@ function App() {
           task={activeTask} 
           open={open}
           closeTaskDetails={closeTaskDetails}
+          toggleTaskComplete={toggleTaskComplete}
         />}
       </Stack>
     </AppLayout>
