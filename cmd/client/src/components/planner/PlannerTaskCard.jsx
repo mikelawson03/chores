@@ -3,9 +3,10 @@ import { Typography } from "@mui/material";
 import { Stack } from "@mui/material";
 import { Checkbox } from "@mui/material";
 
-export default function PlannerTaskCard({ id, title, assignee, duration, completed, onToggleComplete, width }) {
+export default function PlannerTaskCard({ id, title, assignee, duration, completed, onToggleComplete, width, openTaskDetails}) {
   return (
-    <Card sx= {{ 
+    <Card onClick={openTaskDetails}
+    sx= {{ 
       width: {width},
       borderRadius: 1,
       backgroundColor: completed ? "grey.200" : "background.paper"

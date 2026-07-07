@@ -8,10 +8,13 @@ import { useState } from "react";
 
 function App() {
 
+  const [open, setOpen] = useState(false)
+
   const [tasks, setTasks] = useState([
     {
       id: 1,
       title: "Feed dog",
+      instructions: "Feed Ruby 1 cup of food every morning",
       assignee: "Mike",
       cadence: "daily",
       duration: "10 mins",
@@ -128,6 +131,14 @@ function App() {
     },
   ])
 
+  function openTaskDetails(task) {
+    setOpen(true);
+  }
+
+  function closeTaskDetails() {
+    setOpen(false);
+  }
+
   function onToggleComplete(id) {
     setTasks(
       tasks.map(task => {
@@ -157,9 +168,17 @@ function App() {
       <Stack direction="row">
         <Sidebar />
         <Box sx={{ flexGrow: 1 }}>
-          <WeeklyPlanner tasks={tasks} onToggleComplete={onToggleComplete}/>
+          <WeeklyPlanner 
+            tasks={tasks} 
+            onToggleComplete={onToggleComplete} 
+            openTaskDetails={openTaskDetails}
+          />
         </Box>
-        <TaskDetails />
+        <TaskDetails 
+          task={tasks[0]} 
+          open={open}
+          closeTaskDetails={closeTaskDetails}
+        />
       </Stack>
     </AppLayout>
   );

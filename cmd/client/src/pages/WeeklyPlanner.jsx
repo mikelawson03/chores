@@ -7,7 +7,7 @@ import { Stack } from "@mui/material";
 import StagingArea from "../components/planner/StagingArea";
 
 
-export default function WeeklyPlanner({ tasks, onToggleComplete }) {
+export default function WeeklyPlanner({ tasks, onToggleComplete, openTaskDetails }) {
   dayjs.extend(isoWeek);
   const [currentWeek, setCurrentWeek] = useState(dayjs());
   
@@ -55,6 +55,7 @@ export default function WeeklyPlanner({ tasks, onToggleComplete }) {
         weekEnd={weekEnd}
         plannerDays = {plannerDays}
         onToggleComplete={onToggleComplete}
+        openTaskDetails={openTaskDetails}
         sx = {{
           flex: 1,
           minHeight:600

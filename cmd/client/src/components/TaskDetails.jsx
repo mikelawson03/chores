@@ -1,10 +1,15 @@
 import { Box, Button, Drawer, Stack, TextField, Typography } from "@mui/material";
 import DetailRow from "../components/DetailRow"
 
-export default function TaskDetails() {
+export default function TaskDetails({task, open, closeTaskDetails}) {
     const TASK_DETAIL_WIDTH=680
     return (
-        <Drawer anchor="right"  open={true} sx={{
+        <Drawer 
+          variant="temporary"
+          anchor="right"  
+          open={open} 
+          onClose={closeTaskDetails}
+          sx={{
             width: TASK_DETAIL_WIDTH,
             "& .MuiDrawer-paper": {
                 width: TASK_DETAIL_WIDTH,
@@ -18,9 +23,9 @@ export default function TaskDetails() {
               </Stack>
               <Stack direction="column" spacing={2}>
                 <DetailRow label="Due Date" value="July 6, 2026" />
-                <DetailRow label="Instructions" value="Feed Ruby 1 cup of food every morning" />
-                <DetailRow label="Assigned To" value="Mike" />
-                <DetailRow label="Duration" value="10 minutes" />
+                <DetailRow label="Instructions" value={task.instructions} />
+                <DetailRow label="Assigned To" value={task.assignee} />
+                <DetailRow label="Duration" value={task.duration} />
               </Stack>
               <Stack>
                 <Typography variant="body1">Notes</Typography>
