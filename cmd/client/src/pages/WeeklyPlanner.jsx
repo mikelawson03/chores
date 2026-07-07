@@ -65,6 +65,7 @@ export default function WeeklyPlanner({ tasks, onToggleComplete, openTaskDetails
         weeklyTasks = {weeklyBacklog}
         monthlyTasks = {monthlyBacklog}
         onToggleComplete={onToggleComplete}
+        openTaskDetails={openTaskDetails}
         />
     </Stack>
   )

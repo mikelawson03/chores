@@ -5,10 +5,12 @@ import WeeklyPlanner from "./pages/WeeklyPlanner";
 import TaskDetails from "./components/TaskDetails"
 import { Box, Stack } from "@mui/material";
 import { useState } from "react";
+import DrawerTest from "./components/DrawerTest";
 
 function App() {
 
   const [open, setOpen] = useState(false)
+  const [activeTask, setActiveTask] = useState()
 
   const [tasks, setTasks] = useState([
     {
@@ -132,6 +134,7 @@ function App() {
   ])
 
   function openTaskDetails(task) {
+    setActiveTask(task)
     setOpen(true);
   }
 
@@ -163,24 +166,29 @@ function App() {
     //       </Box>
     //     </Stack>
     // </AppLayout>
+   
+    //    {/* Temporary until routing determines layout variant. */}
+    //   
     <AppLayout maxWidth={false}>
-       {/* Temporary until routing determines layout variant. */}
       <Stack direction="row">
         <Sidebar />
-        <Box sx={{ flexGrow: 1 }}>
-          <WeeklyPlanner 
-            tasks={tasks} 
-            onToggleComplete={onToggleComplete} 
-            openTaskDetails={openTaskDetails}
-          />
-        </Box>
-        <TaskDetails 
-          task={tasks[0]} 
+          <Box sx={{ flexGrow: 1 }}>
+            <WeeklyPlanner 
+              tasks={tasks} 
+              onToggleComplete={onToggleComplete} 
+              openTaskDetails={openTaskDetails}
+            />
+          </Box>
+        {activeTask && <TaskDetails 
+          task={activeTask} 
           open={open}
           closeTaskDetails={closeTaskDetails}
-        />
+        />}
       </Stack>
     </AppLayout>
+    // 
+        
+
   );
 }
 

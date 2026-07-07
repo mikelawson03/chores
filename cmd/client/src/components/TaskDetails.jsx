@@ -10,13 +10,13 @@ export default function TaskDetails({task, open, closeTaskDetails}) {
           open={open} 
           onClose={closeTaskDetails}
           sx={{
-            width: TASK_DETAIL_WIDTH,
             "& .MuiDrawer-paper": {
                 width: TASK_DETAIL_WIDTH,
                 boxSizing: "border-box",
-            }}}>
+            }}}
+            >
             <Stack direction="column" spacing={4} sx={{ p: 5 }}>
-              <Typography variant="h2">Feed dog</Typography>
+              <Typography variant="h2">{task.title}</Typography>
               <Stack direction="row" spacing={1} sx={{ alignItems: "center"}}>
                 <Box sx={{ width: 25, height: 25, borderRadius: "50%", backgroundColor: "#99e17a"}} />
                 <Typography variant="h6">Scheduled</Typography>

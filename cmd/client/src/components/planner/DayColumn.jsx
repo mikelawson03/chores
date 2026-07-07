@@ -42,12 +42,8 @@ export default function DayColumn({ day, tasks, onToggleComplete, openTaskDetail
     >
       {tasks.map( task => (
         <PlannerTaskCard 
-          key={task.id}
-          id={task.id} 
-          title={task.title}
-          assignee={task.assignee}
-          duration={task.duration}
-          completed={task.completed}
+          key={task.id} 
+          task={task}
           onToggleComplete={onToggleComplete}
           openTaskDetails={openTaskDetails}
           width="100%"
