@@ -1,7 +1,7 @@
 import { Box, Stack, Typography } from "@mui/material";
 import PlannerTaskCard from "./PlannerTaskCard";
 
-export default function DayColumn({ day, tasks, onToggleComplete, openTaskDetails, isLast}) {
+export default function DayColumn({ day, tasks, toggleTaskComplete, openTaskDetails, isLast}) {
 
   return (
 
@@ -44,7 +44,7 @@ export default function DayColumn({ day, tasks, onToggleComplete, openTaskDetail
         <PlannerTaskCard 
           key={task.id} 
           task={task}
-          onToggleComplete={onToggleComplete}
+          toggleTaskComplete={toggleTaskComplete}
           openTaskDetails={openTaskDetails}
           width="100%"
           />

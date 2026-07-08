@@ -1,10 +1,12 @@
 import AppLayout from "./layouts/AppLayout";
+import Calendar from "./pages/Calendar";
 import Dashboard from "./pages/Dashboard";
 import Sidebar from "./components/Sidebar";
 import WeeklyPlanner from "./pages/WeeklyPlanner";
 import TaskDetails from "./components/TaskDetails"
 import { Box, Stack } from "@mui/material";
 import { useState } from "react";
+import dayjs from "dayjs";
 
 function App() {
 
@@ -23,6 +25,10 @@ function App() {
       scheduledFor: "2026-07-04",
       completed: false,
       canceled: false,
+      createdAt: "",
+      upatedAt: "",
+      completedAt: "",
+      canceledAt: "",
     },
     {
       id: 2,
@@ -173,6 +179,9 @@ function App() {
   // - save to backend
   // - render undo toast
   function toggleTaskComplete(task) {
+    if (!task.scheduledFor) {
+      updateScheduledFor(task.id, dayjs())
+    }
     onToggleComplete(task.id);
   }
 
@@ -182,9 +191,10 @@ function App() {
   
   // TODO:
   // make cancel API call once back end connected
+  // Back end will own canceledAt data; will assign to current state on API return
   function onToggleCancel(id) {
-    return setTasks(currentTasks => {
-      currentTasks.map(task => {
+    setTasks(currentTasks => {
+      return currentTasks.map(task => {
         if (task.id == id ) {
           return {
             ...task,
@@ -198,7 +208,7 @@ function App() {
 
   // TODO:
   // make complete API call once back end connected
-
+  // Back end will own completedAt data; will assign to current state on API return
   function onToggleComplete(id) {
     setTasks(currentTasks => {
       return currentTasks.map(task => {
@@ -213,7 +223,7 @@ function App() {
       )
     });
   }
-
+  // Back end will own updatedAt data; will assign to current state on API return
   function saveNotes(id, newNotes) {
     // TODO:
     // add Notes section to assignment table
@@ -234,13 +244,38 @@ function App() {
     )
   }
 
+  function updateScheduledFor(id, scheduledFor) {
+    setTasks(currentTasks => {
+      return currentTasks.map(task => {
+        if (task.id == id) {
+          return {
+            ...task,
+            scheduledFor: scheduledFor.format("YYYY-MM-DD")
+          };
+        }
+        return task;
+      })
+    })
+  }
+
   return (
     // <AppLayout>
     //     <Stack direction="row">
     //       <Sidebar />
     //       <Box sx={{ flexGrow: 1 }}>
-    //         <Dashboard tasks={tasks} onToggleComplete={onToggleComplete}/>
+    //         <Dashboard 
+    //           tasks={tasks} 
+    //           toggleTaskComplete={toggleTaskComplete}
+    //           openTaskDetails={openTaskDetails}
+    //         />
     //       </Box>
+    //       {activeTask && <TaskDetails 
+    //       task={activeTask} 
+    //       open={open}
+    //       closeTaskDetails={closeTaskDetails}
+    //       toggleTaskComplete={toggleTaskComplete}
+    //       toggleTaskCancel={toggleTaskCancel}
+    //     />}
     //     </Stack>
     // </AppLayout>
    
@@ -250,24 +285,22 @@ function App() {
       <Stack direction="row">
         <Sidebar />
           <Box sx={{ flexGrow: 1 }}>
-            <WeeklyPlanner 
+            <Calendar />
+            {/* <WeeklyPlanner 
               tasks={tasks} 
-              onToggleComplete={onToggleComplete} 
+              toggleTaskComplete={toggleTaskComplete} 
               openTaskDetails={openTaskDetails}
-            />
+            /> */}
           </Box>
-        {activeTask && <TaskDetails 
-          task={activeTask} 
-          open={open}
-          closeTaskDetails={closeTaskDetails}
-          toggleTaskComplete={toggleTaskComplete}
-          toggleTaskCancel={toggleTaskCancel}
-        />}
+         {activeTask && <TaskDetails 
+           task={activeTask} 
+           open={open}
+           closeTaskDetails={closeTaskDetails}
+           toggleTaskComplete={toggleTaskComplete}
+           toggleTaskCancel={toggleTaskCancel}
+         />}
       </Stack>
     </AppLayout>
-    // 
-        
-
   );
 }
 

@@ -1,3 +1,7 @@
 export default function Calendar() {
-  return <h1>Calendar</h1>;
+  return (
+    <Stack spacking={4} direction="column" sx ={{height: "100%"}}>
+    <CalendarToolbar />
+    </Stack>
+  );
 }

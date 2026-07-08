@@ -3,7 +3,7 @@ import { Typography } from "@mui/material";
 import { Stack } from "@mui/material";
 import { Checkbox } from "@mui/material";
 
-export default function PlannerTaskCard({ task, onToggleComplete, width, openTaskDetails }) {
+export default function PlannerTaskCard({ task, toggleTaskComplete, width, openTaskDetails }) {
   let bgColor;
   let txtColor;
   let txtDecoration;
@@ -55,7 +55,7 @@ export default function PlannerTaskCard({ task, onToggleComplete, width, openTas
             checked={task.completed} 
             size="small" 
             sx={{ p: 0 }} 
-            onChange={() => {onToggleComplete(task.id); }} 
+            onChange={() => {toggleTaskComplete(task); }} 
             onClick={(event) => {event.stopPropagation();}}
           />
         </Stack>

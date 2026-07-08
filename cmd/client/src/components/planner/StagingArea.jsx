@@ -1,7 +1,7 @@
 import { Stack, Typography } from "@mui/material"
 import StagingSection from "./StagingSection"
 
-export default function StagingArea({ weeklyTasks, monthlyTasks, onToggleComplete, openTaskDetails }) {
+export default function StagingArea({ weeklyTasks, monthlyTasks, toggleTaskComplete, openTaskDetails }) {
     return (
         <Stack direction="column">
             {weeklyTasks.length > 0 && (
@@ -9,7 +9,7 @@ export default function StagingArea({ weeklyTasks, monthlyTasks, onToggleComplet
                 title="This Week" 
                 text="Test" 
                 tasks={weeklyTasks} 
-                onToggleComplete={onToggleComplete}
+                toggleTaskComplete={toggleTaskComplete}
                 openTaskDetails={openTaskDetails}
             />
             )}
@@ -18,7 +18,7 @@ export default function StagingArea({ weeklyTasks, monthlyTasks, onToggleComplet
                     title="This Month" 
                     text="Test" 
                     tasks={monthlyTasks} 
-                    onToggleComplete={onToggleComplete}
+                    toggleTaskComplete={toggleTaskComplete}
                     openTaskDetails={openTaskDetails}
                 />
             )}
