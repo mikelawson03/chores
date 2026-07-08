@@ -19,6 +19,7 @@ export default function WeeklyPlanner({ tasks, onToggleComplete, openTaskDetails
      (_, i) => weekStart.add(i, "day")
   );
 
+  
   const plannerDays = days.map(day => ({
     day,
     tasks: tasks.filter(

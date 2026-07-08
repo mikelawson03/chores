@@ -21,7 +21,8 @@ function App() {
       duration: "10 mins",
       notes: "Ruby only ate half her food this morning",
       scheduledFor: "2026-07-04",
-      completed: false
+      completed: false,
+      canceled: false,
     },
     {
       id: 2,
@@ -31,7 +32,8 @@ function App() {
       duration: "1 hour",
       notes: "",
       scheduledFor: "2026-07-04",
-      completed: false
+      completed: false,
+      canceled: false,
     },
     {
       id: 3,
@@ -41,7 +43,8 @@ function App() {
       duration: "30 mins",
       notes: "",
       scheduledFor: "2026-07-04",
-      completed: false
+      completed: false,
+      canceled: false,
     },
     {
       id: 4,
@@ -51,7 +54,8 @@ function App() {
       duration: "30 mins",
       notes: "",
       scheduledFor: "",
-      completed: false
+      completed: false,
+      canceled: false,
     },
     {
       id: 5,
@@ -61,7 +65,8 @@ function App() {
       duration: "30 mins",
       notes: "",
       scheduledFor: "",
-      completed: false
+      completed: false,
+      canceled: false,
     },
     {
       id: 6,
@@ -71,7 +76,8 @@ function App() {
       duration: "20 mins",
       notes: "",
       scheduledFor: "",
-      completed: false
+      completed: false,
+      canceled: false,
     },
     {
       id: 7,
@@ -81,7 +87,8 @@ function App() {
       duration: "10 mins",
       notes: "",
       scheduledFor: "",
-      completed: false
+      completed: false,
+      canceled: false,
     },
     {
       id: 8,
@@ -91,7 +98,8 @@ function App() {
       duration: "10 mins",
       notes: "",
       scheduledFor: "",
-      completed: false
+      completed: false,
+      canceled: false,
     },
     {
       id: 9,
@@ -101,7 +109,8 @@ function App() {
       duration: "10 mins",
       notes: "",
       scheduledFor: "",
-      completed: false
+      completed: false,
+      canceled: false,
     },
     {
       id: 10,
@@ -111,7 +120,8 @@ function App() {
       duration: "45 mins",
       notes: "",
       scheduledFor: "",
-      completed: true
+      completed: true,
+      canceled: false,
     },
     {
       id: 11,
@@ -121,7 +131,8 @@ function App() {
       duration: "10 mins",
       notes: "",
       scheduledFor: "2026-07-02",
-      completed: true
+      completed: true,
+      canceled: false,
     },
     {
       id: 12,
@@ -131,7 +142,8 @@ function App() {
       duration: "10 mins",
       notes: "",
       scheduledFor: "2026-07-02",
-      completed: true
+      completed: true,
+      canceled: false,
     },
     {
       id: 13,
@@ -141,7 +153,8 @@ function App() {
       duration: "10 mins",
       notes: "",
       scheduledFor: "2026-07-01",
-      completed: true
+      completed: true,
+      canceled: false,
     },
   ])
 
@@ -150,19 +163,45 @@ function App() {
     setOpen(true);
   }
 
-  function closeTaskDetails() {
+  function closeTaskDetails(id, notes) {
     setOpen(false);
-    // TODO: expand to save notes
+    saveNotes(id, notes);
   }
 
+  // TODO: 
+  // - expand to add activity log entry, 
+  // - save to backend
+  // - render undo toast
   function toggleTaskComplete(task) {
     onToggleComplete(task.id);
-    // TODO: expand to add activity log entry, save to backend, and render undo toast
   }
 
+  function toggleTaskCancel(task) {
+    onToggleCancel(task.id)
+  }
+  
+  // TODO:
+  // make cancel API call once back end connected
+  function onToggleCancel(id) {
+    return setTasks(currentTasks => {
+      currentTasks.map(task => {
+        if (task.id == id ) {
+          return {
+            ...task,
+            canceled: !task.canceled
+          };
+        }
+        return task;
+      })
+    });
+  }
+
+  // TODO:
+  // make complete API call once back end connected
+
   function onToggleComplete(id) {
-    setTasks(
-      tasks.map(task => {
+    setTasks(currentTasks => {
+      return currentTasks.map(task => {
         if (task.id == id) {
           return {
             ...task,
@@ -172,7 +211,27 @@ function App() {
         return task;
       }
       )
-    );
+    });
+  }
+
+  function saveNotes(id, newNotes) {
+    // TODO:
+    // add Notes section to assignment table
+    // persist Notes changes to backend
+    setTasks(currentTasks => {
+      return currentTasks.map(task => {
+        if (task.id == id) {
+          if (task.notes !== newNotes) {
+            return {
+              ...task,
+              notes: newNotes
+            };
+          }
+        }
+        return task;
+      })
+    }
+    )
   }
 
   return (
@@ -202,6 +261,7 @@ function App() {
           open={open}
           closeTaskDetails={closeTaskDetails}
           toggleTaskComplete={toggleTaskComplete}
+          toggleTaskCancel={toggleTaskCancel}
         />}
       </Stack>
     </AppLayout>
