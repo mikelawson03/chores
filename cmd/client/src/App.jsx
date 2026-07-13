@@ -336,26 +336,26 @@ function App() {
       <AppLayout maxWidth={false}>
         <Stack direction="row" sx={{ height: "100%" }}>
           <Sidebar />
-            <Box sx={{ flexGrow: 1 }}>
-              {/* <Chores /> */}
-              <Calendar 
+            <Box sx={{ flexGrow: 1, }}>
+              <Chores />
+              {/* <Calendar 
                 tasks={tasks} 
                 openTaskDetails={openTaskDetails}
                 toggleTaskComplete={toggleTaskComplete}
-              />
+              /> */}
               {/* <WeeklyPlanner 
                 tasks={tasks} 
                 toggleTaskComplete={toggleTaskComplete} 
                 openTaskDetails={openTaskDetails}
               /> */}
             </Box>
-          {activeTask && <TaskDetails 
+          {/* {activeTask && <TaskDetails 
             task={activeTask} 
             open={open}
             closeTaskDetails={closeTaskDetails}
             toggleTaskComplete={toggleTaskComplete}
             toggleTaskCancel={toggleTaskCancel}
-          />}
+          />} */}
         </Stack>
       </AppLayout>
     </>
