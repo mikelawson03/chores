@@ -1,10 +1,11 @@
 import AppLayout from "./layouts/AppLayout";
 import Calendar from "./pages/Calendar";
+import Chores from "./pages/Chores";
 import Dashboard from "./pages/Dashboard";
 import Sidebar from "./components/Sidebar";
 import WeeklyPlanner from "./pages/WeeklyPlanner";
 import TaskDetails from "./components/TaskDetails"
-import { Box, Stack } from "@mui/material";
+import { Box, CssBaseline, Stack } from "@mui/material";
 import { useState } from "react";
 import dayjs from "dayjs";
 
@@ -23,12 +24,9 @@ function App() {
       duration: "10 mins",
       notes: "Ruby only ate half her food this morning",
       scheduledFor: "2026-07-04",
+      dueDate: "2026-07-04",
       completed: false,
       canceled: false,
-      createdAt: "",
-      upatedAt: "",
-      completedAt: "",
-      canceledAt: "",
     },
     {
       id: 2,
@@ -38,6 +36,7 @@ function App() {
       duration: "1 hour",
       notes: "",
       scheduledFor: "2026-07-04",
+      dueDate: "2026-07-04",
       completed: false,
       canceled: false,
     },
@@ -49,6 +48,7 @@ function App() {
       duration: "30 mins",
       notes: "",
       scheduledFor: "2026-07-04",
+      dueDate: "2026-07-04",
       completed: false,
       canceled: false,
     },
@@ -59,7 +59,8 @@ function App() {
       cadence: "weekly",
       duration: "30 mins",
       notes: "",
-      scheduledFor: "",
+      scheduledFor: "2026-07-11",
+      dueDate: "2026-07-11",
       completed: false,
       canceled: false,
     },
@@ -71,6 +72,7 @@ function App() {
       duration: "30 mins",
       notes: "",
       scheduledFor: "",
+      dueDate: "2026-07-10",
       completed: false,
       canceled: false,
     },
@@ -82,6 +84,7 @@ function App() {
       duration: "20 mins",
       notes: "",
       scheduledFor: "",
+      dueDate: "2026-07-10",
       completed: false,
       canceled: false,
     },
@@ -93,6 +96,7 @@ function App() {
       duration: "10 mins",
       notes: "",
       scheduledFor: "",
+      dueDate: "2026-07-31",
       completed: false,
       canceled: false,
     },
@@ -104,6 +108,7 @@ function App() {
       duration: "10 mins",
       notes: "",
       scheduledFor: "",
+      dueDate: "2026-07-31",
       completed: false,
       canceled: false,
     },
@@ -115,6 +120,7 @@ function App() {
       duration: "10 mins",
       notes: "",
       scheduledFor: "",
+      dueDate: "2026-07-31",
       completed: false,
       canceled: false,
     },
@@ -126,6 +132,7 @@ function App() {
       duration: "45 mins",
       notes: "",
       scheduledFor: "",
+      dueDate: "2026-07-31",
       completed: true,
       canceled: false,
     },
@@ -137,6 +144,7 @@ function App() {
       duration: "10 mins",
       notes: "",
       scheduledFor: "2026-07-02",
+      dueDate: "2026-07-31",
       completed: true,
       canceled: false,
     },
@@ -148,6 +156,7 @@ function App() {
       duration: "10 mins",
       notes: "",
       scheduledFor: "2026-07-02",
+      dueDate: "2026-07-02",
       completed: true,
       canceled: false,
     },
@@ -159,7 +168,47 @@ function App() {
       duration: "10 mins",
       notes: "",
       scheduledFor: "2026-07-01",
+      dueDate: "2026-07-01",
       completed: true,
+      canceled: false,
+    },
+    {
+      id: 14,
+      title: "Eat breakfast",
+      instructions: "Eat some oatmeal",
+      assignee: "Mike",
+      cadence: "daily",
+      duration: "10 mins",
+      notes: "",
+      scheduledFor: "2026-07-04",
+      dueDate: "2026-07-04",
+      completed: false,
+      canceled: false,
+    },
+    {
+      id: 15,
+      title: "Take a shower",
+      instructions: "Clean ya ass",
+      assignee: "Mike",
+      cadence: "one-off",
+      duration: "10 mins",
+      notes: "Ruby only ate half her food this morning",
+      scheduledFor: "2026-07-04",
+      dueDate: "2026-07-04",
+      completed: false,
+      canceled: false,
+    },
+    {
+      id: 16,
+      title: "Get a passport photo",
+      instructions: "Picture time!",
+      assignee: "Mike",
+      cadence: "one-off",
+      duration: "60 mins",
+      notes: "Ruby only ate half her food this morning",
+      scheduledFor: "2026-07-04",
+      dueDate: "2026-07-04",
+      completed: false,
       canceled: false,
     },
   ])
@@ -259,6 +308,7 @@ function App() {
   }
 
   return (
+    
     // <AppLayout>
     //     <Stack direction="row">
     //       <Sidebar />
@@ -279,28 +329,36 @@ function App() {
     //     </Stack>
     // </AppLayout>
    
-    //    {/* Temporary until routing determines layout variant. */}
-    //   
-    <AppLayout maxWidth={false}>
-      <Stack direction="row">
-        <Sidebar />
-          <Box sx={{ flexGrow: 1 }}>
-            <Calendar />
-            {/* <WeeklyPlanner 
-              tasks={tasks} 
-              toggleTaskComplete={toggleTaskComplete} 
-              openTaskDetails={openTaskDetails}
-            /> */}
-          </Box>
-         {activeTask && <TaskDetails 
-           task={activeTask} 
-           open={open}
-           closeTaskDetails={closeTaskDetails}
-           toggleTaskComplete={toggleTaskComplete}
-           toggleTaskCancel={toggleTaskCancel}
-         />}
-      </Stack>
-    </AppLayout>
+    //    {/* maxWidth below is temporary until routing determines layout variant. */}
+    <>
+      <CssBaseline />
+
+      <AppLayout maxWidth={false}>
+        <Stack direction="row" sx={{ height: "100%" }}>
+          <Sidebar />
+            <Box sx={{ flexGrow: 1 }}>
+              {/* <Chores /> */}
+              <Calendar 
+                tasks={tasks} 
+                openTaskDetails={openTaskDetails}
+                toggleTaskComplete={toggleTaskComplete}
+              />
+              {/* <WeeklyPlanner 
+                tasks={tasks} 
+                toggleTaskComplete={toggleTaskComplete} 
+                openTaskDetails={openTaskDetails}
+              /> */}
+            </Box>
+          {activeTask && <TaskDetails 
+            task={activeTask} 
+            open={open}
+            closeTaskDetails={closeTaskDetails}
+            toggleTaskComplete={toggleTaskComplete}
+            toggleTaskCancel={toggleTaskCancel}
+          />}
+        </Stack>
+      </AppLayout>
+    </>
   );
 }
 

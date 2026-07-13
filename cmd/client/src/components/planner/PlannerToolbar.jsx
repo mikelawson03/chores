@@ -12,7 +12,7 @@ export default function PlannerToolbar({ weekStart, weekEnd, onPreviousWeek, onN
         {weekStart.format("MMM D")} - {weekEnd.format("MMM D")}
       </Typography>
       <IconButton onClick={onNextWeek}>
-        <ChevronRightIcon fontSize="large"></ChevronRightIcon>
+        <ChevronRightIcon fontSize="large" />
       </IconButton>
     </Stack>
   )

@@ -1,5 +1,5 @@
 import { Card, Checkbox, List, ListItem, ListItemIcon, ListItemText, Typography } from "@mui/material";
-
+import { clickableText } from "../styles/typography";
 
 export default function TaskListCard({ cardName, tasks, maxItems, footerText, openTaskDetails, toggleTaskComplete}) {
   return (
@@ -21,13 +21,13 @@ export default function TaskListCard({ cardName, tasks, maxItems, footerText, op
               <ListItemIcon>
                 <Checkbox checked={task.completed} onChange={() => {toggleTaskComplete(task);}}/>
               </ListItemIcon>
-              <ListItemText onClick={() => openTaskDetails(task)} primary={task.title} sx = {{ color: task.completed ? "text.secondary" : "text.primary", textDecoration: task.completed ? "line-through" : "none"}} />
+              <ListItemText onClick={() => openTaskDetails(task)} primary={task.title} sx = {[clickableText, { color: task.completed ? "text.secondary" : "text.primary", textDecoration: task.completed ? "line-through" : "none"}]} />
             </ListItem>
           ))
         }
       </List>
       {tasks.length > maxItems && (
-      <Typography>
+      <Typography sx={clickableText}>
         {footerText}
       </Typography>
       )}

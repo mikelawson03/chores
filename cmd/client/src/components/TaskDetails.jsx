@@ -31,6 +31,7 @@ export default function TaskDetails({task, open, closeTaskDetails, toggleTaskCom
           open={open} 
           onClose={() => closeTaskDetails(task.id, notes)}
           sx={{
+            zIndex: (theme) => theme.zIndex.modal + 1,
             "& .MuiDrawer-paper": {
                 width: TASK_DETAIL_WIDTH,
                 boxSizing: "border-box",
@@ -43,7 +44,7 @@ export default function TaskDetails({task, open, closeTaskDetails, toggleTaskCom
                 <Typography variant="h6">{statusName}</Typography>
               </Stack>
               <Stack direction="column" spacing={2}>
-                <DetailRow label="Due Date" value="July 6, 2026" />
+                <DetailRow label="Due Date" value={task.dueDate} />
                 <DetailRow label="Instructions" value={task.instructions} />
                 <DetailRow label="Assigned To" value={task.assignee} />
                 <DetailRow label="Duration" value={task.duration} />

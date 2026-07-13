@@ -2,6 +2,8 @@ import { Card, CardContent } from "@mui/material";
 import { Typography } from "@mui/material";
 import { Stack } from "@mui/material";
 import { Checkbox } from "@mui/material";
+import { clickableSurface } from "../../styles/surfaces";
+
 
 export default function PlannerTaskCard({ task, toggleTaskComplete, width, openTaskDetails }) {
   let bgColor;
@@ -28,11 +30,11 @@ export default function PlannerTaskCard({ task, toggleTaskComplete, width, openT
 
   return (
     <Card onClick={() => openTaskDetails(task)}
-    sx= {{ 
+    sx= {[clickableSurface, { 
       width: width,
       borderRadius: 1,
-      backgroundColor: bgColor
-      }}>
+      backgroundColor: bgColor,
+      }]}>
       <CardContent sx={{ p: 0.5, "&:last-child": { pb: 0.5 }, lineHeight: 1, }}>
         <Typography variant="body1"  
         sx = {{

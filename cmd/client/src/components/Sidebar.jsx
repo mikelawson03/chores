@@ -1,6 +1,6 @@
 import { Drawer, List, ListItem, ListItemText } from "@mui/material";
 import { useState } from "react";
-
+import { clickableText } from "../styles/typography";
 
 
 export default function Sidebar() {
@@ -43,6 +43,7 @@ export default function Sidebar() {
         <ListItem sx={{p: 3}} key={item.text}>
           <ListItemText 
           primary={item.text} 
+          sx={clickableText}
           slotProps={{
             primary: {
               variant: "h6",

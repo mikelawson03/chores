@@ -52,8 +52,6 @@ export default function WeeklyPlanner({ tasks, toggleTaskComplete, openTaskDetai
         onNextWeek={handleNextWeek}
       />
       <WeeklyGrid
-        weekStart={weekStart}
-        weekEnd={weekEnd}
         plannerDays = {plannerDays}
         toggleTaskComplete={toggleTaskComplete}
         openTaskDetails={openTaskDetails}

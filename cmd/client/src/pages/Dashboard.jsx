@@ -2,24 +2,18 @@ import PageHeader from "../components/PageHeader";
 import TaskCard from "../components/TaskCard";
 import TaskListCard from "../components/TaskListCard";
 import { Grid, Stack, Typography } from "@mui/material"
+import { getActiveTasks, getScheduledTasksForDay, getUnscheduledTasks, getWeeklyTasks, getMonthlyTasks, removeCompletedTasks, getCompletedTasks } from "../utils/taskFilters";
+import dayjs from "dayjs";
 
 export default function Dashboard({tasks, openTaskDetails, toggleTaskComplete}) {
 
-  const weeklyTasks = tasks.filter(
-    task => task.cadence === "weekly" && !task.completed
-  );
-
-  const monthlyTasks = tasks.filter(
-    task => task.cadence === "monthly" && !task.completed
-  );
-
-  const completedTasks = tasks.filter(
-    task => task.completed
-  );
-
-  const todaysTasks = tasks.filter(
-    task => task.cadence === "daily" && !task.completed
-  );
+  const activeTasks = getActiveTasks(tasks)
+  const activeAndUnscheduledTasks = getUnscheduledTasks(activeTasks)
+  
+  const weeklyTasks = getWeeklyTasks(activeAndUnscheduledTasks);
+  const monthlyTasks = getMonthlyTasks(activeAndUnscheduledTasks);
+  const todaysTasks = getScheduledTasksForDay(dayjs(), activeTasks);
+  const completedTasks = getCompletedTasks(tasks);
 
   return (
   <>

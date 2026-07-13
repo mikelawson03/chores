@@ -27,7 +27,7 @@ export default function DayColumn({ day, tasks, toggleTaskComplete, openTaskDeta
         <Typography variant="h6">
           {day.format("ddd")}
         </Typography>
-        <Typography variant="body2" color="te xt.secondary">
+        <Typography variant="body2" color="text.secondary">
           {day.format("MMM D")}
         </Typography>
       </Box>

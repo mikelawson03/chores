@@ -1,7 +1,7 @@
 import { Box, Stack } from "@mui/material"
 import DayColumn from "./DayColumn"
 
-export default function WeeklyGrid({weekStart, weekEnd, plannerDays, toggleTaskComplete, openTaskDetails}) {
+export default function WeeklyGrid({plannerDays, toggleTaskComplete, openTaskDetails}) {
   return (
     <Stack 
       direction="row" 

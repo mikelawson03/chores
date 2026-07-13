@@ -1,3 +1,5 @@
 export default function Chores() {
-  return <h1>Chores</h1>;
+  return (
+    <h1>Chores</h1>
+)
 }

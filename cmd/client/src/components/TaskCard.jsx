@@ -2,17 +2,18 @@ import { Card } from "@mui/material";
 import { Typography } from "@mui/material";
 import { Stack } from "@mui/material";
 import { Checkbox } from "@mui/material";
+import { clickableSurface } from "../styles/surfaces";
 
 export default function TaskCard({ task, openTaskDetails, toggleTaskComplete }) {
   return (
     <Card 
       onClick={() => openTaskDetails(task)}
-      sx= {{ 
+      sx= {[clickableSurface, { 
       width: "100%",
       borderRadius: 2,
       p: 2,
       backgroundColor: task.completed ? "grey.200" : "background.paper"
-      }}>
+      }]}>
       <Typography variant="h6" 
       gutterBottom 
       sx = {{
