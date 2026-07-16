@@ -3,66 +3,24 @@ import ChoresTable from "../components/chores/ChoresTable";
 import PageHeader from "../components/PageHeader";
 import EditChore from "../components/chores/EditChore";
 import { EMPTY_CHORE_TEMPLATE } from "../constants/choreTemplate";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import dayjs from "dayjs";
+import { getChoreTemplates } from "../api/choreTemplates";
 
 export default function Chores() {
   const [editedChoreTemplate, setEditedChoreTemplate] = useState(null);
   const [editChoreOpen, setEditChoreOpen] = useState(false);
   const [editChoreMode, setEditChoreMode] = useState(null);
 
-  const [choreTemplates, setChoreTemplates]=useState([
-      {
-        id: 1,
-        name: "Make dinner",
-        cadence: "daily",
-        assignee: "",
-        instructions: "",
-        duration: 60,
-        created_at: "2026-11-10T05:26:00",
-        updated_at: "2026-11-10T05:26:00"
-      },
-      {
-        id: 2,
-        name: "Wash dishes",
-        cadence: "daily",
-        assignee: "",
-        duration: 75,
-        instructions: "",
-        created_at: "2026-11-13T17:26:00",
-        updated_at: "2026-07-13T17:26:00"
-      },
-      {
-        id: 3,
-        name: "Clean fish tank",
-        cadence: "weekly",
-        assignee: "Mike",
-        duration: 20,
-        instructions: "",
-        created_at: "2026-06-05T17:26:00",
-        updated_at: "2026-07-05T17:26:00"
-      },
-      {
-        id: 4,
-        name: "Mow yard",
-        cadence: "weekly",
-        assignee: "",
-        duration: 90,
-        instructions: "",
-        created_at: "2026-07-14T16:11:00",
-        updated_at: "2026-07-14T16:11:00"
-      },
-      {
-        id: 5,
-        name: "Feed dog",
-        cadence: "daily",
-        assignee: "",
-        duration: 10,
-        instructions: "Feed Ruby 1 cup of food in AM",
-        created_at: "2026-07-15T13:48:00",
-        updated_at: "2026-07-14T13:48:00"
-      }
-    ])
+  const [choreTemplates, setChoreTemplates]=useState([])
+
+  useEffect(() => {
+    async function loadChores() {
+      const chores = await getChoreTemplates();
+      setChoreTemplates(chores);
+    }
+    loadChores();
+  },[])
 
   function openEditChore(choreTemplate) {
     setEditedChoreTemplate({...choreTemplate});

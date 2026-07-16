@@ -2,7 +2,7 @@ import { Box, Button, Drawer, Stack, Typography } from "@mui/material";
 import DetailRow from "../../details/DetailRow";
 import DetailRowSelect from "../../details/DetailRowSelect";
 import { CADENCES } from "../../constants/cadences";
-import { USERS } from "../../constants/temp";
+import { USERS } from "../../config/dev";
 import DetailRowNumber from "../../details/DetailRowNumber";
 import DetailRowLargeText from "../../details/DetailRowLargeText";
 import DetailRowTitle from "../../details/DetailRowTitle";
