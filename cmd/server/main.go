@@ -10,6 +10,7 @@ import (
 	"github.com/joho/godotenv"
 	_ "github.com/mattn/go-sqlite3"
 	api "github.com/mikelawson03/chores/internal/api"
+	"github.com/mikelawson03/chores/internal/middleware"
 	"github.com/pressly/goose"
 )
 
@@ -67,7 +68,7 @@ func main() {
 
 	srv := &http.Server{
 		Addr:    ":" + port,
-		Handler: m,
+		Handler: middleware.Cors(m),
 	}
 
 	log.Printf("Server open and listening on port: %s", port)

@@ -11,12 +11,12 @@ const (
 )
 
 type ChoreTemplate struct {
-	ID        string
-	Name      string
-	Cadence   Cadence
-	Shared    bool
-	Assignee  string
-	Duration  int
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID        string    `json:"id"`
+	Name      string    `json:"name"`
+	Cadence   Cadence   `json:"cadence"`
+	Shared    bool      `json:"shared"`
+	Assignee  string    `json:"assignee"`
+	Duration  int       `json:"duration"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
