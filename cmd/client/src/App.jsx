@@ -7,6 +7,7 @@ import WeeklyPlanner from "./pages/WeeklyPlanner";
 import TaskDetails from "./components/TaskDetails"
 import { Box, CssBaseline, Stack } from "@mui/material";
 import { useState } from "react";
+import { Route, Routes } from "react-router-dom"
 import dayjs from "dayjs";
 
 function App() {
@@ -309,6 +310,59 @@ function App() {
 
   return (
     
+    <AppLayout>
+      <Routes>
+        <Route path="/"
+            element={
+              <Dashboard 
+                tasks={tasks} 
+                toggleTaskComplete={toggleTaskComplete}
+                openTaskDetails={openTaskDetails}
+            />
+          }
+        />
+
+        <Route 
+          path="/calendar"
+          element={
+            <Calendar 
+              tasks={tasks} 
+              openTaskDetails={openTaskDetails}
+              toggleTaskComplete={toggleTaskComplete}
+            />
+          } 
+        />
+
+        <Route 
+          path="/chores"
+          element={
+            <Chores />
+          }
+        />
+
+        <Route 
+          path="/planner"
+          element={
+            <WeeklyPlanner 
+              tasks={tasks} 
+              toggleTaskComplete={toggleTaskComplete} 
+              openTaskDetails={openTaskDetails}
+            /> 
+          }
+        />
+
+      </Routes>
+      {activeTask && (
+        <TaskDetails 
+          task={activeTask} 
+          open={open}
+          closeTaskDetails={closeTaskDetails}
+          toggleTaskComplete={toggleTaskComplete}
+          toggleTaskCancel={toggleTaskCancel}
+        />
+      )}
+    </AppLayout>
+
     // <AppLayout>
     //     <Stack direction="row">
     //       <Sidebar />
@@ -319,46 +373,40 @@ function App() {
     //           openTaskDetails={openTaskDetails}
     //         />
     //       </Box>
-    //       {activeTask && <TaskDetails 
-    //       task={activeTask} 
-    //       open={open}
-    //       closeTaskDetails={closeTaskDetails}
-    //       toggleTaskComplete={toggleTaskComplete}
-    //       toggleTaskCancel={toggleTaskCancel}
-    //     />}
+          
     //     </Stack>
     // </AppLayout>
    
     //    {/* maxWidth below is temporary until routing determines layout variant. */}
-    <>
-      <CssBaseline />
+    // <>
+    //   <CssBaseline />
 
-      <AppLayout maxWidth={false}>
-        <Stack direction="row" sx={{ height: "100%" }}>
-          <Sidebar />
-            <Box sx={{ flexGrow: 1, }}>
-              <Chores />
-              {/* <Calendar 
-                tasks={tasks} 
-                openTaskDetails={openTaskDetails}
-                toggleTaskComplete={toggleTaskComplete}
-              /> */}
-              {/* <WeeklyPlanner 
-                tasks={tasks} 
-                toggleTaskComplete={toggleTaskComplete} 
-                openTaskDetails={openTaskDetails}
-              /> */}
-            </Box>
-          {/* {activeTask && <TaskDetails 
-            task={activeTask} 
-            open={open}
-            closeTaskDetails={closeTaskDetails}
-            toggleTaskComplete={toggleTaskComplete}
-            toggleTaskCancel={toggleTaskCancel}
-          />} */}
-        </Stack>
-      </AppLayout>
-    </>
+    //   <AppLayout maxWidth={false}>
+    //     <Stack direction="row" sx={{ height: "100%" }}>
+    //       <Sidebar />
+    //         <Box sx={{ flexGrow: 1, }}>
+    //           <Chores />
+    //           {/* <Calendar 
+    //             tasks={tasks} 
+    //             openTaskDetails={openTaskDetails}
+    //             toggleTaskComplete={toggleTaskComplete}
+    //           /> */}
+    //           {/* <WeeklyPlanner 
+    //             tasks={tasks} 
+    //             toggleTaskComplete={toggleTaskComplete} 
+    //             openTaskDetails={openTaskDetails}
+    //           /> */}
+    //         </Box>
+    //       {/* {activeTask && <TaskDetails 
+    //         task={activeTask} 
+    //         open={open}
+    //         closeTaskDetails={closeTaskDetails}
+    //         toggleTaskComplete={toggleTaskComplete}
+    //         toggleTaskCancel={toggleTaskCancel}
+    //       />} */}
+    //     </Stack>
+    //   </AppLayout>
+    // </>
   );
 }
 

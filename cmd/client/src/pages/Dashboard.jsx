@@ -1,7 +1,7 @@
 import PageHeader from "../components/PageHeader";
 import TaskCard from "../components/TaskCard";
 import TaskListCard from "../components/TaskListCard";
-import { Grid, Stack, Typography } from "@mui/material"
+import { Container, Grid, Stack, Typography } from "@mui/material"
 import { getActiveTasks, getScheduledTasksForDay, getUnscheduledTasks, getWeeklyTasks, getMonthlyTasks, removeCompletedTasks, getCompletedTasks } from "../utils/taskFilters";
 import dayjs from "dayjs";
 
@@ -16,7 +16,7 @@ export default function Dashboard({tasks, openTaskDetails, toggleTaskComplete}) 
   const completedTasks = getCompletedTasks(tasks);
 
   return (
-  <>
+  <Container maxWidth="lg">
     <PageHeader title="Dashboard" />
     <Stack spacing={2} direction={"row"} sx={{ marginBottom: 4, marginTop: 8}}>
       <TaskListCard 
@@ -56,6 +56,6 @@ export default function Dashboard({tasks, openTaskDetails, toggleTaskComplete}) 
         </Grid>
     ))}
     </Grid>
-  </>
+  </Container>
   )
 }

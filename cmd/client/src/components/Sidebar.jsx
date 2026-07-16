@@ -1,6 +1,7 @@
-import { Drawer, List, ListItem, ListItemText } from "@mui/material";
+import { Drawer, List, ListItem, ListItemButton, ListItemText } from "@mui/material";
 import { useState } from "react";
 import { clickableText } from "../styles/typography";
+import { NavLink } from "react-router-dom";
 
 
 export default function Sidebar() {
@@ -10,19 +11,24 @@ export default function Sidebar() {
   const [open, setOpen] = useState(true)
   const navItems = [
     {
-      text: "Dashboard"
+      text: "Dashboard",
+      route: "/",
     },
     {
-      text: "Chores"
+      text: "Chores",
+      route: "/chores",
     },
     {
-      text: "Planner"
+      text: "Planner",
+      route: "/planner",
     },
     {
-      text: "Calendar"
+      text: "Calendar",
+      route: "/calendar",
     },
     {
-      text: "Settings"
+      text: "Settings",
+      route: "/admin",
     },
   ]
 
@@ -41,15 +47,17 @@ export default function Sidebar() {
     <List>
       {navItems.map(item => (
         <ListItem sx={{p: 3}} key={item.text}>
-          <ListItemText 
-          primary={item.text} 
-          sx={clickableText}
-          slotProps={{
-            primary: {
-              variant: "h6",
-          }
-        }}
-          />
+          <ListItemButton component={NavLink} to={item.route}>
+            <ListItemText 
+              primary={item.text} 
+              // sx={clickableText}
+              slotProps={{
+                primary: {
+                  variant: "h6",
+                }
+              }}
+            />
+          </ListItemButton>
         </ListItem>
       ))
       }  

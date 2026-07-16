@@ -4,9 +4,9 @@ import { formatCadence, formatDuration, formatTimestamp } from "../../utils/form
 
 
 
-export default function ChoresTableRow({ choreTemplate, openChoreDetails }) {
+export default function ChoresTableRow({ choreTemplate, openEditChore }) {
   return (
-    <Stack direction="row" onClick={() => {console.log("click"); openChoreDetails(choreTemplate)}} sx ={{ flex: 1, width: "100%", borderLeft: 1, borderRight:1, borderColor: "divider", justifyContent:"space-between"}}>
+    <Stack direction="row" onClick={() => {openEditChore(choreTemplate)}} sx ={{ flex: 1, width: "100%", borderLeft: 1, borderRight:1, borderColor: "divider", justifyContent:"space-between"}}>
       <ChoreCell item={choreTemplate.name} />
       <ChoreCell item={formatCadence(choreTemplate.cadence)} />
       <ChoreCell item={choreTemplate.assignee ? choreTemplate.assignee : "—"} />

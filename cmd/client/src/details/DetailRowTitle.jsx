@@ -1,10 +1,11 @@
 import { TextField } from "@mui/material"
 
-export default function DetailRowTitle({field, value, onValueChange}) {
+export default function DetailRowTitle({field, placeholder, value, onValueChange}) {
     return(
         <TextField  
             variant="standard"
             value={value} 
+            placeholder={placeholder}
             onChange={(event) => onValueChange(field, event.target.value)} 
             slotProps={{
                 input: {
@@ -24,6 +25,10 @@ export default function DetailRowTitle({field, value, onValueChange}) {
                     typography: "h2",
                     fontWeight: "inherit",
                     p: 0,
+                },
+                "&::placeholder": {
+                    color: "text.secondary",
+                    opacity: 1,
                 },
             }}
         />

@@ -1,13 +1,15 @@
 import { Box, Stack } from "@mui/material";
 import ChoresTable from "../components/chores/ChoresTable";
 import PageHeader from "../components/PageHeader";
-import ChoreDetails from "../components/chores/ChoreDetails";
+import EditChore from "../components/chores/EditChore";
+import { EMPTY_CHORE_TEMPLATE } from "../constants/choreTemplate";
 import { useState } from "react";
+import dayjs from "dayjs";
 
 export default function Chores() {
   const [editedChoreTemplate, setEditedChoreTemplate] = useState(null);
-  const [choreDetailsOpen, setChoreDetailsOpen] = useState(false);
-  
+  const [editChoreOpen, setEditChoreOpen] = useState(false);
+  const [editChoreMode, setEditChoreMode] = useState(null);
 
   const [choreTemplates, setChoreTemplates]=useState([
       {
@@ -62,13 +64,14 @@ export default function Chores() {
       }
     ])
 
-  function openChoreDetails(choreTemplate) {
+  function openEditChore(choreTemplate) {
     setEditedChoreTemplate({...choreTemplate});
-    setChoreDetailsOpen(true);
+    setEditChoreMode("edit");
+    setEditChoreOpen(true);
   }
 
-  function closeChoreDetails(choreTemplate) {
-    setChoreDetailsOpen(false);
+  function closeEditChore(choreTemplate) {
+    setEditChoreOpen(false);
   }
 
   function onChoreDetailChange(field, value) {
@@ -78,13 +81,29 @@ export default function Chores() {
     }))
   }
 
+  function editNewChore() {
+    setEditedChoreTemplate({...EMPTY_CHORE_TEMPLATE});
+    setEditChoreMode("create");
+    setEditChoreOpen(true);
+  }
+
+  function createNewChore(){
+    setChoreTemplates([...choreTemplates,
+      {...editedChoreTemplate,
+        created_at: dayjs().toISOString(),
+        updated_at: dayjs().toISOString(),
+        id: Math.max(...choreTemplates.map(chore => chore.id)) + 1
+      }]
+    )
+  }
+
   // To-Do: 1. Make API Call to update chore in DB
   // 2: Log save event
-  function saveChore(editedChore) {
+  function saveChore() {
     setChoreTemplates(choreTemplates.map( template => {
-      if (editedChore.id === template.id) {
+      if (editedChoreTemplate.id === template.id) {
         return {
-          ...editedChore
+          ...editedChoreTemplate
         };
       }
       return template;
@@ -93,9 +112,9 @@ export default function Chores() {
 
   // TO-DO: 1. Make API Call to delete chore from DB
   // 2. Log delete event
-  function deleteChore(editedChore) {
+  function deleteChore() {
     setChoreTemplates(previousChores => 
-      previousChores.filter(chore => chore.id !== editedChore.id)
+      previousChores.filter(chore => chore.id !== editedChoreTemplate.id)
     );
   }
 
@@ -118,13 +137,15 @@ export default function Chores() {
           <PageHeader title="Chore Management" />
         </Box>
         <Stack direction="column" sx={{flex: 1, width: "95%"}}>
-          <ChoresTable choreTemplates={choreTemplates} openChoreDetails={openChoreDetails}/>
+          <ChoresTable choreTemplates={choreTemplates} openEditChore={openEditChore} editNewChore={editNewChore}/>
         </Stack>
           {editedChoreTemplate && 
-            <ChoreDetails 
-              open={choreDetailsOpen} 
+            <EditChore 
+              open={editChoreOpen} 
               chore={editedChoreTemplate} 
-              closeChoreDetails={closeChoreDetails} 
+              closeEditChore={closeEditChore} 
+              createNewChore={createNewChore}
+              editChoreMode={editChoreMode}
               onChoreDetailChange={onChoreDetailChange} 
               saveChore={saveChore}
               deleteChore={deleteChore}
