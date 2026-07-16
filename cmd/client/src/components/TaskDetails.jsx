@@ -1,6 +1,6 @@
 import { Box, Button, Drawer, Stack, TextField, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
-import DetailRow from "../components/DetailRow"
+import DetailRow from "../details/DetailRow"
 
 export default function TaskDetails({task, open, closeTaskDetails, toggleTaskComplete, toggleTaskCancel}) {
     const TASK_DETAIL_WIDTH=680
@@ -61,7 +61,6 @@ export default function TaskDetails({task, open, closeTaskDetails, toggleTaskCom
                 {task.completed ? "Reopen Task" : "Complete Task"}
               </Button>
               <Button variant="text" onClick={() => {toggleTaskCancel(task); closeTaskDetails(task.id, notes); }}>{task.canceled ? "Restore Task" : "Cancel Task"}</Button>
-              
             </Stack>
         </Drawer>
     )
