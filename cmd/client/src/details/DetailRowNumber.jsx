@@ -16,7 +16,7 @@ export default function DetailRowNumber({label, field, value, onValueChange, uni
                     size="small" 
                     sx={{width: 90}} 
                     onChange={
-                        (event) => onValueChange(field, event.target.value)
+                        (event) => onValueChange(field, Number(event.target.value))
                     } 
                     slotProps={{
                         htmlInput: {

@@ -12,15 +12,14 @@ import (
 )
 
 const createChoreTemplate = `-- name: CreateChoreTemplate :exec
-INSERT INTO chore_templates (id, name, cadence, shared, assignee, duration, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+INSERT INTO chore_templates (id, name, cadence, assignee, duration, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?, ?)
 `
 
 type CreateChoreTemplateParams struct {
 	ID        string
 	Name      string
 	Cadence   string
-	Shared    bool
 	Assignee  sql.NullString
 	Duration  int64
 	CreatedAt time.Time
@@ -32,7 +31,6 @@ func (q *Queries) CreateChoreTemplate(ctx context.Context, arg CreateChoreTempla
 		arg.ID,
 		arg.Name,
 		arg.Cadence,
-		arg.Shared,
 		arg.Assignee,
 		arg.Duration,
 		arg.CreatedAt,
@@ -55,7 +53,6 @@ const editChoreTemplate = `-- name: EditChoreTemplate :exec
 UPDATE chore_templates
 SET name = ?,
 cadence = ?,
-shared = ?,
 assignee = ?,
 duration = ?,
 updated_at = ?
@@ -65,7 +62,6 @@ WHERE id = ?
 type EditChoreTemplateParams struct {
 	Name      string
 	Cadence   string
-	Shared    bool
 	Assignee  sql.NullString
 	Duration  int64
 	UpdatedAt time.Time
@@ -76,7 +72,6 @@ func (q *Queries) EditChoreTemplate(ctx context.Context, arg EditChoreTemplatePa
 	_, err := q.db.ExecContext(ctx, editChoreTemplate,
 		arg.Name,
 		arg.Cadence,
-		arg.Shared,
 		arg.Assignee,
 		arg.Duration,
 		arg.UpdatedAt,
@@ -86,7 +81,7 @@ func (q *Queries) EditChoreTemplate(ctx context.Context, arg EditChoreTemplatePa
 }
 
 const getAllChoreTemplates = `-- name: GetAllChoreTemplates :many
-SELECT id, name, cadence, shared, assignee, duration, created_at, updated_at
+SELECT id, name, cadence, assignee, duration, created_at, updated_at
 FROM chore_templates
 `
 
@@ -103,7 +98,6 @@ func (q *Queries) GetAllChoreTemplates(ctx context.Context) ([]ChoreTemplate, er
 			&i.ID,
 			&i.Name,
 			&i.Cadence,
-			&i.Shared,
 			&i.Assignee,
 			&i.Duration,
 			&i.CreatedAt,
@@ -123,7 +117,7 @@ func (q *Queries) GetAllChoreTemplates(ctx context.Context) ([]ChoreTemplate, er
 }
 
 const getChoreTemplateByID = `-- name: GetChoreTemplateByID :one
-SELECT id, name, cadence, shared, assignee, duration, created_at, updated_at
+SELECT id, name, cadence, assignee, duration, created_at, updated_at
 FROM chore_templates
 WHERE id = ?
 `
@@ -135,7 +129,6 @@ func (q *Queries) GetChoreTemplateByID(ctx context.Context, id string) (ChoreTem
 		&i.ID,
 		&i.Name,
 		&i.Cadence,
-		&i.Shared,
 		&i.Assignee,
 		&i.Duration,
 		&i.CreatedAt,
@@ -145,7 +138,7 @@ func (q *Queries) GetChoreTemplateByID(ctx context.Context, id string) (ChoreTem
 }
 
 const getChoreTemplateByName = `-- name: GetChoreTemplateByName :one
-SELECT id, name, cadence, shared, assignee, duration, created_at, updated_at
+SELECT id, name, cadence, assignee, duration, created_at, updated_at
 FROM chore_templates
 WHERE name = ?
 `
@@ -157,7 +150,6 @@ func (q *Queries) GetChoreTemplateByName(ctx context.Context, name string) (Chor
 		&i.ID,
 		&i.Name,
 		&i.Cadence,
-		&i.Shared,
 		&i.Assignee,
 		&i.Duration,
 		&i.CreatedAt,

@@ -26,15 +26,12 @@ func (a *App) choreNameExists(ctx context.Context, name string) (bool, error) {
 	return true, nil
 }
 
-func (a *App) validateChoreTemplateRequest(name string, cadence string, shared *bool, duration *int) error {
+func (a *App) validateChoreTemplateRequest(name string, cadence string, duration *int) error {
 	if strings.TrimSpace(name) == "" {
 		return errors.New("Name is required")
 	}
 	if strings.TrimSpace(cadence) == "" {
 		return errors.New("Cadence is required")
-	}
-	if shared == nil {
-		return errors.New("Sharing value required")
 	}
 	if duration == nil {
 		return errors.New("Duration is required")
@@ -55,7 +52,7 @@ func (a *App) ValidateChoreTemplateAssignee(ctx context.Context, requesterID, ne
 	return nil
 }
 
-func (a *App) CreateChoreTemplate(ctx context.Context, requesterID, name, cadence, assignee string, shared *bool, duration *int) (domain.ChoreTemplate, error) {
+func (a *App) CreateChoreTemplate(ctx context.Context, requesterID, name, cadence, assignee string, duration *int) (domain.ChoreTemplate, error) {
 	exists, err := a.choreNameExists(ctx, name)
 
 	if err != nil {
@@ -66,7 +63,7 @@ func (a *App) CreateChoreTemplate(ctx context.Context, requesterID, name, cadenc
 		return domain.ChoreTemplate{}, fmt.Errorf("Chore with name %s already exists", name)
 	}
 
-	err = a.validateChoreTemplateRequest(name, cadence, shared, duration)
+	err = a.validateChoreTemplateRequest(name, cadence, duration)
 	if err != nil {
 		return domain.ChoreTemplate{}, err
 	}
@@ -84,7 +81,6 @@ func (a *App) CreateChoreTemplate(ctx context.Context, requesterID, name, cadenc
 		ID:        id,
 		Name:      name,
 		Cadence:   domain.Cadence(cadence),
-		Shared:    *shared,
 		Assignee:  assignee,
 		Duration:  *duration,
 		CreatedAt: time.Now(),
@@ -121,7 +117,7 @@ func (a *App) GetChoreTemplateByID(ctx context.Context, id string) (domain.Chore
 	return tmp, nil
 }
 
-func (a *App) EditChoreTemplate(ctx context.Context, requesterID, id, name, cadence, assignee string, shared *bool, duration *int) (domain.ChoreTemplate, error) {
+func (a *App) EditChoreTemplate(ctx context.Context, requesterID, id, name, cadence, assignee string, duration *int) (domain.ChoreTemplate, error) {
 	tmp, err := a.GetChoreTemplateByID(ctx, id)
 
 	if err != nil {
@@ -139,7 +135,7 @@ func (a *App) EditChoreTemplate(ctx context.Context, requesterID, id, name, cade
 		}
 	}
 
-	err = a.validateChoreTemplateRequest(name, cadence, shared, duration)
+	err = a.validateChoreTemplateRequest(name, cadence, duration)
 	if err != nil {
 		return domain.ChoreTemplate{}, err
 	}
@@ -148,7 +144,6 @@ func (a *App) EditChoreTemplate(ctx context.Context, requesterID, id, name, cade
 		ID:        id,
 		Name:      name,
 		Cadence:   domain.Cadence(cadence),
-		Shared:    *shared,
 		Assignee:  assignee,
 		Duration:  *duration,
 		CreatedAt: tmp.CreatedAt,

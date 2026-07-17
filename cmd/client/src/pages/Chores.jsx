@@ -4,8 +4,7 @@ import PageHeader from "../components/PageHeader";
 import EditChore from "../components/chores/EditChore";
 import { EMPTY_CHORE_TEMPLATE } from "../constants/choreTemplate";
 import { useEffect, useState } from "react";
-import dayjs from "dayjs";
-import { getChoreTemplates } from "../api/choreTemplates";
+import { createChoreTemplate, deleteChoreTemplate, getChoreTemplates, updateChoreTemplate } from "../api/choreTemplates";
 
 export default function Chores() {
   const [editedChoreTemplate, setEditedChoreTemplate] = useState(null);
@@ -45,23 +44,19 @@ export default function Chores() {
     setEditChoreOpen(true);
   }
 
-  function createNewChore(){
-    setChoreTemplates([...choreTemplates,
-      {...editedChoreTemplate,
-        created_at: dayjs().toISOString(),
-        updated_at: dayjs().toISOString(),
-        id: Math.max(...choreTemplates.map(chore => chore.id)) + 1
-      }]
+  async function createNewChore(){
+    const newChore = await createChoreTemplate(editedChoreTemplate);
+    setChoreTemplates([...choreTemplates, newChore]
     )
   }
 
-  // To-Do: 1. Make API Call to update chore in DB
-  // 2: Log save event
-  function saveChore() {
+  // To-Do:  Log save event
+  async function saveChore() {
+    const updatedChore = await updateChoreTemplate(editedChoreTemplate)
     setChoreTemplates(choreTemplates.map( template => {
-      if (editedChoreTemplate.id === template.id) {
+      if (updatedChore.id === template.id) {
         return {
-          ...editedChoreTemplate
+          ...updatedChore
         };
       }
       return template;
@@ -70,7 +65,8 @@ export default function Chores() {
 
   // TO-DO: 1. Make API Call to delete chore from DB
   // 2. Log delete event
-  function deleteChore() {
+  async function deleteChore() {
+    await deleteChoreTemplate(editedChoreTemplate.id);
     setChoreTemplates(previousChores => 
       previousChores.filter(chore => chore.id !== editedChoreTemplate.id)
     );

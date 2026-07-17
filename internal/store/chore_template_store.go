@@ -14,7 +14,6 @@ func dbTemplateToDomainTemplate(dbTmp db.ChoreTemplate) domain.ChoreTemplate {
 		ID:        dbTmp.ID,
 		Name:      dbTmp.Name,
 		Cadence:   domain.Cadence(dbTmp.Cadence),
-		Shared:    dbTmp.Shared,
 		Assignee:  dbTmp.Assignee.String,
 		Duration:  int(dbTmp.Duration),
 		CreatedAt: dbTmp.CreatedAt,
@@ -37,7 +36,6 @@ func (s *Store) AddChoreTemplate(ctx context.Context, tmp domain.ChoreTemplate) 
 		ID:        tmp.ID,
 		Name:      tmp.Name,
 		Cadence:   string(tmp.Cadence),
-		Shared:    tmp.Shared,
 		Assignee:  assignee,
 		Duration:  int64(tmp.Duration),
 		CreatedAt: tmp.CreatedAt,
@@ -103,7 +101,6 @@ func (s *Store) EditChoreTemplate(ctx context.Context, tmp domain.ChoreTemplate)
 	err := s.Queries.EditChoreTemplate(ctx, db.EditChoreTemplateParams{
 		Name:      tmp.Name,
 		Cadence:   string(tmp.Cadence),
-		Shared:    tmp.Shared,
 		Assignee:  assignee,
 		Duration:  int64(tmp.Duration),
 		UpdatedAt: time.Now(),

@@ -1,6 +1,6 @@
 -- name: CreateChoreTemplate :exec
-INSERT INTO chore_templates (id, name, cadence, shared, assignee, duration, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?);
+INSERT INTO chore_templates (id, name, cadence, assignee, duration, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?, ?);
 
 -- name: GetChoreTemplateByName :one
 SELECT *
@@ -20,7 +20,6 @@ FROM chore_templates;
 UPDATE chore_templates
 SET name = ?,
 cadence = ?,
-shared = ?,
 assignee = ?,
 duration = ?,
 updated_at = ?
