@@ -72,5 +72,5 @@ func main() {
 	}
 
 	log.Printf("Server open and listening on port: %s", port)
-	srv.ListenAndServe()
+	log.Fatal(srv.ListenAndServe())
 }

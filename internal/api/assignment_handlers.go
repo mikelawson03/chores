@@ -12,6 +12,7 @@ type AssignmentRequest struct {
 	ChoreID        string     `json:"chore_id"`
 	AssignedUserID string     `json:"assigned_user_id"`
 	DueDate        *time.Time `json:"due_date"`
+	ScheduledFor   *time.Time `json:"scheduled_for"`
 }
 
 type EditAssignmentRequest struct {
@@ -38,7 +39,7 @@ func (cfg *apiCfg) handlerCreateAssignmentForUser(w http.ResponseWriter, r *http
 	requesterID := r.Header.Get("X-User-ID")
 	ctx := r.Context()
 
-	assignment, err := cfg.App.CreateAssignmentForUser(ctx, requesterID, req.ChoreID, req.AssignedUserID, req.DueDate)
+	assignment, err := cfg.App.CreateAssignmentForUser(ctx, requesterID, req.ChoreID, req.AssignedUserID, req.DueDate, req.ScheduledFor)
 
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Error assigning chore: ", err)

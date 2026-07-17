@@ -64,7 +64,7 @@ func (a *App) dailyScheduler(horizonStart, horizonEnd time.Time, templates []dom
 		currentDay := horizonStart
 		for currentDay.Before(horizonEnd) {
 			if !assignmentExistsForTemplateAndDate(template.ID, currentDay, existingAssignments) {
-				assignment := a.createNewAssignment(template.ID, template.Assignee, &currentDay)
+				assignment := a.createNewAssignment(template.ID, template.Assignee, &currentDay, &currentDay)
 				newAssignments = append(newAssignments, assignment)
 			}
 			currentDay = currentDay.AddDate(0, 0, 1)
@@ -84,7 +84,7 @@ func (a *App) weeklyScheduler(horizonStart, horizonEnd time.Time, templates []do
 			weekEnd := weekStart.AddDate(0, 0, 7)
 			if !assignmentExistsForTemplateAndDateWindow(template.ID, weekStart, weekEnd, existingAssignments) {
 				assignmentDate := weekEnd.AddDate(0, 0, -1)
-				assignment := a.createNewAssignment(template.ID, template.Assignee, &assignmentDate)
+				assignment := a.createNewAssignment(template.ID, template.Assignee, &assignmentDate, nil)
 				newAssignments = append(newAssignments, assignment)
 			}
 		}
@@ -104,7 +104,7 @@ func (a *App) monthlyScheduler(horizonStart, horizonEnd time.Time, templates []d
 			nextMonthStart := thisMonthStart.AddDate(0, 1, 0)
 			thisMonthEnd := nextMonthStart.AddDate(0, 0, -1)
 			if !assignmentExistsForTemplateAndDateWindow(template.ID, thisMonthStart, nextMonthStart, existingAssignments) {
-				assignment := a.createNewAssignment(template.ID, template.Assignee, &thisMonthEnd)
+				assignment := a.createNewAssignment(template.ID, template.Assignee, &thisMonthEnd, nil)
 				newAssignments = append(newAssignments, assignment)
 			}
 			thisMonthStart = nextMonthStart
@@ -121,26 +121,26 @@ func (a *App) RunScheduler(ctx context.Context) error {
 	// retrieve users
 	users, err := a.Store.GetAllUsers(ctx)
 	if err != nil {
-		return fmt.Errorf("Error retrieving users - %s", err)
+		return fmt.Errorf("error retrieving users - %s", err)
 	}
 	if len(users) == 0 {
-		return errors.New("No users available for scheduling.")
+		return errors.New("no users available for scheduling")
 	}
 
 	// retrieve current templates
 	tmps, err := a.Store.GetChoreTemplates(ctx)
 	if err != nil {
-		return fmt.Errorf("Error retrieving templates - %s", err)
+		return fmt.Errorf("error retrieving templates - %s", err)
 	}
 	if len(tmps) == 0 {
-		return errors.New("No chore templates available for scheduling.")
+		return errors.New("no chore templates available for scheduling")
 	}
 
 	// retrieve existing assignments
 	assignmentWindowEnd := schedulerAssignmentWindowEnd(horizonEnd)
 	existingAssignments, err := a.Store.GetAssignmentsByDateRange(ctx, horizonStart, assignmentWindowEnd)
 	if err != nil {
-		return fmt.Errorf("Error retrieving assignments - %s", err)
+		return fmt.Errorf("error retrieving assignments - %s", err)
 	}
 
 	// run schedulers by cadence
@@ -152,21 +152,21 @@ func (a *App) RunScheduler(ctx context.Context) error {
 	for _, dailyAssignment := range newDailyAssignments {
 		err = a.Store.AddAssignment(ctx, dailyAssignment)
 		if err != nil {
-			return fmt.Errorf("Error committing new daily assignment to DB: %s", err)
+			return fmt.Errorf("error committing new daily assignment to DB: %s", err)
 		}
 	}
 
 	for _, weeklyAssignment := range newWeeklyAssignments {
 		err = a.Store.AddAssignment(ctx, weeklyAssignment)
 		if err != nil {
-			return fmt.Errorf("Error committing new weekly assignment to DB: %s", err)
+			return fmt.Errorf("error committing new weekly assignment to DB: %s", err)
 		}
 	}
 
 	for _, monthlyAssignment := range newMonthlyAssignments {
 		err = a.Store.AddAssignment(ctx, monthlyAssignment)
 		if err != nil {
-			return fmt.Errorf("Error committing new monthly assignment to DB: %s", err)
+			return fmt.Errorf("error committing new monthly assignment to DB: %s", err)
 		}
 	}
 

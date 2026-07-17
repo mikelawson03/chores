@@ -17,7 +17,7 @@ import (
 
 func (a *App) validateTemplateID(ctx context.Context, templateID string) error {
 	if strings.TrimSpace(templateID) == "" {
-		return errors.New("Missing required template ID")
+		return errors.New("missing required template ID")
 	}
 
 	_, err := a.GetChoreTemplateByID(ctx, templateID)
@@ -30,7 +30,7 @@ func (a *App) validateTemplateID(ctx context.Context, templateID string) error {
 
 func (a *App) validateAssignedUserID(ctx context.Context, assignedUserID string) error {
 	if strings.TrimSpace(assignedUserID) == "" {
-		return errors.New("Missing required assigned user ID")
+		return errors.New("missing required assigned user ID")
 	}
 
 	_, err := a.GetUserByID(ctx, assignedUserID)
@@ -43,16 +43,16 @@ func (a *App) validateAssignedUserID(ctx context.Context, assignedUserID string)
 
 func validateDueDate(dueDate *time.Time) error {
 	if dueDate == nil {
-		return errors.New("Missing required schedule date")
+		return errors.New("missing required schedule date")
 	}
 
 	if dueDate.Before(time.Now()) {
-		return errors.New("Chores may not be scheduled before current time")
+		return errors.New("chores may not be scheduled before current time")
 	}
 	return nil
 }
 
-func (a *App) createNewAssignment(templateID string, assignedUserID string, dueDate *time.Time) domain.Assignment {
+func (a *App) createNewAssignment(templateID string, assignedUserID string, dueDate *time.Time, scheduledFor *time.Time) domain.Assignment {
 	id := uuid.NewString()
 	now := time.Now()
 	assignment := domain.Assignment{
@@ -60,6 +60,7 @@ func (a *App) createNewAssignment(templateID string, assignedUserID string, dueD
 		TemplateID:     templateID,
 		AssignedUserID: assignedUserID,
 		DueDate:        *dueDate,
+		ScheduledFor:   *scheduledFor,
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	}
@@ -67,7 +68,7 @@ func (a *App) createNewAssignment(templateID string, assignedUserID string, dueD
 	return assignment
 }
 
-func (a *App) CreateAssignmentForUser(ctx context.Context, requesterID, templateID, assignedUserID string, dueDate *time.Time) (domain.Assignment, error) {
+func (a *App) CreateAssignmentForUser(ctx context.Context, requesterID, templateID, assignedUserID string, dueDate *time.Time, scheduledFor *time.Time) (domain.Assignment, error) {
 	// validate that templateID is provided and exists
 	err := a.validateTemplateID(ctx, templateID)
 	if err != nil {
@@ -97,7 +98,7 @@ func (a *App) CreateAssignmentForUser(ctx context.Context, requesterID, template
 		return domain.Assignment{}, err
 	}
 
-	assignment := a.createNewAssignment(templateID, assignedUserID, dueDate)
+	assignment := a.createNewAssignment(templateID, assignedUserID, dueDate, scheduledFor)
 
 	err = a.Store.AddAssignment(ctx, assignment)
 	if err != nil {
@@ -119,7 +120,7 @@ func (a *App) GetAllAssignments(ctx context.Context) ([]domain.Assignment, error
 func (a *App) GetAssignmentByID(ctx context.Context, id string) (domain.Assignment, error) {
 	assignment, err := a.Store.GetAssignmentByID(ctx, id)
 	if errors.Is(err, sql.ErrNoRows) {
-		return domain.Assignment{}, fmt.Errorf("Assignment with ID %s not found.", id)
+		return domain.Assignment{}, fmt.Errorf("assignment with ID %s not found", id)
 	}
 
 	if err != nil {
@@ -175,7 +176,7 @@ func (a *App) EditAssignment(ctx context.Context, requesterID, assignmentID, ass
 func (a *App) CancelAssignment(ctx context.Context, assignmentID, requesterID string) (domain.Assignment, error) {
 	existing, err := a.GetAssignmentByID(ctx, assignmentID)
 	if errors.Is(err, sql.ErrNoRows) {
-		return domain.Assignment{}, errors.New("Assignment not found")
+		return domain.Assignment{}, errors.New("assignment not found")
 	}
 
 	if err != nil {
@@ -183,7 +184,7 @@ func (a *App) CancelAssignment(ctx context.Context, assignmentID, requesterID st
 	}
 
 	if existing.AssignedUserID != requesterID {
-		return domain.Assignment{}, errors.New("May not cancel other user's assignments")
+		return domain.Assignment{}, errors.New("may not cancel other user's assignments")
 	}
 
 	now := time.Now()
@@ -212,7 +213,7 @@ func (a *App) CancelAssignment(ctx context.Context, assignmentID, requesterID st
 func (a *App) CompleteAssignment(ctx context.Context, assignmentID, requesterID string) (domain.Assignment, error) {
 	existing, err := a.GetAssignmentByID(ctx, assignmentID)
 	if errors.Is(err, sql.ErrNoRows) {
-		return domain.Assignment{}, errors.New("Assignment not found")
+		return domain.Assignment{}, errors.New("assignment not found")
 	}
 
 	if err != nil {
@@ -220,7 +221,7 @@ func (a *App) CompleteAssignment(ctx context.Context, assignmentID, requesterID 
 	}
 
 	if existing.AssignedUserID != requesterID {
-		return domain.Assignment{}, errors.New("May not complete other user's assignments")
+		return domain.Assignment{}, errors.New("may not complete other user's assignments")
 	}
 	now := time.Now()
 
