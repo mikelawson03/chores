@@ -25,7 +25,7 @@ func dbAssignmentToDomainAssignment(dbAssignment db.Assignment) domain.Assignmen
 		ID:             dbAssignment.ID,
 		TemplateID:     dbAssignment.TemplateID,
 		AssignedUserID: dbAssignment.AssignedUserID,
-		ScheduledFor:   dbAssignment.ScheduledFor,
+		DueDate:        dbAssignment.DueDate,
 		Completed:      dbAssignment.Completed,
 		Canceled:       dbAssignment.Canceled,
 		CreatedAt:      dbAssignment.CreatedAt,
@@ -41,7 +41,8 @@ func (s *Store) AddAssignment(ctx context.Context, assignment domain.Assignment)
 		ID:             assignment.ID,
 		TemplateID:     assignment.TemplateID,
 		AssignedUserID: assignment.AssignedUserID,
-		ScheduledFor:   assignment.ScheduledFor,
+		DueDate:        assignment.DueDate,
+		ScheduledFor:   sql.NullTime{Valid: false},
 		Completed:      false,
 		Canceled:       false,
 		CreatedAt:      assignment.CreatedAt,
@@ -87,7 +88,6 @@ func (s *Store) GetAllAssignments(ctx context.Context) ([]domain.Assignment, err
 func (s *Store) EditAssignment(ctx context.Context, assignment domain.Assignment) error {
 	err := s.Queries.EditAssignment(ctx, db.EditAssignmentParams{
 		AssignedUserID: assignment.AssignedUserID,
-		ScheduledFor:   assignment.ScheduledFor,
 		UpdatedAt:      assignment.UpdatedAt,
 		ID:             assignment.ID,
 	})
@@ -159,10 +159,10 @@ func (s *Store) GetAssignmentsByUserID(ctx context.Context, id string) ([]domain
 
 func (s *Store) GetAssignmentsForBalancing(ctx context.Context, horizonStart, horizonEnd, monthlyPlanningEnd time.Time) ([]domain.AssignmentWithMetadata, error) {
 	dbAssignmentsWithMetadata, err := s.Queries.GetAssignmentsWithMetadataForDateRange(ctx, db.GetAssignmentsWithMetadataForDateRangeParams{
-		ScheduledFor:   horizonStart,
-		ScheduledFor_2: horizonEnd,
-		ScheduledFor_3: horizonStart,
-		ScheduledFor_4: monthlyPlanningEnd,
+		DueDate:   horizonStart,
+		DueDate_2: horizonEnd,
+		DueDate_3: horizonStart,
+		DueDate_4: monthlyPlanningEnd,
 	})
 	if err != nil {
 		return []domain.AssignmentWithMetadata{}, err
@@ -184,7 +184,7 @@ func (s *Store) GetAssignmentsForBalancing(ctx context.Context, horizonStart, ho
 			ID:             dbAssignmentWithMetadata.ID,
 			TemplateID:     dbAssignmentWithMetadata.TemplateID,
 			AssignedUserID: dbAssignmentWithMetadata.AssignedUserID,
-			ScheduledFor:   dbAssignmentWithMetadata.ScheduledFor,
+			DueDate:        dbAssignmentWithMetadata.DueDate,
 			Completed:      dbAssignmentWithMetadata.Completed,
 			Canceled:       dbAssignmentWithMetadata.Canceled,
 			CreatedAt:      dbAssignmentWithMetadata.CreatedAt,
@@ -219,7 +219,6 @@ func (s *Store) BulkUpdateAssignments(ctx context.Context, assignments []domain.
 	for _, assignment := range assignments {
 		err := qtx.EditAssignment(ctx, db.EditAssignmentParams{
 			AssignedUserID: assignment.AssignedUserID,
-			ScheduledFor:   assignment.ScheduledFor,
 			CreatedAt:      assignment.CreatedAt,
 			UpdatedAt:      time.Now(),
 			ID:             assignment.ID,

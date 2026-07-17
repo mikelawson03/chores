@@ -41,34 +41,25 @@ func (a *App) validateAssignedUserID(ctx context.Context, assignedUserID string)
 	return nil
 }
 
-func validateScheduleDate(scheduleDate *time.Time) error {
-	if scheduleDate == nil {
+func validateDueDate(dueDate *time.Time) error {
+	if dueDate == nil {
 		return errors.New("Missing required schedule date")
 	}
 
-	if scheduleDate.Before(time.Now()) {
+	if dueDate.Before(time.Now()) {
 		return errors.New("Chores may not be scheduled before current time")
 	}
 	return nil
 }
 
-func (a *App) findAssignmentIndex(id string) int {
-	for i, assignment := range a.Assignments {
-		if assignment.ID == id {
-			return i
-		}
-	}
-	return -1
-}
-
-func (a *App) createNewAssignment(templateID string, assignedUserID string, scheduleDate *time.Time) domain.Assignment {
+func (a *App) createNewAssignment(templateID string, assignedUserID string, dueDate *time.Time) domain.Assignment {
 	id := uuid.NewString()
 	now := time.Now()
 	assignment := domain.Assignment{
 		ID:             id,
 		TemplateID:     templateID,
 		AssignedUserID: assignedUserID,
-		ScheduledFor:   *scheduleDate,
+		DueDate:        *dueDate,
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	}
@@ -76,7 +67,7 @@ func (a *App) createNewAssignment(templateID string, assignedUserID string, sche
 	return assignment
 }
 
-func (a *App) CreateAssignmentForUser(ctx context.Context, requesterID, templateID, assignedUserID string, scheduleDate *time.Time) (domain.Assignment, error) {
+func (a *App) CreateAssignmentForUser(ctx context.Context, requesterID, templateID, assignedUserID string, dueDate *time.Time) (domain.Assignment, error) {
 	// validate that templateID is provided and exists
 	err := a.validateTemplateID(ctx, templateID)
 	if err != nil {
@@ -90,7 +81,7 @@ func (a *App) CreateAssignmentForUser(ctx context.Context, requesterID, template
 	}
 
 	// validate schedule date exists and is in the future
-	err = validateScheduleDate(scheduleDate)
+	err = validateDueDate(dueDate)
 	if err != nil {
 		return domain.Assignment{}, err
 	}
@@ -106,7 +97,7 @@ func (a *App) CreateAssignmentForUser(ctx context.Context, requesterID, template
 		return domain.Assignment{}, err
 	}
 
-	assignment := a.createNewAssignment(templateID, assignedUserID, scheduleDate)
+	assignment := a.createNewAssignment(templateID, assignedUserID, dueDate)
 
 	err = a.Store.AddAssignment(ctx, assignment)
 	if err != nil {
@@ -138,7 +129,7 @@ func (a *App) GetAssignmentByID(ctx context.Context, id string) (domain.Assignme
 	return assignment, nil
 }
 
-func (a *App) EditAssignment(ctx context.Context, requesterID, assignmentID, assignedUserID string, scheduleDate *time.Time) (domain.Assignment, error) {
+func (a *App) EditAssignment(ctx context.Context, requesterID, assignmentID, assignedUserID string) (domain.Assignment, error) {
 	// check assignment exists
 	existing, err := a.GetAssignmentByID(ctx, assignmentID)
 	if err != nil {
@@ -156,12 +147,6 @@ func (a *App) EditAssignment(ctx context.Context, requesterID, assignmentID, ass
 		return domain.Assignment{}, err
 	}
 
-	// check that scheduleDate is provided and in future
-	err = validateScheduleDate(scheduleDate)
-	if err != nil {
-		return domain.Assignment{}, err
-	}
-
 	// check assignment is to self
 	if requesterID != assignedUserID {
 		return domain.Assignment{}, errors.New("may not assign chores to other users")
@@ -171,7 +156,6 @@ func (a *App) EditAssignment(ctx context.Context, requesterID, assignmentID, ass
 		ID:             assignmentID,
 		TemplateID:     existing.TemplateID,
 		AssignedUserID: assignedUserID,
-		ScheduledFor:   *scheduleDate,
 		Completed:      existing.Completed,
 		Canceled:       existing.Canceled,
 		CreatedAt:      existing.CreatedAt,
@@ -208,7 +192,7 @@ func (a *App) CancelAssignment(ctx context.Context, assignmentID, requesterID st
 		ID:             assignmentID,
 		TemplateID:     existing.TemplateID,
 		AssignedUserID: existing.AssignedUserID,
-		ScheduledFor:   existing.ScheduledFor,
+		DueDate:        existing.DueDate,
 		Completed:      existing.Completed,
 		Canceled:       true,
 		CreatedAt:      existing.CreatedAt,
@@ -244,7 +228,7 @@ func (a *App) CompleteAssignment(ctx context.Context, assignmentID, requesterID 
 		ID:             assignmentID,
 		TemplateID:     existing.TemplateID,
 		AssignedUserID: existing.AssignedUserID,
-		ScheduledFor:   existing.ScheduledFor,
+		DueDate:        existing.DueDate,
 		Completed:      true,
 		Canceled:       existing.Canceled,
 		CreatedAt:      existing.CreatedAt,

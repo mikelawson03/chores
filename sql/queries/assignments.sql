@@ -2,15 +2,16 @@
 INSERT INTO assignments (
     id, 
     template_id, 
-    assigned_user_id, 
-    scheduled_for, 
+    assigned_user_id,
+    due_date, 
+    scheduled_for,
     completed, 
     canceled, 
     created_at, 
     updated_at,
     completed_at,
     canceled_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 -- name: GetAllAssignments :many
 SELECT *
@@ -24,7 +25,7 @@ WHERE id = ?;
 -- name: EditAssignment :exec
 UPDATE assignments
 SET assigned_user_id = ?,
-scheduled_for = ?,
+scheduled_for =?,
 created_at = ?,
 updated_at = ?
 WHERE id = ?;
@@ -46,8 +47,8 @@ WHERE id = ?;
 -- name: GetAssignmentsByDateRange :many
 SELECT *
 FROM assignments
-WHERE scheduled_for >= ?
-AND scheduled_for < ?;
+WHERE due_date >= ?
+AND due_date < ?;
 
 -- name: GetAssignmentsByTemplateID :many
 SELECT *
@@ -64,10 +65,10 @@ SELECT a.*, ct.duration, ct.cadence
 FROM assignments a
 JOIN chore_templates ct ON a.template_id = ct.id
 WHERE (ct.cadence IN ("daily", "weekly") 
-    AND a.scheduled_for >= ?
-    AND a.scheduled_for < ?
+    AND a.due_date >= ?
+    AND a.due_date < ?
     AND a.canceled = false)
 OR (ct.cadence = "monthly"
-    AND a.scheduled_for >= ?
-    AND a.scheduled_for < ?
+    AND a.due_date >= ?
+    AND a.due_date < ?
     AND a.canceled = false);

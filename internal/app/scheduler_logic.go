@@ -29,7 +29,7 @@ func assignmentExistsForTemplateAndDate(templateID string, date time.Time, assig
 		if assignment.TemplateID != templateID {
 			continue
 		}
-		if sameDay(assignment.ScheduledFor, date) {
+		if sameDay(assignment.DueDate, date) {
 			return true
 		}
 	}
@@ -43,11 +43,11 @@ func assignmentExistsForTemplateAndDateWindow(templateID string, windowStart, wi
 			continue
 		}
 
-		if assignment.ScheduledFor.Before(windowStart) {
+		if assignment.DueDate.Before(windowStart) {
 			continue
 		}
 
-		if assignment.ScheduledFor.After(windowEnd) {
+		if assignment.DueDate.After(windowEnd) {
 			continue
 		}
 		return true

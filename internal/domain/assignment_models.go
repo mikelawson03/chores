@@ -8,6 +8,7 @@ type Assignment struct {
 	ID             string
 	TemplateID     string
 	AssignedUserID string
+	DueDate        time.Time
 	ScheduledFor   time.Time
 	Completed      bool
 	Canceled       bool

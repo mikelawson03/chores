@@ -7,7 +7,11 @@ export async function getChoreTemplates() {
         headers: getHeaders(),
     })
 
-    return await response.json();
+    const data = await response.json();
+
+    console.log(data);
+
+    return await data;
 
 };
 

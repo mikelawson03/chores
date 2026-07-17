@@ -10,8 +10,8 @@ import (
 
 func (s *Store) GetAssignmentsByDateRange(ctx context.Context, startDate, endDate time.Time) ([]domain.Assignment, error) {
 	dbAssignments, err := s.Queries.GetAssignmentsByDateRange(ctx, db.GetAssignmentsByDateRangeParams{
-		ScheduledFor:   startDate,
-		ScheduledFor_2: endDate,
+		DueDate:   startDate,
+		DueDate_2: endDate,
 	})
 	if err != nil {
 		return []domain.Assignment{}, err

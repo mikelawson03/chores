@@ -6,6 +6,7 @@ CREATE TABLE chore_templates (
     cadence TEXT NOT NULL,
     assignee TEXT,
     duration INTEGER NOT NULL,
+    instructions TEXT,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL,
     FOREIGN KEY (assignee) REFERENCES users(id)

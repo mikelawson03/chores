@@ -11,12 +11,11 @@ import (
 type AssignmentRequest struct {
 	ChoreID        string     `json:"chore_id"`
 	AssignedUserID string     `json:"assigned_user_id"`
-	ScheduleDate   *time.Time `json:"schedule_date"`
+	DueDate        *time.Time `json:"due_date"`
 }
 
 type EditAssignmentRequest struct {
-	AssignedUserID string     `json:"assigned_user_id"`
-	ScheduleDate   *time.Time `json:"schedule_date"`
+	AssignedUserID string `json:"assigned_user_id"`
 }
 
 func decodeRequest(r *http.Request, target any) error {
@@ -39,7 +38,7 @@ func (cfg *apiCfg) handlerCreateAssignmentForUser(w http.ResponseWriter, r *http
 	requesterID := r.Header.Get("X-User-ID")
 	ctx := r.Context()
 
-	assignment, err := cfg.App.CreateAssignmentForUser(ctx, requesterID, req.ChoreID, req.AssignedUserID, req.ScheduleDate)
+	assignment, err := cfg.App.CreateAssignmentForUser(ctx, requesterID, req.ChoreID, req.AssignedUserID, req.DueDate)
 
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Error assigning chore: ", err)
@@ -102,7 +101,7 @@ func (cfg *apiCfg) handlerEditAssignment(w http.ResponseWriter, r *http.Request)
 
 	requesterID := r.Header.Get("X-User-ID")
 	ctx := r.Context()
-	res, err := cfg.App.EditAssignment(ctx, requesterID, assignmentID, req.AssignedUserID, req.ScheduleDate)
+	res, err := cfg.App.EditAssignment(ctx, requesterID, assignmentID, req.AssignedUserID)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Error editing assignment: ", err)
 		return
