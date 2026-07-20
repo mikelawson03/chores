@@ -3,6 +3,8 @@ CREATE TABLE assignments (
     id TEXT PRIMARY KEY,
     template_id TEXT NOT NULL,
     assigned_user_id TEXT NOT NULL,
+    instructions TEXT,
+    notes TEXT,
     due_date TIMESTAMP NOT NULL,
     scheduled_for TIMESTAMP,
     completed BOOLEAN NOT NULL DEFAULT FALSE,

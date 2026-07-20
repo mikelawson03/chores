@@ -10,7 +10,8 @@ export default function CalendarDay({currentDate, day, tasks, maxDayItems, onOve
                 sx={{
                     borderRight: isLastColumn ? 0 : 1, 
                     borderBottom: isLastRow ? 0 : 1,
-                    borderColor:"divider", p: 1,
+                    borderColor:"divider", 
+                    p: 1,
                     backgroundColor: isCurrentMonth ? "background.paper" : "grey.200",
                     minWidth: 0,
                     "&:hover": {
@@ -58,7 +59,7 @@ export default function CalendarDay({currentDate, day, tasks, maxDayItems, onOve
                                             overflow: "hidden",
                                         }}
                                     >
-                                            {task.title}
+                                            {task.templateName}
                                     </Typography>
                                 </Box>
                             )

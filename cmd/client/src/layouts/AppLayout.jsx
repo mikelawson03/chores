@@ -5,11 +5,11 @@ export default function AppLayout({ children, maxWidth }) {
     return (
         <Container 
             maxWidth={false}
-            sx = {{ height: "100vh", p: 0}}
+            sx = {{ minHeight: "100vh", p: 0, display: "flex", flexDirection: "column"}}
         >
-            <Stack direction="row">
+            <Stack direction="row" sx= {{flex: 1, minHeight: 0}}>
                 <Sidebar />
-                <Box sx={{ flexGrow: 1 }}>
+                <Box sx={{ overflow: "hidden", flex: 1, minHeight: 0 }}>
                     {children}
                 </Box>
             </Stack>

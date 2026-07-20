@@ -64,7 +64,7 @@ func (a *App) dailyScheduler(horizonStart, horizonEnd time.Time, templates []dom
 		currentDay := horizonStart
 		for currentDay.Before(horizonEnd) {
 			if !assignmentExistsForTemplateAndDate(template.ID, currentDay, existingAssignments) {
-				assignment := a.createNewAssignment(template.ID, template.Assignee, &currentDay, &currentDay)
+				assignment := a.createNewAssignment(template.ID, template.Assignee, template.Instructions, &currentDay, &currentDay)
 				newAssignments = append(newAssignments, assignment)
 			}
 			currentDay = currentDay.AddDate(0, 0, 1)
@@ -84,7 +84,7 @@ func (a *App) weeklyScheduler(horizonStart, horizonEnd time.Time, templates []do
 			weekEnd := weekStart.AddDate(0, 0, 7)
 			if !assignmentExistsForTemplateAndDateWindow(template.ID, weekStart, weekEnd, existingAssignments) {
 				assignmentDate := weekEnd.AddDate(0, 0, -1)
-				assignment := a.createNewAssignment(template.ID, template.Assignee, &assignmentDate, nil)
+				assignment := a.createNewAssignment(template.ID, template.Assignee, template.Instructions, &assignmentDate, nil)
 				newAssignments = append(newAssignments, assignment)
 			}
 		}
@@ -104,7 +104,7 @@ func (a *App) monthlyScheduler(horizonStart, horizonEnd time.Time, templates []d
 			nextMonthStart := thisMonthStart.AddDate(0, 1, 0)
 			thisMonthEnd := nextMonthStart.AddDate(0, 0, -1)
 			if !assignmentExistsForTemplateAndDateWindow(template.ID, thisMonthStart, nextMonthStart, existingAssignments) {
-				assignment := a.createNewAssignment(template.ID, template.Assignee, &thisMonthEnd, nil)
+				assignment := a.createNewAssignment(template.ID, template.Assignee, template.Instructions, &thisMonthEnd, nil)
 				newAssignments = append(newAssignments, assignment)
 			}
 			thisMonthStart = nextMonthStart

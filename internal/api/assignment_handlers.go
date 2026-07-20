@@ -9,19 +9,23 @@ import (
 )
 
 type AssignmentRequest struct {
-	ChoreID        string     `json:"chore_id"`
-	AssignedUserID string     `json:"assigned_user_id"`
-	DueDate        *time.Time `json:"due_date"`
-	ScheduledFor   *time.Time `json:"scheduled_for"`
+	ChoreID        string     `json:"choreId"`
+	AssignedUserID string     `json:"assignedUserId"`
+	Instructions   string     `json:"instructions"`
+	DueDate        *time.Time `json:"dueDate"`
+	ScheduledFor   *time.Time `json:"scheduledFor"`
 }
 
 type EditAssignmentRequest struct {
-	AssignedUserID string `json:"assigned_user_id"`
+	AssignedUserID string     `json:"userId"`
+	ScheduledFor   *time.Time `json:"scheduledFor"`
+	Notes          string     `json:"notes"`
+	Completed      bool       `json:"completed"`
+	Canceled       bool       `json:"canceled"`
 }
 
 func decodeRequest(r *http.Request, target any) error {
 	d := json.NewDecoder(r.Body)
-	d.DisallowUnknownFields()
 
 	return d.Decode(target)
 }
@@ -39,7 +43,7 @@ func (cfg *apiCfg) handlerCreateAssignmentForUser(w http.ResponseWriter, r *http
 	requesterID := r.Header.Get("X-User-ID")
 	ctx := r.Context()
 
-	assignment, err := cfg.App.CreateAssignmentForUser(ctx, requesterID, req.ChoreID, req.AssignedUserID, req.DueDate, req.ScheduledFor)
+	assignment, err := cfg.App.CreateAssignmentForUser(ctx, requesterID, req.ChoreID, req.AssignedUserID, req.Instructions, req.DueDate, req.ScheduledFor)
 
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Error assigning chore: ", err)
@@ -102,7 +106,7 @@ func (cfg *apiCfg) handlerEditAssignment(w http.ResponseWriter, r *http.Request)
 
 	requesterID := r.Header.Get("X-User-ID")
 	ctx := r.Context()
-	res, err := cfg.App.EditAssignment(ctx, requesterID, assignmentID, req.AssignedUserID)
+	res, err := cfg.App.EditAssignment(ctx, requesterID, assignmentID, req.AssignedUserID, req.Notes, req.Canceled, req.Completed, req.ScheduledFor)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Error editing assignment: ", err)
 		return

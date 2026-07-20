@@ -90,7 +90,7 @@ export default function ChoresTable({ choreTemplates, editNewChore, openEditChor
   return (
     <Stack direction="column" sx={{
         flex: 1, 
-        width: "100%"
+        width: "95%"
       }
     }>
       <TableToolbar editNewChore={editNewChore}/>

@@ -8,8 +8,9 @@ export default function CalendarGrid({ currentDate, days, maxDayItems, onOverflo
             direction="column" 
             sx = {{ 
                 flex: 1,
+                minHeight: 0,
                 border: 1,
-                borderColor: "divider" 
+                borderColor: "divider" ,
             }}
         >
             <CalendarGridHeader />

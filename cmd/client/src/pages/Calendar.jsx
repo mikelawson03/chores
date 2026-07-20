@@ -5,7 +5,7 @@ import CalendarContent from "../components/calendar/CalendarContent";
 import DailyAgenda from "../components/dailyAgenda/DailyAgenda";
 import { useState } from "react";
 import { Stack } from "@mui/material";
-import { getActiveTasks, getMonthlyTasks, getUnscheduledTasks, getTasksDueInMonth, getWeeklyTasks, removeCompletedTasks } from "../utils/taskFilters";
+import { getActiveTasks, getMonthlyTasks, getUnscheduledTasks, getTasksDueInMonth, getWeeklyTasks, removeCompletedTasks } from "../utils/taskHelpers";
 
 export default function Calendar({ tasks, openTaskDetails, toggleTaskComplete }) {
   dayjs.extend(isoWeek);
@@ -25,7 +25,7 @@ export default function Calendar({ tasks, openTaskDetails, toggleTaskComplete })
   const calendarDays = days.map(day => ({
     day,
     tasks: tasks.filter(
-      task => task.scheduledFor === day.format("YYYY-MM-DD") && !task.completed && !task.canceled
+      task => dayjs(task.scheduledFor).isSame(day, "day") && !task.completed && !task.canceled
     )
   }));
 
@@ -63,7 +63,7 @@ export default function Calendar({ tasks, openTaskDetails, toggleTaskComplete })
   }
 
   return (
-    <Stack spacing={0} direction="column" sx ={{p: 3, height: "100%"}}>
+    <Stack spacing={0} direction="column" sx ={{ flex: 1, minHeight: 0}}>
       <CalendarToolbar 
         currentDate={currentDate}
         onPreviousMonth={handlePreviousMonth}
@@ -77,7 +77,6 @@ export default function Calendar({ tasks, openTaskDetails, toggleTaskComplete })
         weeklyTasks={weeklyTasks}
         monthlyTasks={monthlyTasks}
         onOverflowClick={handleDailyAgendaOpen}
-        sx={{ flex: 1 }}
       />
       <DailyAgenda 
         agendaDate={agendaDate}

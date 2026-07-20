@@ -1,11 +1,11 @@
 import { Box, Button, Drawer, Stack, Typography } from "@mui/material";
-import DetailRow from "../../details/DetailRow";
-import DetailRowSelect from "../../details/DetailRowSelect";
+import DetailRow from "../details/DetailRow";
+import DetailRowSelect from "../details/DetailRowSelect";
 import { CADENCES } from "../../constants/cadences";
 import { USERS } from "../../config/dev";
-import DetailRowNumber from "../../details/DetailRowNumber";
-import DetailRowLargeText from "../../details/DetailRowLargeText";
-import DetailRowTitle from "../../details/DetailRowTitle";
+import DetailRowNumber from "../details/DetailRowNumber";
+import DetailRowLargeText from "../details/DetailRowLargeText";
+import DetailRowTitle from "../details/DetailRowTitle";
 import { formatTimestamp } from "../../utils/formatters";
 
 export default function EditChore({ open, chore, closeEditChore, createNewChore, editChoreMode, onChoreDetailChange, saveChore, deleteChore}) {

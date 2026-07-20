@@ -10,15 +10,17 @@ import (
 )
 
 func dbAssignmentToDomainAssignment(dbAssignment db.Assignment) domain.Assignment {
-	var completedAt time.Time
-	var canceledAt time.Time
+	var completedAt *time.Time
+	var canceledAt *time.Time
 
 	if dbAssignment.CompletedAt.Valid {
-		completedAt = dbAssignment.CompletedAt.Time
+		t := dbAssignment.CompletedAt.Time
+		completedAt = &t
 	}
 
 	if dbAssignment.CanceledAt.Valid {
-		canceledAt = dbAssignment.CanceledAt.Time
+		t := dbAssignment.CanceledAt.Time
+		completedAt = &t
 	}
 
 	return domain.Assignment{
@@ -35,14 +37,137 @@ func dbAssignmentToDomainAssignment(dbAssignment db.Assignment) domain.Assignmen
 	}
 }
 
+func mapGetAssignmentRow(r db.GetAssignmentRow) domain.Assignment {
+	var completedAt *time.Time
+	var canceledAt *time.Time
+	var scheduledFor *time.Time
+	var instructions string
+	var notes string
+
+	if r.CompletedAt.Valid {
+		t := r.CompletedAt.Time
+		completedAt = &t
+	}
+
+	if r.CanceledAt.Valid {
+		t := r.CanceledAt.Time
+		canceledAt = &t
+	}
+
+	if r.Instructions.Valid {
+		instructions = r.Instructions.String
+	}
+
+	if r.Notes.Valid {
+		notes = r.Notes.String
+	}
+
+	if r.ScheduledFor.Valid {
+		t := r.ScheduledFor.Time
+		scheduledFor = &t
+	}
+
+	return domain.Assignment{
+		ID:           r.ID,
+		TemplateID:   r.TemplateID,
+		TemplateName: r.Name,
+		Cadence:      r.Cadence,
+		Duration:     r.Duration,
+		Instructions: instructions,
+		Notes:        notes,
+		DueDate:      r.DueDate,
+		ScheduledFor: scheduledFor,
+		Completed:    r.Completed,
+		Canceled:     r.Canceled,
+		CreatedAt:    r.CreatedAt,
+		UpdatedAt:    r.UpdatedAt,
+		CompletedAt:  completedAt,
+		CanceledAt:   canceledAt,
+	}
+}
+
+func mapGetAllAssignmentsRow(r db.GetAllAssignmentsRow) domain.Assignment {
+	var completedAt *time.Time
+	var canceledAt *time.Time
+	var scheduledFor *time.Time
+	var instructions string
+	var notes string
+
+	if r.CompletedAt.Valid {
+		t := r.CompletedAt.Time
+		completedAt = &t
+	}
+
+	if r.CanceledAt.Valid {
+		t := r.CanceledAt.Time
+		canceledAt = &t
+	}
+
+	if r.Instructions.Valid {
+		instructions = r.Instructions.String
+	}
+
+	if r.Notes.Valid {
+		notes = r.Notes.String
+	}
+
+	if r.ScheduledFor.Valid {
+		t := r.ScheduledFor.Time
+		scheduledFor = &t
+	}
+
+	return domain.Assignment{
+		ID:           r.ID,
+		TemplateID:   r.TemplateID,
+		TemplateName: r.Name,
+		Cadence:      r.Cadence,
+		Duration:     r.Duration,
+		Instructions: instructions,
+		Notes:        notes,
+		DueDate:      r.DueDate,
+		ScheduledFor: scheduledFor,
+		Completed:    r.Completed,
+		Canceled:     r.Canceled,
+		CreatedAt:    r.CreatedAt,
+		UpdatedAt:    r.UpdatedAt,
+		CompletedAt:  completedAt,
+		CanceledAt:   canceledAt,
+	}
+}
+
 func (s *Store) AddAssignment(ctx context.Context, assignment domain.Assignment) error {
+	var scheduledFor sql.NullTime
+	var instructions sql.NullString
+
+	if assignment.ScheduledFor != nil {
+		scheduledFor = sql.NullTime{
+			Valid: true,
+			Time:  *assignment.ScheduledFor,
+		}
+	} else {
+		scheduledFor = sql.NullTime{
+			Valid: false,
+		}
+	}
+
+	if assignment.Instructions != "" {
+		instructions = sql.NullString{
+			Valid:  true,
+			String: assignment.Instructions,
+		}
+	} else {
+		instructions = sql.NullString{
+			Valid: false,
+		}
+	}
 
 	err := s.Queries.CreateAssignment(ctx, db.CreateAssignmentParams{
 		ID:             assignment.ID,
 		TemplateID:     assignment.TemplateID,
 		AssignedUserID: assignment.AssignedUserID,
+		Instructions:   instructions,
 		DueDate:        assignment.DueDate,
-		ScheduledFor:   sql.NullTime{Valid: false},
+		ScheduledFor:   scheduledFor,
 		Completed:      false,
 		Canceled:       false,
 		CreatedAt:      assignment.CreatedAt,
@@ -58,13 +183,13 @@ func (s *Store) AddAssignment(ctx context.Context, assignment domain.Assignment)
 	return nil
 }
 
-func (s *Store) GetAssignmentByID(ctx context.Context, id string) (domain.Assignment, error) {
-	dbAssignment, err := s.Queries.GetAssignmentByID(ctx, id)
+func (s *Store) GetAssignment(ctx context.Context, id string) (domain.Assignment, error) {
+	dbAssignment, err := s.Queries.GetAssignment(ctx, id)
 	if err != nil {
 		return domain.Assignment{}, err
 	}
 
-	assignment := dbAssignmentToDomainAssignment(dbAssignment)
+	assignment := mapGetAssignmentRow(dbAssignment)
 
 	return assignment, nil
 
@@ -78,18 +203,67 @@ func (s *Store) GetAllAssignments(ctx context.Context) ([]domain.Assignment, err
 
 	assignments := []domain.Assignment{}
 
-	for _, assignment := range dbAssignments {
-		assignments = append(assignments, dbAssignmentToDomainAssignment(assignment))
+	for _, dbAssignment := range dbAssignments {
+		assignment := mapGetAllAssignmentsRow(dbAssignment)
+
+		assignments = append(assignments, assignment)
 	}
 
 	return assignments, nil
 }
 
 func (s *Store) EditAssignment(ctx context.Context, assignment domain.Assignment) error {
+	var scheduledFor sql.NullTime
+	var notes sql.NullString
+	var completedAt sql.NullTime
+	var canceledAt sql.NullTime
+
+	if assignment.ScheduledFor != nil {
+		scheduledFor = sql.NullTime{
+			Valid: true,
+			Time:  *assignment.ScheduledFor,
+		}
+	} else {
+		scheduledFor.Valid = false
+	}
+
+	if assignment.Notes != "" {
+		notes = sql.NullString{
+			Valid:  true,
+			String: assignment.Notes,
+		}
+	} else {
+		notes.Valid = false
+	}
+
+	if assignment.CompletedAt != nil {
+		completedAt = sql.NullTime{
+			Valid: true,
+			Time:  *assignment.CompletedAt,
+		}
+	} else {
+		completedAt.Valid = false
+	}
+
+	if assignment.CanceledAt != nil {
+		canceledAt = sql.NullTime{
+			Valid: true,
+			Time:  *assignment.CanceledAt,
+		}
+	} else {
+		canceledAt.Valid = false
+	}
+
 	err := s.Queries.EditAssignment(ctx, db.EditAssignmentParams{
 		AssignedUserID: assignment.AssignedUserID,
+		Notes:          notes,
+		ScheduledFor:   scheduledFor,
 		UpdatedAt:      assignment.UpdatedAt,
 		ID:             assignment.ID,
+		Completed:      assignment.Completed,
+		Canceled:       assignment.Canceled,
+		CompletedAt:    completedAt,
+		CanceledAt:     canceledAt,
 	})
 
 	if err != nil {
@@ -102,7 +276,7 @@ func (s *Store) EditAssignment(ctx context.Context, assignment domain.Assignment
 func (s *Store) CancelAssignment(ctx context.Context, assignment domain.Assignment) error {
 	err := s.Queries.CancelAssignment(ctx, db.CancelAssignmentParams{
 		Canceled:   assignment.Canceled,
-		CanceledAt: sql.NullTime{Valid: true, Time: assignment.CanceledAt},
+		CanceledAt: sql.NullTime{Valid: true, Time: *assignment.CanceledAt},
 		UpdatedAt:  assignment.UpdatedAt,
 		ID:         assignment.ID,
 	})
@@ -117,7 +291,7 @@ func (s *Store) CancelAssignment(ctx context.Context, assignment domain.Assignme
 func (s *Store) CompleteAssignment(ctx context.Context, assignment domain.Assignment) error {
 	err := s.Queries.CompleteAssignment(ctx, db.CompleteAssignmentParams{
 		Completed:   assignment.Completed,
-		CompletedAt: sql.NullTime{Valid: true, Time: assignment.CompletedAt},
+		CompletedAt: sql.NullTime{Valid: true, Time: *assignment.CompletedAt},
 		UpdatedAt:   assignment.UpdatedAt,
 		ID:          assignment.ID,
 	})
@@ -170,14 +344,16 @@ func (s *Store) GetAssignmentsForBalancing(ctx context.Context, horizonStart, ho
 
 	var assignments []domain.AssignmentWithMetadata
 	for _, dbAssignmentWithMetadata := range dbAssignmentsWithMetadata {
-		var completedAt time.Time
-		var canceledAt time.Time
+		var completedAt *time.Time
+		var canceledAt *time.Time
 		if dbAssignmentWithMetadata.CompletedAt.Valid {
-			completedAt = dbAssignmentWithMetadata.CompletedAt.Time
+			t := dbAssignmentWithMetadata.CompletedAt.Time
+			completedAt = &t
 		}
 
 		if dbAssignmentWithMetadata.CanceledAt.Valid {
-			canceledAt = dbAssignmentWithMetadata.CanceledAt.Time
+			t := dbAssignmentWithMetadata.CanceledAt.Time
+			canceledAt = &t
 		}
 
 		assignment := domain.Assignment{

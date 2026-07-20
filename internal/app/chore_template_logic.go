@@ -52,7 +52,7 @@ func (a *App) ValidateChoreTemplateAssignee(ctx context.Context, requesterID, ne
 	return nil
 }
 
-func (a *App) CreateChoreTemplate(ctx context.Context, requesterID, name, cadence, assignee string, duration *int) (domain.ChoreTemplate, error) {
+func (a *App) CreateChoreTemplate(ctx context.Context, requesterID, name, cadence, assignee, instructions string, duration *int) (domain.ChoreTemplate, error) {
 	exists, err := a.choreNameExists(ctx, name)
 
 	if err != nil {
@@ -78,13 +78,14 @@ func (a *App) CreateChoreTemplate(ctx context.Context, requesterID, name, cadenc
 	id := uuid.NewString()
 
 	chore := domain.ChoreTemplate{
-		ID:        id,
-		Name:      name,
-		Cadence:   domain.Cadence(cadence),
-		Assignee:  assignee,
-		Duration:  *duration,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		ID:           id,
+		Name:         name,
+		Cadence:      domain.Cadence(cadence),
+		Assignee:     assignee,
+		Instructions: instructions,
+		Duration:     *duration,
+		CreatedAt:    time.Now(),
+		UpdatedAt:    time.Now(),
 	}
 
 	err = a.Store.AddChoreTemplate(context.Background(), chore)
@@ -117,7 +118,7 @@ func (a *App) GetChoreTemplateByID(ctx context.Context, id string) (domain.Chore
 	return tmp, nil
 }
 
-func (a *App) EditChoreTemplate(ctx context.Context, requesterID, id, name, cadence, assignee string, duration *int) (domain.ChoreTemplate, error) {
+func (a *App) EditChoreTemplate(ctx context.Context, requesterID, id, name, cadence, assignee, instructions string, duration *int) (domain.ChoreTemplate, error) {
 	tmp, err := a.GetChoreTemplateByID(ctx, id)
 
 	if err != nil {
@@ -141,13 +142,14 @@ func (a *App) EditChoreTemplate(ctx context.Context, requesterID, id, name, cade
 	}
 
 	updatedTmp := domain.ChoreTemplate{
-		ID:        id,
-		Name:      name,
-		Cadence:   domain.Cadence(cadence),
-		Assignee:  assignee,
-		Duration:  *duration,
-		CreatedAt: tmp.CreatedAt,
-		UpdatedAt: time.Now(),
+		ID:           id,
+		Name:         name,
+		Cadence:      domain.Cadence(cadence),
+		Assignee:     assignee,
+		Instructions: instructions,
+		Duration:     *duration,
+		CreatedAt:    tmp.CreatedAt,
+		UpdatedAt:    time.Now(),
 	}
 
 	err = a.Store.EditChoreTemplate(ctx, updatedTmp)

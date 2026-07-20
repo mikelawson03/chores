@@ -3,6 +3,7 @@ import { Typography } from "@mui/material";
 import { Stack } from "@mui/material";
 import { Checkbox } from "@mui/material";
 import { clickableSurface } from "../../styles/surfaces";
+import { formatDuration } from "../../utils/formatters";
 
 
 export default function PlannerTaskCard({ task, toggleTaskComplete, width, openTaskDetails }) {
@@ -41,17 +42,17 @@ export default function PlannerTaskCard({ task, toggleTaskComplete, width, openT
           textDecoration: txtDecoration, 
           color: txtColor
           }}>
-          {task.title}
+          {task.templateName}
         </Typography>
         <Typography variant="body2" sx = {{ color: txtColor, textDecoration: txtDecoration, mb: 0.25, lineHeight: 1.15}}>
-          {task.assignee}
+          {task.userName ? task.userName : "Unassigned"}
         </Typography>
         <Stack 
           direction="row" 
           sx = {{ width: "100%", justifyContent:"space-between"  }}
         >
           <Typography variant="body2" sx={{ color: txtColor, textDecoration: txtDecoration }}>
-            {task.duration}
+            {formatDuration(task.duration)}
           </Typography>
           <Checkbox 
             checked={task.completed} 

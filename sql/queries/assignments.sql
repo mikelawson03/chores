@@ -5,29 +5,46 @@ INSERT INTO assignments (
     assigned_user_id,
     due_date, 
     scheduled_for,
+    instructions,
+    notes,
     completed, 
     canceled, 
     created_at, 
     updated_at,
     completed_at,
     canceled_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
 -- name: GetAllAssignments :many
-SELECT *
-FROM assignments;
+SELECT 
+    a.*, 
+    ct.name,
+    ct.duration, 
+    ct.cadence
+FROM assignments a
+JOIN chore_templates ct ON a.template_id = ct.id;
 
--- name: GetAssignmentByID :one
-SELECT *
-FROM assignments
-WHERE id = ?;
+-- name: GetAssignment :one
+SELECT 
+    a.*, 
+    ct.name,
+    ct.duration, 
+    ct.cadence
+FROM assignments a
+JOIN chore_templates ct ON a.template_id = ct.id
+WHERE a.id = ?;
 
 -- name: EditAssignment :exec
 UPDATE assignments
 SET assigned_user_id = ?,
-scheduled_for =?,
+scheduled_for = ?,
+notes = ?,
 created_at = ?,
-updated_at = ?
+updated_at = ?,
+completed = ?,
+canceled = ?,
+completed_at = ?,
+canceled_at = ?
 WHERE id = ?;
 
 -- name: CancelAssignment :exec

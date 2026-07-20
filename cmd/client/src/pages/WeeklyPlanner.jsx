@@ -23,7 +23,7 @@ export default function WeeklyPlanner({ tasks, toggleTaskComplete, openTaskDetai
   const plannerDays = days.map(day => ({
     day,
     tasks: tasks.filter(
-      task => task.scheduledFor === day.format("YYYY-MM-DD")
+      task => dayjs(task.scheduledFor).isSame(day, "day")
     ),
   }));
 

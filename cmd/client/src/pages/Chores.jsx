@@ -90,9 +90,7 @@ export default function Chores() {
         >
           <PageHeader title="Chore Management" />
         </Box>
-        <Stack direction="column" sx={{flex: 1, width: "95%"}}>
           <ChoresTable choreTemplates={choreTemplates} openEditChore={openEditChore} editNewChore={editNewChore}/>
-        </Stack>
           {editedChoreTemplate && 
             <EditChore 
               open={editChoreOpen} 

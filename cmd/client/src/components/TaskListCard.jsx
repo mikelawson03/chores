@@ -21,7 +21,7 @@ export default function TaskListCard({ cardName, tasks, maxItems, footerText, op
               <ListItemIcon>
                 <Checkbox checked={task.completed} onChange={() => {toggleTaskComplete(task);}}/>
               </ListItemIcon>
-              <ListItemText onClick={() => openTaskDetails(task)} primary={task.title} sx = {[clickableText, { color: task.completed ? "text.secondary" : "text.primary", textDecoration: task.completed ? "line-through" : "none"}]} />
+              <ListItemText onClick={() => openTaskDetails(task)} primary={task.templateName} sx = {[clickableText, { color: task.completed ? "text.secondary" : "text.primary", textDecoration: task.completed ? "line-through" : "none"}]} />
             </ListItem>
           ))
         }

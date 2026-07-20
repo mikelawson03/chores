@@ -13,6 +13,8 @@ type Assignment struct {
 	ID             string
 	TemplateID     string
 	AssignedUserID string
+	Instructions   sql.NullString
+	Notes          sql.NullString
 	DueDate        time.Time
 	ScheduledFor   sql.NullTime
 	Completed      bool
@@ -28,8 +30,8 @@ type ChoreTemplate struct {
 	Name         string
 	Cadence      string
 	Assignee     sql.NullString
-	Duration     int64
 	Instructions sql.NullString
+	Duration     int64
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 }

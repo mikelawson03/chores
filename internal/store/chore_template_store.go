@@ -11,18 +11,21 @@ import (
 
 func dbTemplateToDomainTemplate(dbTmp db.ChoreTemplate) domain.ChoreTemplate {
 	return domain.ChoreTemplate{
-		ID:        dbTmp.ID,
-		Name:      dbTmp.Name,
-		Cadence:   domain.Cadence(dbTmp.Cadence),
-		Assignee:  dbTmp.Assignee.String,
-		Duration:  int(dbTmp.Duration),
-		CreatedAt: dbTmp.CreatedAt,
-		UpdatedAt: dbTmp.UpdatedAt,
+		ID:           dbTmp.ID,
+		Name:         dbTmp.Name,
+		Cadence:      domain.Cadence(dbTmp.Cadence),
+		Assignee:     dbTmp.Assignee.String,
+		Instructions: dbTmp.Instructions.String,
+		Duration:     int(dbTmp.Duration),
+		CreatedAt:    dbTmp.CreatedAt,
+		UpdatedAt:    dbTmp.UpdatedAt,
 	}
 }
 
 func (s *Store) AddChoreTemplate(ctx context.Context, tmp domain.ChoreTemplate) error {
 	var assignee sql.NullString
+	var instructions sql.NullString
+
 	if tmp.Assignee != "" {
 		assignee = sql.NullString{
 			String: tmp.Assignee,
@@ -32,14 +35,24 @@ func (s *Store) AddChoreTemplate(ctx context.Context, tmp domain.ChoreTemplate) 
 		assignee.Valid = false
 	}
 
+	if tmp.Instructions != "" {
+		instructions = sql.NullString{
+			String: tmp.Instructions,
+			Valid:  true,
+		}
+	} else {
+		instructions.Valid = false
+	}
+
 	err := s.Queries.CreateChoreTemplate(ctx, db.CreateChoreTemplateParams{
-		ID:        tmp.ID,
-		Name:      tmp.Name,
-		Cadence:   string(tmp.Cadence),
-		Assignee:  assignee,
-		Duration:  int64(tmp.Duration),
-		CreatedAt: tmp.CreatedAt,
-		UpdatedAt: tmp.UpdatedAt,
+		ID:           tmp.ID,
+		Name:         tmp.Name,
+		Cadence:      string(tmp.Cadence),
+		Assignee:     assignee,
+		Instructions: instructions,
+		Duration:     int64(tmp.Duration),
+		CreatedAt:    tmp.CreatedAt,
+		UpdatedAt:    tmp.UpdatedAt,
 	})
 
 	if err != nil {
@@ -89,6 +102,8 @@ func (s *Store) GetChoreTemplates(ctx context.Context) ([]domain.ChoreTemplate, 
 
 func (s *Store) EditChoreTemplate(ctx context.Context, tmp domain.ChoreTemplate) error {
 	var assignee sql.NullString
+	var instructions sql.NullString
+
 	if tmp.Assignee != "" {
 		assignee = sql.NullString{
 			String: tmp.Assignee,
@@ -98,13 +113,23 @@ func (s *Store) EditChoreTemplate(ctx context.Context, tmp domain.ChoreTemplate)
 		assignee.Valid = false
 	}
 
+	if tmp.Instructions != "" {
+		instructions = sql.NullString{
+			String: tmp.Instructions,
+			Valid:  true,
+		}
+	} else {
+		instructions.Valid = false
+	}
+
 	err := s.Queries.EditChoreTemplate(ctx, db.EditChoreTemplateParams{
-		Name:      tmp.Name,
-		Cadence:   string(tmp.Cadence),
-		Assignee:  assignee,
-		Duration:  int64(tmp.Duration),
-		UpdatedAt: time.Now(),
-		ID:        tmp.ID,
+		Name:         tmp.Name,
+		Cadence:      string(tmp.Cadence),
+		Assignee:     assignee,
+		Instructions: instructions,
+		Duration:     int64(tmp.Duration),
+		UpdatedAt:    time.Now(),
+		ID:           tmp.ID,
 	})
 
 	if err != nil {

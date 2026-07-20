@@ -3,6 +3,7 @@ import { Typography } from "@mui/material";
 import { Stack } from "@mui/material";
 import { Checkbox } from "@mui/material";
 import { clickableSurface } from "../styles/surfaces";
+import { formatDuration } from "../utils/formatters";
 
 export default function TaskCard({ task, openTaskDetails, toggleTaskComplete }) {
   return (
@@ -20,17 +21,17 @@ export default function TaskCard({ task, openTaskDetails, toggleTaskComplete }) 
         textDecoration: task.completed ? "line-through" : "none", 
         color: task.completed ? "text.secondary" : "text.primary"
         }}>
-        {task.title}
+        {task.templateName}
       </Typography>
       <Typography variant="body2" sx = {{ color: 'text.secondary', textDecoration: task.completed ? "line-through" : "none"}}>
-        Assigned to: {task.assignee}
+        {task.userName ? `Assigned to: ${task.userName}` : "Unassigned"}
       </Typography>
       <Stack 
         direction="row" 
         sx = {{ width: "100%", justifyContent:"space-between"  }}
       >
         <Typography variant="body2" sx={{ color: 'text.secondary', textDecoration: task.completed ? "line-through" : "none" }}>
-          {task.duration}
+          {formatDuration(task.duration)}
         </Typography>
         <Checkbox 
           checked={task.completed} 

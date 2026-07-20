@@ -6,7 +6,7 @@ export default function CalendarContent({ currentDate, days, maxDayItems, onOver
     return (
         <Stack direction="row" sx={{
             flex: 1,
-            
+            minHeight: 0
         }}>
             <CalendarGrid 
                 currentDate={currentDate} 

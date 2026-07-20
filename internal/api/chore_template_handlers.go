@@ -8,10 +8,11 @@ import (
 )
 
 type ChoreTemplateRequest struct {
-	Name     string `json:"name"`
-	Cadence  string `json:"cadence"`
-	Assignee string `json:"assignee"`
-	Duration *int   `json:"duration"`
+	Name         string `json:"name"`
+	Cadence      string `json:"cadence"`
+	Assignee     string `json:"assignee"`
+	Instructions string `json:"instructions"`
+	Duration     *int   `json:"duration"`
 }
 
 func CreateChoreTeplateRequest(r *http.Request) (*ChoreTemplateRequest, error) {
@@ -48,7 +49,7 @@ func (cfg *apiCfg) handlerAddChoreTemplate(w http.ResponseWriter, r *http.Reques
 	}
 
 	ctx := r.Context()
-	chore, err := cfg.App.CreateChoreTemplate(ctx, requesterID, req.Name, req.Cadence, req.Assignee, req.Duration)
+	chore, err := cfg.App.CreateChoreTemplate(ctx, requesterID, req.Name, req.Cadence, req.Assignee, req.Instructions, req.Duration)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Error adding chore: ", err)
 		return
@@ -77,7 +78,7 @@ func (cfg *apiCfg) handlerEditChoreTemplate(w http.ResponseWriter, r *http.Reque
 		return
 	}
 	ctx := r.Context()
-	c, err := cfg.App.EditChoreTemplate(ctx, requesterID, id, req.Name, req.Cadence, req.Assignee, req.Duration)
+	c, err := cfg.App.EditChoreTemplate(ctx, requesterID, id, req.Name, req.Cadence, req.Assignee, req.Instructions, req.Duration)
 	if err != nil {
 		RespondWithError(w, http.StatusNotFound, "Error updating chore: ", err)
 		return

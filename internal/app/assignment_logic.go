@@ -52,15 +52,24 @@ func validateDueDate(dueDate *time.Time) error {
 	return nil
 }
 
-func (a *App) createNewAssignment(templateID string, assignedUserID string, dueDate *time.Time, scheduledFor *time.Time) domain.Assignment {
+func (a *App) createNewAssignment(templateID, assignedUserID, instructions string, dueDate *time.Time, scheduledFor *time.Time) domain.Assignment {
 	id := uuid.NewString()
 	now := time.Now()
+
+	var assignmentScheduledFor *time.Time
+
+	if scheduledFor != nil {
+		t := *scheduledFor
+		assignmentScheduledFor = &t
+	}
+
 	assignment := domain.Assignment{
 		ID:             id,
 		TemplateID:     templateID,
 		AssignedUserID: assignedUserID,
+		Instructions:   instructions,
 		DueDate:        *dueDate,
-		ScheduledFor:   *scheduledFor,
+		ScheduledFor:   assignmentScheduledFor,
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	}
@@ -68,7 +77,7 @@ func (a *App) createNewAssignment(templateID string, assignedUserID string, dueD
 	return assignment
 }
 
-func (a *App) CreateAssignmentForUser(ctx context.Context, requesterID, templateID, assignedUserID string, dueDate *time.Time, scheduledFor *time.Time) (domain.Assignment, error) {
+func (a *App) CreateAssignmentForUser(ctx context.Context, requesterID, templateID, assignedUserID, instructions string, dueDate, scheduledFor *time.Time) (domain.Assignment, error) {
 	// validate that templateID is provided and exists
 	err := a.validateTemplateID(ctx, templateID)
 	if err != nil {
@@ -98,7 +107,7 @@ func (a *App) CreateAssignmentForUser(ctx context.Context, requesterID, template
 		return domain.Assignment{}, err
 	}
 
-	assignment := a.createNewAssignment(templateID, assignedUserID, dueDate, scheduledFor)
+	assignment := a.createNewAssignment(templateID, assignedUserID, instructions, dueDate, scheduledFor)
 
 	err = a.Store.AddAssignment(ctx, assignment)
 	if err != nil {
@@ -118,7 +127,7 @@ func (a *App) GetAllAssignments(ctx context.Context) ([]domain.Assignment, error
 }
 
 func (a *App) GetAssignmentByID(ctx context.Context, id string) (domain.Assignment, error) {
-	assignment, err := a.Store.GetAssignmentByID(ctx, id)
+	assignment, err := a.Store.GetAssignment(ctx, id)
 	if errors.Is(err, sql.ErrNoRows) {
 		return domain.Assignment{}, fmt.Errorf("assignment with ID %s not found", id)
 	}
@@ -130,39 +139,63 @@ func (a *App) GetAssignmentByID(ctx context.Context, id string) (domain.Assignme
 	return assignment, nil
 }
 
-func (a *App) EditAssignment(ctx context.Context, requesterID, assignmentID, assignedUserID string) (domain.Assignment, error) {
+func (a *App) EditAssignment(ctx context.Context, requesterID, assignmentID, assignedUserID, notes string, canceled, completed bool, scheduledFor *time.Time) (domain.Assignment, error) {
 	// check assignment exists
 	existing, err := a.GetAssignmentByID(ctx, assignmentID)
 	if err != nil {
 		return domain.Assignment{}, err
 	}
 
-	// check user owns assignment
-	if existing.AssignedUserID != requesterID {
-		return domain.Assignment{}, errors.New("may not edit chores belonging to other users")
-	}
+	// // check user owns assignment
+	// if existing.AssignedUserID != requesterID {
+	// 	return domain.Assignment{}, errors.New("may not edit chores belonging to other users")
+	// }
 
 	// check that userID is provided and valid
-	err = a.validateAssignedUserID(ctx, assignedUserID)
-	if err != nil {
-		return domain.Assignment{}, err
+	// err = a.validateAssignedUserID(ctx, assignedUserID)
+	// if err != nil {
+	// 	return domain.Assignment{}, err
+	// }
+
+	// // check assignment is to self
+	// if requesterID != assignedUserID {
+	// 	return domain.Assignment{}, errors.New("may not assign chores to other users")
+	// }
+
+	var completedAt *time.Time
+	var canceledAt *time.Time
+
+	if !existing.Completed && completed {
+		t := time.Now()
+		completedAt = &t
+	} else if existing.Completed && !completed {
+		completedAt = nil
 	}
 
-	// check assignment is to self
-	if requesterID != assignedUserID {
-		return domain.Assignment{}, errors.New("may not assign chores to other users")
+	if !existing.Canceled && canceled {
+		t := time.Now()
+		canceledAt = &t
+	} else if existing.Canceled && !canceled {
+		canceledAt = nil
 	}
 
 	assignment := domain.Assignment{
 		ID:             assignmentID,
 		TemplateID:     existing.TemplateID,
+		TemplateName:   existing.TemplateName,
 		AssignedUserID: assignedUserID,
-		Completed:      existing.Completed,
-		Canceled:       existing.Canceled,
+		Cadence:        existing.Cadence,
+		Duration:       existing.Duration,
+		Instructions:   existing.Instructions,
+		Notes:          notes,
+		DueDate:        existing.DueDate,
+		ScheduledFor:   scheduledFor,
+		Completed:      completed,
+		Canceled:       canceled,
 		CreatedAt:      existing.CreatedAt,
 		UpdatedAt:      time.Now(),
-		CompletedAt:    existing.CompletedAt,
-		CanceledAt:     existing.CanceledAt,
+		CompletedAt:    completedAt,
+		CanceledAt:     canceledAt,
 	}
 
 	err = a.Store.EditAssignment(ctx, assignment)
@@ -199,7 +232,7 @@ func (a *App) CancelAssignment(ctx context.Context, assignmentID, requesterID st
 		CreatedAt:      existing.CreatedAt,
 		UpdatedAt:      now,
 		CompletedAt:    existing.CompletedAt,
-		CanceledAt:     now,
+		CanceledAt:     &now,
 	}
 
 	err = a.Store.CancelAssignment(ctx, assignment)
@@ -234,7 +267,7 @@ func (a *App) CompleteAssignment(ctx context.Context, assignmentID, requesterID 
 		Canceled:       existing.Canceled,
 		CreatedAt:      existing.CreatedAt,
 		UpdatedAt:      now,
-		CompletedAt:    now,
+		CompletedAt:    &now,
 		CanceledAt:     existing.CanceledAt,
 	}
 

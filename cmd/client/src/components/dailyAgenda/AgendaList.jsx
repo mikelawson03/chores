@@ -1,6 +1,6 @@
 import { Box, Fade, Stack, Typography } from "@mui/material";
 import AgendaCard from "./AgendaCard";
-import { getScheduledTasksForDay } from "../../utils/taskFilters";
+import { getScheduledTasksForDay } from "../../utils/taskHelpers";
 
 export default function AgendaList({ tasks, openTaskDetails, toggleTaskComplete }) {
     return (

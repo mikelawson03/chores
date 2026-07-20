@@ -2,7 +2,7 @@ import { Box, Stack } from "@mui/material"
 import DayColumn from "./DayColumn"
 
 export default function WeeklyGrid({plannerDays, toggleTaskComplete, openTaskDetails}) {
-  return (
+  return (    
     <Stack 
       direction="row" 
       sx = {{

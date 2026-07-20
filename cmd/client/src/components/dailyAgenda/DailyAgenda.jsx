@@ -1,7 +1,7 @@
 import { Box, Dialog, DialogContent, DialogTitle, IconButton, Stack, Typography } from "@mui/material";
 import AgendaHeader from "./AgendaHeader";
 import AgendaList from "./AgendaList";
-import { getScheduledTasksForDay } from "../../utils/taskFilters";
+import { getScheduledTasksForDay } from "../../utils/taskHelpers";
 
 
 export default function DailyAgenda({ activeTasks, dailyAgendaOpen, onDailyAgendaClose, agendaDate, onNextAgendaDay, onPreviousAgendaDay, openTaskDetails, toggleTaskComplete }) {

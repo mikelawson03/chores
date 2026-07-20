@@ -5,10 +5,11 @@ import CalendarDay from "./CalendarDay";
 export default function CalendarCells({currentDate, days, maxDayItems, onOverflowClick, openTaskDetails}) {
     return(
         <Box sx={{
+            flex: 1,
+            minHeight: 0,
             display: "grid",
             gridTemplateColumns:"repeat(7, 1fr)",
             gridTemplateRows: "repeat(6, 1fr)",
-            height: "100%",
         }}>
             
             {days.map(({ day, tasks }, index) => (

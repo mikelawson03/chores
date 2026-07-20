@@ -3,7 +3,9 @@ import dayjs from "dayjs";
 
 export default function TaskShelfPanel({ title, tasks, openTaskDetails }) {
     return(
-        <Stack spacing={2} sx={{pt: 2}}>
+        <Stack spacing={2} 
+            sx={{pt: 2}}
+        >
             {tasks.map( task => 
                 <Box 
                     key={task.id}
@@ -18,7 +20,7 @@ export default function TaskShelfPanel({ title, tasks, openTaskDetails }) {
                         }
                     }}
                 >
-                    <Typography variant="body1">{dayjs(task.dueDate).format("MMM DD")} - {task.title}</Typography>
+                    <Typography variant="body1">{dayjs(task.dueDate).format("MMM DD")} - {task.templateName}</Typography>
                 </Box>
             )}
         </Stack>
