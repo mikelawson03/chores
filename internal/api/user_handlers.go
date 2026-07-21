@@ -7,17 +7,19 @@ import (
 	"net/http"
 )
 
-type UserRequest struct {
-	Username string `json:"username"`
+type NewUserRequest struct {
+	Username  string `json:"username"`
+	Role      string `json:"role"`
+	FirstName string `json:"firstName"`
 }
 
-func CreateNewUserRequest(r *http.Request) (*UserRequest, error) {
+func CreateNewUserRequest(r *http.Request) (*NewUserRequest, error) {
 	d := json.NewDecoder(r.Body)
-	req := &UserRequest{}
+	req := &NewUserRequest{}
 
 	err := d.Decode(req)
 	if err != nil {
-		return &UserRequest{}, err
+		return &NewUserRequest{}, err
 	}
 
 	return req, nil
