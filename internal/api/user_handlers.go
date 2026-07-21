@@ -10,7 +10,24 @@ import (
 type NewUserRequest struct {
 	Username  string `json:"username"`
 	Role      string `json:"role"`
-	FirstName string `json:"firstName"`
+	FirstName string `json:"first_name"`
+}
+
+type LoginRequest struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+type UserResponse struct {
+	ID        string `json:"id"`
+	Username  string `json:"username"`
+	FirstName string `json:"first_name"`
+	Role      string `json:"role"`
+}
+
+type LoginResponse struct {
+	User  UserResponse `json:"id"`
+	Token string       `json:"token"`
 }
 
 func CreateNewUserRequest(r *http.Request) (*NewUserRequest, error) {
@@ -33,7 +50,7 @@ func (cfg *apiCfg) handlerAddUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := cfg.App.CreateNewUser(ctx, userReq.Username)
+	user, err := cfg.App.CreateNewUser(ctx, userReq.Username, userReq.Role, userReq.FirstName)
 	if err != nil {
 		RespondWithError(w, http.StatusInternalServerError, "Error creating new user", err)
 		return
@@ -109,4 +126,35 @@ func (cfg *apiCfg) handlerDeleteUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (cfg *apiCfg) handlerLogin(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	d := json.NewDecoder(r.Body)
+	req := &LoginRequest{}
+
+	err := d.Decode(req)
+	if err != nil {
+		RespondWithError(w, http.StatusUnauthorized, "", err)
+		return
+	}
+
+	result, err := cfg.App.LoginUser(ctx, req.Username, req.Password)
+	if err != nil {
+		RespondWithError(w, http.StatusInternalServerError, "Error logging in user", err)
+		return
+	}
+
+	resp := LoginResponse{
+		User: UserResponse{
+			ID:        result.User.ID,
+			Username:  result.User.Username,
+			FirstName: result.User.FirstName,
+			Role:      result.User.Role,
+		},
+		Token: result.Token,
+	}
+
+	RespondWithJSON(w, http.StatusOK, resp)
+
 }

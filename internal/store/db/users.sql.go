@@ -12,14 +12,15 @@ import (
 
 const createUser = `-- name: CreateUser :exec
 
-INSERT INTO users (id, username, role, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?)
+INSERT INTO users (id, username, role, first_name, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?)
 `
 
 type CreateUserParams struct {
 	ID        string
 	Username  string
 	Role      string
+	FirstName string
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
@@ -29,6 +30,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
 		arg.ID,
 		arg.Username,
 		arg.Role,
+		arg.FirstName,
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)
@@ -64,7 +66,7 @@ func (q *Queries) EditUser(ctx context.Context, arg EditUserParams) error {
 }
 
 const getAllUsers = `-- name: GetAllUsers :many
-SELECT id, username, role, created_at, updated_at
+SELECT id, username, first_name, role, created_at, updated_at
 FROM users
 `
 
@@ -80,6 +82,7 @@ func (q *Queries) GetAllUsers(ctx context.Context) ([]User, error) {
 		if err := rows.Scan(
 			&i.ID,
 			&i.Username,
+			&i.FirstName,
 			&i.Role,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -98,7 +101,7 @@ func (q *Queries) GetAllUsers(ctx context.Context) ([]User, error) {
 }
 
 const getUserByID = `-- name: GetUserByID :one
-SELECT id, username, role, created_at, updated_at
+SELECT id, username, first_name, role, created_at, updated_at
 FROM users
 WHERE id = ?
 `
@@ -109,6 +112,7 @@ func (q *Queries) GetUserByID(ctx context.Context, id string) (User, error) {
 	err := row.Scan(
 		&i.ID,
 		&i.Username,
+		&i.FirstName,
 		&i.Role,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -117,7 +121,7 @@ func (q *Queries) GetUserByID(ctx context.Context, id string) (User, error) {
 }
 
 const getUserByUsername = `-- name: GetUserByUsername :one
-SELECT id, username, role, created_at, updated_at
+SELECT id, username, first_name, role, created_at, updated_at
 FROM users
 WHERE username = ?
 `
@@ -128,6 +132,7 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User,
 	err := row.Scan(
 		&i.ID,
 		&i.Username,
+		&i.FirstName,
 		&i.Role,
 		&i.CreatedAt,
 		&i.UpdatedAt,

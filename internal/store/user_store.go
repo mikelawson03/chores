@@ -11,6 +11,7 @@ func dbUserToDomainUser(user db.User) domain.User {
 	return domain.User{
 		ID:        user.ID,
 		Username:  user.Username,
+		FirstName: user.FirstName,
 		Role:      user.Role,
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
@@ -22,6 +23,7 @@ func (s *Store) CreateUser(ctx context.Context, u domain.User) error {
 		ID:        u.ID,
 		Username:  u.Username,
 		Role:      u.Role,
+		FirstName: u.FirstName,
 		CreatedAt: u.CreatedAt,
 		UpdatedAt: u.UpdatedAt,
 	})

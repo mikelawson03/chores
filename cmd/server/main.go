@@ -9,8 +9,10 @@ import (
 
 	"github.com/joho/godotenv"
 	_ "github.com/mattn/go-sqlite3"
-	api "github.com/mikelawson03/chores/internal/api"
+	"github.com/mikelawson03/chores/internal/api"
+	"github.com/mikelawson03/chores/internal/app"
 	"github.com/mikelawson03/chores/internal/middleware"
+	"github.com/mikelawson03/chores/internal/store"
 	"github.com/pressly/goose"
 )
 
@@ -57,11 +59,18 @@ func main() {
 	godotenv.Load()
 	port := os.Getenv("PORT")
 	dbPath := os.Getenv("DB_PATH")
+	devUsername := os.Getenv("DEV_USERNAME")
+	devPassword := os.Getenv("DEV_PASSWORD")
+	JWTSigninSecret := os.Getenv("JWT_SIGNIN_SECRET")
 
 	dbConn := dbConnect(dbPath)
 	dbMigrate(dbConn)
 
-	cfg := api.NewApiConfig(dbConn)
+	config := app.NewConfig(JWTSigninSecret, devPassword, devUsername)
+	store := store.NewStore(dbConn)
+	app := app.NewApp(store, config)
+
+	cfg := api.NewApiConfig(app)
 
 	m := http.NewServeMux()
 	cfg.RegisterRoutes(m)

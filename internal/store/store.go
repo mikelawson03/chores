@@ -10,3 +10,10 @@ type Store struct {
 	Db      *sql.DB
 	Queries *db.Queries
 }
+
+func NewStore(dbConn *sql.DB) *Store {
+	return &Store{
+		Db:      dbConn,
+		Queries: db.New(dbConn),
+	}
+}

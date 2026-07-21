@@ -3,13 +3,33 @@ package app
 import (
 	"time"
 
-	"github.com/mikelawson03/chores/internal/domain"
 	"github.com/mikelawson03/chores/internal/store"
 )
 
+type Config struct {
+	JWTSigninSecret  string
+	DevLoginPassword string
+	DevUsername      string
+}
+
 type App struct {
-	Store       *store.Store
-	Assignments []domain.Assignment
+	Store  *store.Store
+	Config Config
+}
+
+func NewConfig(secret, password, user string) Config {
+	return Config{
+		JWTSigninSecret:  secret,
+		DevLoginPassword: password,
+		DevUsername:      user,
+	}
+}
+
+func NewApp(store *store.Store, config Config) *App {
+	return &App{
+		Store:  store,
+		Config: config,
+	}
 }
 
 func (a *App) getHorizonWindow() (start time.Time, end time.Time) {

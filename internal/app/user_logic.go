@@ -5,11 +5,18 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"os"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/mikelawson03/chores/internal/auth"
 	"github.com/mikelawson03/chores/internal/domain"
 )
+
+type LoginResult struct {
+	User  domain.User
+	Token string
+}
 
 func (a *App) UsernameExists(ctx context.Context, username string) (bool, error) {
 	_, err := a.Store.GetUserByUsername(ctx, username)
@@ -26,7 +33,7 @@ func (a *App) UsernameExists(ctx context.Context, username string) (bool, error)
 
 }
 
-func (a *App) CreateNewUser(ctx context.Context, username string) (domain.User, error) {
+func (a *App) CreateNewUser(ctx context.Context, username, role, firstName string) (domain.User, error) {
 	exists, err := a.UsernameExists(ctx, username)
 
 	if err != nil {
@@ -40,7 +47,8 @@ func (a *App) CreateNewUser(ctx context.Context, username string) (domain.User, 
 	user := domain.User{
 		ID:        uuid.NewString(),
 		Username:  username,
-		Role:      "user",
+		Role:      role,
+		FirstName: firstName,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
 	}
@@ -123,4 +131,30 @@ func (a *App) DeleteUser(ctx context.Context, id, requesterID string) error {
 	}
 
 	return nil
+}
+
+func (a *App) LoginUser(ctx context.Context, username, password string) (LoginResult, error) {
+
+	devUsername := os.Getenv("DEV_USERNAME")
+	devPassword := os.Getenv("DEV_PASSWORD")
+
+	if username != devUsername || password != devPassword {
+		return LoginResult{}, errors.New("Invalid credentials")
+	}
+
+	user, err := a.Store.GetUserByUsername(ctx, username)
+	if err != nil {
+		return LoginResult{}, err
+	}
+
+	token, err := auth.GenerateToken(user.ID, a.Config.JWTSigninSecret, time.Hour*24*30)
+	if err != nil {
+		return LoginResult{}, err
+	}
+
+	return LoginResult{
+		User:  user,
+		Token: token,
+	}, err
+
 }
