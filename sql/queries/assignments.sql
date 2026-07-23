@@ -47,20 +47,6 @@ completed_at = ?,
 canceled_at = ?
 WHERE id = ?;
 
--- name: CancelAssignment :exec
-UPDATE assignments
-SET canceled = ?,
-canceled_at = ?,
-updated_at = ?
-WHERE id = ?;
-
--- name: CompleteAssignment :exec
-UPDATE assignments
-SET completed = ?,
-completed_at = ?,
-updated_at = ?
-WHERE id = ?;
-
 -- name: GetAssignmentsByDateRange :many
 SELECT *
 FROM assignments

@@ -273,36 +273,6 @@ func (s *Store) EditAssignment(ctx context.Context, assignment domain.Assignment
 	return nil
 }
 
-func (s *Store) CancelAssignment(ctx context.Context, assignment domain.Assignment) error {
-	err := s.Queries.CancelAssignment(ctx, db.CancelAssignmentParams{
-		Canceled:   assignment.Canceled,
-		CanceledAt: sql.NullTime{Valid: true, Time: *assignment.CanceledAt},
-		UpdatedAt:  assignment.UpdatedAt,
-		ID:         assignment.ID,
-	})
-
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (s *Store) CompleteAssignment(ctx context.Context, assignment domain.Assignment) error {
-	err := s.Queries.CompleteAssignment(ctx, db.CompleteAssignmentParams{
-		Completed:   assignment.Completed,
-		CompletedAt: sql.NullTime{Valid: true, Time: *assignment.CompletedAt},
-		UpdatedAt:   assignment.UpdatedAt,
-		ID:          assignment.ID,
-	})
-
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (s *Store) GetAssignmentsByTemplateID(ctx context.Context, id string) ([]domain.Assignment, error) {
 	dbAssignments, err := s.Queries.GetAssignmentsByTemplateID(ctx, id)
 	if err != nil {

@@ -116,32 +116,3 @@ func (cfg *apiCfg) handlerEditAssignment(w http.ResponseWriter, r *http.Request)
 
 	RespondWithJSON(w, http.StatusOK, res)
 }
-
-func (cfg *apiCfg) handlerCancelAssignment(w http.ResponseWriter, r *http.Request) {
-	assignmentID := r.PathValue("id")
-	requesterID := r.Header.Get("X-User-ID")
-	ctx := r.Context()
-
-	assignment, err := cfg.App.CancelAssignment(ctx, assignmentID, requesterID)
-	if err != nil {
-		RespondWithError(w, err)
-		return
-	}
-
-	RespondWithJSON(w, http.StatusOK, assignment)
-}
-
-func (cfg *apiCfg) handlerCompleteAssignment(w http.ResponseWriter, r *http.Request) {
-	assignmentID := r.PathValue("id")
-	requesterID := r.Header.Get("X-User-ID")
-	ctx := r.Context()
-
-	assignment, err := cfg.App.CompleteAssignment(ctx, assignmentID, requesterID)
-
-	if err != nil {
-		RespondWithError(w, err)
-		return
-	}
-
-	RespondWithJSON(w, http.StatusOK, assignment)
-}
