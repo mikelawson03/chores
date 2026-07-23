@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/mikelawson03/chores/internal/auth"
 	domain "github.com/mikelawson03/chores/internal/domain"
 )
 
@@ -40,27 +39,19 @@ func (a *App) validateChoreTemplateRequest(name string, cadence string, duration
 	return nil
 }
 
-func (a *App) ValidateChoreTemplateAssignee(ctx context.Context, requesterID, newAssignee string) error {
+func (a *App) ValidateChoreTemplateAssignee(ctx context.Context, newAssignee string) error {
 	_, err := a.GetUserByID(ctx, newAssignee)
 	if errors.Is(err, sql.ErrNoRows) {
 		return errors.New("assigned user does not exist")
 	}
 
-	if newAssignee != "" && requesterID != newAssignee {
-		return errors.New("may not assign templates to other users")
-	}
-
 	return nil
 }
 
-func (a *App) CreateChoreTemplate(ctx context.Context, requesterID, name, cadence, assignee, instructions string, duration *int) (domain.ChoreTemplate, error) {
-	user, ok := auth.UserFromContext(ctx)
-	if !ok {
-		return domain.ChoreTemplate{}, ErrUnauthorized
-	}
-
-	if user.Role != "admin" {
-		return domain.ChoreTemplate{}, ErrForbidden
+func (a *App) CreateChoreTemplate(ctx context.Context, name, cadence, assignee, instructions string, duration *int) (domain.ChoreTemplate, error) {
+	_, err := CheckAdmin(ctx)
+	if err != nil {
+		return domain.ChoreTemplate{}, err
 	}
 
 	exists, err := a.choreNameExists(ctx, name)
@@ -78,7 +69,7 @@ func (a *App) CreateChoreTemplate(ctx context.Context, requesterID, name, cadenc
 	}
 
 	if assignee != "" {
-		err = a.ValidateChoreTemplateAssignee(ctx, requesterID, assignee)
+		err = a.ValidateChoreTemplateAssignee(ctx, assignee)
 		if err != nil {
 			return domain.ChoreTemplate{}, err
 		}
@@ -106,6 +97,11 @@ func (a *App) CreateChoreTemplate(ctx context.Context, requesterID, name, cadenc
 }
 
 func (a *App) GetChoreTemplates(ctx context.Context) ([]domain.ChoreTemplate, error) {
+	_, err := CheckAdmin(ctx)
+	if err != nil {
+		return []domain.ChoreTemplate{}, err
+	}
+
 	tmps, err := a.Store.GetChoreTemplates(ctx)
 	if err != nil {
 		return []domain.ChoreTemplate{}, err
@@ -114,6 +110,11 @@ func (a *App) GetChoreTemplates(ctx context.Context) ([]domain.ChoreTemplate, er
 }
 
 func (a *App) GetChoreTemplateByID(ctx context.Context, id string) (domain.ChoreTemplate, error) {
+	_, err := CheckAdmin(ctx)
+	if err != nil {
+		return domain.ChoreTemplate{}, err
+	}
+
 	tmp, err := a.Store.GetTemplateByID(ctx, id)
 
 	if errors.Is(err, sql.ErrNoRows) {
@@ -127,19 +128,20 @@ func (a *App) GetChoreTemplateByID(ctx context.Context, id string) (domain.Chore
 	return tmp, nil
 }
 
-func (a *App) EditChoreTemplate(ctx context.Context, requesterID, id, name, cadence, assignee, instructions string, duration *int) (domain.ChoreTemplate, error) {
+func (a *App) EditChoreTemplate(ctx context.Context, id, name, cadence, assignee, instructions string, duration *int) (domain.ChoreTemplate, error) {
+	_, err := CheckAdmin(ctx)
+	if err != nil {
+		return domain.ChoreTemplate{}, err
+	}
+
 	tmp, err := a.GetChoreTemplateByID(ctx, id)
 
 	if err != nil {
 		return tmp, err
 	}
 
-	if tmp.Assignee != "" && tmp.Assignee != requesterID {
-		return domain.ChoreTemplate{}, errors.New("May not edit chores assigned to other users")
-	}
-
 	if assignee != "" {
-		err = a.ValidateChoreTemplateAssignee(ctx, requesterID, assignee)
+		err = a.ValidateChoreTemplateAssignee(ctx, assignee)
 		if err != nil {
 			return domain.ChoreTemplate{}, err
 		}
@@ -170,17 +172,17 @@ func (a *App) EditChoreTemplate(ctx context.Context, requesterID, id, name, cade
 	return updatedTmp, nil
 }
 
-func (a *App) DeleteChoreTemplate(ctx context.Context, id, requesterID string) error {
-	tmp, err := a.GetChoreTemplateByID(ctx, id)
+func (a *App) DeleteChoreTemplate(ctx context.Context, id string) error {
+	_, err := CheckAdmin(ctx)
 	if err != nil {
 		return err
 	}
 
-	if tmp.Assignee != "" && requesterID != tmp.Assignee {
-		return errors.New("May not delete other users' templates")
+	err = a.Store.DeleteChoreTemplate(ctx, id)
+	if errors.Is(err, sql.ErrNoRows) {
+		return fmt.Errorf("%w: chore template", ErrNotFound)
 	}
 
-	err = a.Store.DeleteChoreTemplate(ctx, id)
 	if err != nil {
 		return err
 	}

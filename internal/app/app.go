@@ -1,9 +1,12 @@
 package app
 
 import (
+	"context"
 	"errors"
 	"time"
 
+	"github.com/mikelawson03/chores/internal/auth"
+	"github.com/mikelawson03/chores/internal/domain"
 	"github.com/mikelawson03/chores/internal/store"
 )
 
@@ -65,4 +68,26 @@ func (a *App) getMonthlyPlanningEnd(horizonStart, horizonEnd time.Time) time.Tim
 		return nextMonthStart
 	}
 	return nextMonthStart.AddDate(0, 1, 0)
+}
+
+func AuthenticatedUser(ctx context.Context) (domain.User, error) {
+	user, ok := auth.UserFromContext(ctx)
+	if !ok {
+		return domain.User{}, ErrUnauthorized
+	}
+
+	return user, nil
+}
+
+func CheckAdmin(ctx context.Context) (domain.User, error) {
+	user, err := AuthenticatedUser(ctx)
+	if err != nil {
+		return domain.User{}, err
+	}
+
+	if user.Role != domain.RoleAdmin {
+		return domain.User{}, ErrForbidden
+	}
+
+	return user, nil
 }

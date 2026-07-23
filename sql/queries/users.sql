@@ -23,6 +23,7 @@ SET username = ?,
 updated_at = ?
 WHERE id = ?;
 
--- name: DeleteUser :exec
+-- name: DeleteUser :one
 DELETE FROM users
-WHERE id = ?;
+WHERE id = ?
+RETURNING id;

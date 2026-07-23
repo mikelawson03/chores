@@ -140,7 +140,7 @@ func (s *Store) EditChoreTemplate(ctx context.Context, tmp domain.ChoreTemplate)
 }
 
 func (s *Store) DeleteChoreTemplate(ctx context.Context, id string) error {
-	err := s.Queries.DeleteChoreTemplate(ctx, id)
+	_, err := s.Queries.DeleteChoreTemplate(ctx, id)
 
 	if err != nil {
 		return err

@@ -41,7 +41,6 @@ func (cfg *apiCfg) handlerGetChoreTemplates(w http.ResponseWriter, r *http.Reque
 }
 
 func (cfg *apiCfg) handlerAddChoreTemplate(w http.ResponseWriter, r *http.Request) {
-	requesterID := r.Header.Get("X-User-ID")
 	req, err := CreateChoreTeplateRequest(r)
 	if err != nil {
 		RespondWithError(w, err)
@@ -49,7 +48,7 @@ func (cfg *apiCfg) handlerAddChoreTemplate(w http.ResponseWriter, r *http.Reques
 	}
 
 	ctx := r.Context()
-	chore, err := cfg.App.CreateChoreTemplate(ctx, requesterID, req.Name, req.Cadence, req.Assignee, req.Instructions, req.Duration)
+	chore, err := cfg.App.CreateChoreTemplate(ctx, req.Name, req.Cadence, req.Assignee, req.Instructions, req.Duration)
 	if err != nil {
 		RespondWithError(w, err)
 		return
@@ -71,14 +70,13 @@ func (cfg *apiCfg) handlerGetChoreTemplateByID(w http.ResponseWriter, r *http.Re
 
 func (cfg *apiCfg) handlerEditChoreTemplate(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
-	requesterID := r.Header.Get("X-User-ID")
 	req, err := CreateChoreTeplateRequest(r)
 	if err != nil {
 		RespondWithError(w, err)
 		return
 	}
 	ctx := r.Context()
-	c, err := cfg.App.EditChoreTemplate(ctx, requesterID, id, req.Name, req.Cadence, req.Assignee, req.Instructions, req.Duration)
+	c, err := cfg.App.EditChoreTemplate(ctx, id, req.Name, req.Cadence, req.Assignee, req.Instructions, req.Duration)
 	if err != nil {
 		RespondWithError(w, err)
 		return
@@ -89,10 +87,9 @@ func (cfg *apiCfg) handlerEditChoreTemplate(w http.ResponseWriter, r *http.Reque
 
 func (cfg *apiCfg) handlerDeleteChoreTemplate(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
-	requesterID := r.Header.Get("X-User-ID")
 	ctx := r.Context()
 
-	err := cfg.App.DeleteChoreTemplate(ctx, id, requesterID)
+	err := cfg.App.DeleteChoreTemplate(ctx, id)
 	if err != nil {
 		RespondWithError(w, err)
 		return

@@ -41,14 +41,17 @@ func (q *Queries) CreateChoreTemplate(ctx context.Context, arg CreateChoreTempla
 	return err
 }
 
-const deleteChoreTemplate = `-- name: DeleteChoreTemplate :exec
+const deleteChoreTemplate = `-- name: DeleteChoreTemplate :one
 DELETE FROM chore_templates
 WHERE id = ?
+RETURNING id
 `
 
-func (q *Queries) DeleteChoreTemplate(ctx context.Context, id string) error {
-	_, err := q.db.ExecContext(ctx, deleteChoreTemplate, id)
-	return err
+func (q *Queries) DeleteChoreTemplate(ctx context.Context, id string) (string, error) {
+	row := q.db.QueryRowContext(ctx, deleteChoreTemplate, id)
+	var id_2 string
+	err := row.Scan(&id_2)
+	return id_2, err
 }
 
 const editChoreTemplate = `-- name: EditChoreTemplate :exec

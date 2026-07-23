@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/mikelawson03/chores/internal/domain"
 	"github.com/mikelawson03/chores/internal/store/db"
@@ -12,7 +13,7 @@ func dbUserToDomainUser(user db.User) domain.User {
 		ID:        user.ID,
 		Username:  user.Username,
 		FirstName: user.FirstName,
-		Role:      user.Role,
+		Role:      domain.Role(user.Role),
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
 	}
@@ -22,7 +23,7 @@ func (s *Store) CreateUser(ctx context.Context, u domain.User) error {
 	err := s.Queries.CreateUser(ctx, db.CreateUserParams{
 		ID:        u.ID,
 		Username:  u.Username,
-		Role:      u.Role,
+		Role:      string(u.Role),
 		FirstName: u.FirstName,
 		CreatedAt: u.CreatedAt,
 		UpdatedAt: u.UpdatedAt,
@@ -84,8 +85,8 @@ func (s *Store) EditUser(ctx context.Context, u domain.User) error {
 }
 
 func (s *Store) DeleteUser(ctx context.Context, id string) error {
-	err := s.Queries.DeleteUser(ctx, id)
-
+	res, err := s.Queries.DeleteUser(ctx, id)
+	fmt.Println("ID: ", res)
 	if err != nil {
 		return err
 	}

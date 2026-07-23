@@ -150,7 +150,7 @@ func (cfg *apiCfg) handlerLogin(w http.ResponseWriter, r *http.Request) {
 			ID:        result.User.ID,
 			Username:  result.User.Username,
 			FirstName: result.User.FirstName,
-			Role:      result.User.Role,
+			Role:      string(result.User.Role),
 		},
 		Token: result.Token,
 	}

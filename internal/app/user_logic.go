@@ -48,7 +48,7 @@ func (a *App) CreateNewUser(ctx context.Context, username, role, firstName strin
 	user := domain.User{
 		ID:        uuid.NewString(),
 		Username:  username,
-		Role:      role,
+		Role:      domain.Role(role),
 		FirstName: firstName,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),

@@ -26,6 +26,7 @@ duration = ?,
 updated_at = ?
 WHERE id = ?;
 
--- name: DeleteChoreTemplate :exec
+-- name: DeleteChoreTemplate :one
 DELETE FROM chore_templates
-WHERE id = ?;
+WHERE id = ?
+RETURNING id;
