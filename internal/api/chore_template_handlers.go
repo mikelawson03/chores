@@ -31,7 +31,7 @@ func (cfg *apiCfg) handlerGetChoreTemplates(w http.ResponseWriter, r *http.Reque
 	ctx := r.Context()
 	chores, err := cfg.App.GetChoreTemplates(ctx)
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Error retrieving chore templates:", err)
+		RespondWithError(w, err)
 	}
 	if len(chores) == 0 {
 		RespondWithJSON(w, http.StatusOK, []domain.ChoreTemplate{})
@@ -44,14 +44,14 @@ func (cfg *apiCfg) handlerAddChoreTemplate(w http.ResponseWriter, r *http.Reques
 	requesterID := r.Header.Get("X-User-ID")
 	req, err := CreateChoreTeplateRequest(r)
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Request Error: ", err)
+		RespondWithError(w, err)
 		return
 	}
 
 	ctx := r.Context()
 	chore, err := cfg.App.CreateChoreTemplate(ctx, requesterID, req.Name, req.Cadence, req.Assignee, req.Instructions, req.Duration)
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Error adding chore: ", err)
+		RespondWithError(w, err)
 		return
 	}
 
@@ -63,7 +63,7 @@ func (cfg *apiCfg) handlerGetChoreTemplateByID(w http.ResponseWriter, r *http.Re
 	ctx := r.Context()
 	c, err := cfg.App.GetChoreTemplateByID(ctx, id)
 	if err != nil {
-		RespondWithError(w, http.StatusNotFound, "", err)
+		RespondWithError(w, err)
 		return
 	}
 	RespondWithJSON(w, http.StatusOK, c)
@@ -74,13 +74,13 @@ func (cfg *apiCfg) handlerEditChoreTemplate(w http.ResponseWriter, r *http.Reque
 	requesterID := r.Header.Get("X-User-ID")
 	req, err := CreateChoreTeplateRequest(r)
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Error decoding JSON: ", err)
+		RespondWithError(w, err)
 		return
 	}
 	ctx := r.Context()
 	c, err := cfg.App.EditChoreTemplate(ctx, requesterID, id, req.Name, req.Cadence, req.Assignee, req.Instructions, req.Duration)
 	if err != nil {
-		RespondWithError(w, http.StatusNotFound, "Error updating chore: ", err)
+		RespondWithError(w, err)
 		return
 	}
 
@@ -94,7 +94,7 @@ func (cfg *apiCfg) handlerDeleteChoreTemplate(w http.ResponseWriter, r *http.Req
 
 	err := cfg.App.DeleteChoreTemplate(ctx, id, requesterID)
 	if err != nil {
-		RespondWithError(w, http.StatusNotFound, "Error deleting chore: ", err)
+		RespondWithError(w, err)
 		return
 	}
 

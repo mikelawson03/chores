@@ -3,8 +3,10 @@ package api
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"net/http"
 
+	"github.com/mikelawson03/chores/internal/app"
 	"github.com/mikelawson03/chores/internal/auth"
 )
 
@@ -15,25 +17,28 @@ func (cfg *apiCfg) middlewareAuth(next http.Handler) http.Handler {
 
 		tok, err := auth.GetBearerToken(r.Header)
 		if err != nil {
-			RespondWithError(w, http.StatusUnauthorized, "Error retrieving token: ", err)
+			err = fmt.Errorf("%w: error retrieving token", app.ErrUnauthorized)
+			RespondWithError(w, err)
 			return
 		}
 
 		uid, err := auth.ValidateToken(tok, cfg.App.Config.JWTSigninSecret)
 		if err != nil {
-			RespondWithError(w, http.StatusUnauthorized, "Error validating token: ", err)
+			err = fmt.Errorf("%w: error validating token", app.ErrUnauthorized)
+			RespondWithError(w, err)
 			return
 		}
 
 		user, err := cfg.App.GetUserByID(ctx, uid)
 
 		if errors.Is(err, sql.ErrNoRows) {
-			RespondWithJSON(w, http.StatusUnauthorized, nil)
+			err = fmt.Errorf("%w: user not found", app.ErrUnauthorized)
+			RespondWithError(w, err)
 			return
 		}
 
 		if err != nil {
-			RespondWithError(w, http.StatusInternalServerError, "Database error: ", err)
+			RespondWithError(w, err)
 			return
 		}
 

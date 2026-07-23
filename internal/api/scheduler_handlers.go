@@ -6,7 +6,7 @@ func (cfg *apiCfg) handlerRunScheduler(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	err := cfg.App.RunScheduler(ctx)
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Scheduler failed", err)
+		RespondWithError(w, err)
 		return
 	}
 

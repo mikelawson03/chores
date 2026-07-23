@@ -7,7 +7,7 @@ func (cfg *apiCfg) handlerRunBalancer(w http.ResponseWriter, r *http.Request) {
 
 	err := cfg.App.RunBalancer(ctx)
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Error running balancer: ", err)
+		RespondWithError(w, err)
 		return
 	}
 

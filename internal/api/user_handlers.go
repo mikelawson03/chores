@@ -46,13 +46,13 @@ func (cfg *apiCfg) handlerAddUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userReq, err := CreateNewUserRequest(r)
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Request Error", err)
+		RespondWithError(w, err)
 		return
 	}
 
 	user, err := cfg.App.CreateNewUser(ctx, userReq.Username, userReq.Role, userReq.FirstName)
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Error creating new user", err)
+		RespondWithError(w, err)
 		return
 	}
 
@@ -64,7 +64,7 @@ func (cfg *apiCfg) handlerGetUsers(w http.ResponseWriter, r *http.Request) {
 	users, err := cfg.App.GetAllUsers(ctx)
 
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Error retrieving users", err)
+		RespondWithError(w, err)
 		return
 	}
 
@@ -77,12 +77,12 @@ func (cfg *apiCfg) handlerGetUserByID(w http.ResponseWriter, r *http.Request) {
 	user, err := cfg.App.GetUserByID(ctx, id)
 
 	if errors.Is(err, sql.ErrNoRows) {
-		RespondWithError(w, http.StatusNotFound, "User not found", nil)
+		RespondWithError(w, err)
 		return
 	}
 
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Database error", err)
+		RespondWithError(w, err)
 		return
 	}
 
@@ -95,14 +95,14 @@ func (cfg *apiCfg) handlerEditUser(w http.ResponseWriter, r *http.Request) {
 	requesterID := r.Header.Get("X-User-ID")
 	updatedUser, err := CreateNewUserRequest(r)
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Request Error: ", err)
+		RespondWithError(w, err)
 		return
 	}
 
 	user, err := cfg.App.EditUser(ctx, id, updatedUser.Username, requesterID)
 
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Error updating user: ", err)
+		RespondWithError(w, err)
 		return
 	}
 
@@ -116,12 +116,12 @@ func (cfg *apiCfg) handlerDeleteUser(w http.ResponseWriter, r *http.Request) {
 	err := cfg.App.DeleteUser(ctx, id, requesterID)
 
 	if errors.Is(err, sql.ErrNoRows) {
-		RespondWithError(w, http.StatusNotFound, "User not found", nil)
+		RespondWithError(w, err)
 		return
 	}
 
 	if err != nil {
-		RespondWithError(w, http.StatusNotFound, "Error deleting user: ", err)
+		RespondWithError(w, err)
 		return
 	}
 
@@ -135,13 +135,13 @@ func (cfg *apiCfg) handlerLogin(w http.ResponseWriter, r *http.Request) {
 
 	err := d.Decode(req)
 	if err != nil {
-		RespondWithError(w, http.StatusUnauthorized, "", err)
+		RespondWithError(w, err)
 		return
 	}
 
 	result, err := cfg.App.LoginUser(ctx, req.Username, req.Password)
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Error logging in user", err)
+		RespondWithError(w, err)
 		return
 	}
 

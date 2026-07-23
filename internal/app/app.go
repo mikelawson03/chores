@@ -1,9 +1,18 @@
 package app
 
 import (
+	"errors"
 	"time"
 
 	"github.com/mikelawson03/chores/internal/store"
+)
+
+var (
+	ErrUnauthorized       = errors.New("unauthorized")
+	ErrForbidden          = errors.New("forbidden")
+	ErrInvalidCredentials = errors.New("invalid credentials")
+	ErrNotFound           = errors.New("not found")
+	ErrValidation         = errors.New("invalid request")
 )
 
 type Config struct {

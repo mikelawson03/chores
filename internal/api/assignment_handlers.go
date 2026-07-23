@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"time"
 
@@ -35,7 +36,7 @@ func (cfg *apiCfg) handlerCreateAssignmentForUser(w http.ResponseWriter, r *http
 	req := AssignmentRequest{}
 	err := decodeRequest(r, &req)
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Request Error: ", err)
+		RespondWithError(w, err)
 		return
 	}
 	// call app layer for authorization and assignment creation
@@ -46,7 +47,7 @@ func (cfg *apiCfg) handlerCreateAssignmentForUser(w http.ResponseWriter, r *http
 	assignment, err := cfg.App.CreateAssignmentForUser(ctx, requesterID, req.ChoreID, req.AssignedUserID, req.Instructions, req.DueDate, req.ScheduledFor)
 
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Error assigning chore: ", err)
+		RespondWithError(w, err)
 		return
 	}
 
@@ -59,7 +60,8 @@ func (cfg *apiCfg) handlerGetAssignments(w http.ResponseWriter, r *http.Request)
 	user_id := r.URL.Query().Get("user_id")
 
 	if template_id != "" && user_id != "" {
-		RespondWithError(w, http.StatusBadRequest, "may only specify one assignment filter", nil)
+		err := errors.New("may only specify one assignment filter")
+		RespondWithError(w, err)
 	}
 
 	var (
@@ -77,7 +79,7 @@ func (cfg *apiCfg) handlerGetAssignments(w http.ResponseWriter, r *http.Request)
 	}
 
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Error retrieving assignments:", err)
+		RespondWithError(w, err)
 	}
 
 	RespondWithJSON(w, http.StatusOK, assignments)
@@ -88,7 +90,7 @@ func (cfg *apiCfg) handlerGetAssignmentByID(w http.ResponseWriter, r *http.Reque
 	ctx := r.Context()
 	assignment, err := cfg.App.GetAssignmentByID(ctx, id)
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Error retrieving assignment: ", err)
+		RespondWithError(w, err)
 		return
 	}
 
@@ -100,7 +102,7 @@ func (cfg *apiCfg) handlerEditAssignment(w http.ResponseWriter, r *http.Request)
 	req := EditAssignmentRequest{}
 	err := decodeRequest(r, &req)
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Request Error: ", err)
+		RespondWithError(w, err)
 		return
 	}
 
@@ -108,7 +110,7 @@ func (cfg *apiCfg) handlerEditAssignment(w http.ResponseWriter, r *http.Request)
 	ctx := r.Context()
 	res, err := cfg.App.EditAssignment(ctx, requesterID, assignmentID, req.AssignedUserID, req.Notes, req.Canceled, req.Completed, req.ScheduledFor)
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Error editing assignment: ", err)
+		RespondWithError(w, err)
 		return
 	}
 
@@ -122,7 +124,7 @@ func (cfg *apiCfg) handlerCancelAssignment(w http.ResponseWriter, r *http.Reques
 
 	assignment, err := cfg.App.CancelAssignment(ctx, assignmentID, requesterID)
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Error deleting assignment: ", err)
+		RespondWithError(w, err)
 		return
 	}
 
@@ -137,7 +139,7 @@ func (cfg *apiCfg) handlerCompleteAssignment(w http.ResponseWriter, r *http.Requ
 	assignment, err := cfg.App.CompleteAssignment(ctx, assignmentID, requesterID)
 
 	if err != nil {
-		RespondWithError(w, http.StatusInternalServerError, "Error completing assignment: ", err)
+		RespondWithError(w, err)
 		return
 	}
 

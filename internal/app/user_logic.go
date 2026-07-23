@@ -41,7 +41,8 @@ func (a *App) CreateNewUser(ctx context.Context, username, role, firstName strin
 	}
 
 	if exists {
-		return domain.User{}, fmt.Errorf("User with name %s already exists", username)
+		err = fmt.Errorf("%w: username already exists", ErrValidation)
+		return domain.User{}, err
 	}
 
 	user := domain.User{

@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/mikelawson03/chores/internal/auth"
 	domain "github.com/mikelawson03/chores/internal/domain"
 )
 
@@ -28,13 +29,13 @@ func (a *App) choreNameExists(ctx context.Context, name string) (bool, error) {
 
 func (a *App) validateChoreTemplateRequest(name string, cadence string, duration *int) error {
 	if strings.TrimSpace(name) == "" {
-		return errors.New("Name is required")
+		return errors.New("name is required")
 	}
 	if strings.TrimSpace(cadence) == "" {
-		return errors.New("Cadence is required")
+		return errors.New("cadence is required")
 	}
 	if duration == nil {
-		return errors.New("Duration is required")
+		return errors.New("duration is required")
 	}
 	return nil
 }
@@ -42,25 +43,33 @@ func (a *App) validateChoreTemplateRequest(name string, cadence string, duration
 func (a *App) ValidateChoreTemplateAssignee(ctx context.Context, requesterID, newAssignee string) error {
 	_, err := a.GetUserByID(ctx, newAssignee)
 	if errors.Is(err, sql.ErrNoRows) {
-		return errors.New("Assignment invalid - assigned user does not exist")
+		return errors.New("assigned user does not exist")
 	}
 
 	if newAssignee != "" && requesterID != newAssignee {
-		return errors.New("May not assign templates to other users")
+		return errors.New("may not assign templates to other users")
 	}
 
 	return nil
 }
 
 func (a *App) CreateChoreTemplate(ctx context.Context, requesterID, name, cadence, assignee, instructions string, duration *int) (domain.ChoreTemplate, error) {
-	exists, err := a.choreNameExists(ctx, name)
+	user, ok := auth.UserFromContext(ctx)
+	if !ok {
+		return domain.ChoreTemplate{}, ErrUnauthorized
+	}
 
+	if user.Role != "admin" {
+		return domain.ChoreTemplate{}, ErrForbidden
+	}
+
+	exists, err := a.choreNameExists(ctx, name)
 	if err != nil {
 		return domain.ChoreTemplate{}, err
 	}
 
 	if exists {
-		return domain.ChoreTemplate{}, fmt.Errorf("Chore with name %s already exists", name)
+		return domain.ChoreTemplate{}, fmt.Errorf("chore with name %s already exists", name)
 	}
 
 	err = a.validateChoreTemplateRequest(name, cadence, duration)
@@ -108,7 +117,7 @@ func (a *App) GetChoreTemplateByID(ctx context.Context, id string) (domain.Chore
 	tmp, err := a.Store.GetTemplateByID(ctx, id)
 
 	if errors.Is(err, sql.ErrNoRows) {
-		return domain.ChoreTemplate{}, fmt.Errorf("Chore `%s` not found.", id)
+		err = fmt.Errorf("%w: template", ErrNotFound)
 	}
 
 	if err != nil {
