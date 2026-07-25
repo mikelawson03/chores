@@ -29,9 +29,11 @@ SELECT
     a.*, 
     ct.name,
     ct.duration, 
-    ct.cadence
+    ct.cadence,
+    u.first_name
 FROM assignments a
 JOIN chore_templates ct ON a.template_id = ct.id
+JOIN users u on a.assigned_user_id = u.id
 WHERE a.id = ?;
 
 -- name: EditAssignment :exec
@@ -39,7 +41,6 @@ UPDATE assignments
 SET assigned_user_id = ?,
 scheduled_for = ?,
 notes = ?,
-created_at = ?,
 updated_at = ?,
 completed = ?,
 canceled = ?,

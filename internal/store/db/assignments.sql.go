@@ -11,56 +11,6 @@ import (
 	"time"
 )
 
-const cancelAssignment = `-- name: CancelAssignment :exec
-UPDATE assignments
-SET canceled = ?,
-canceled_at = ?,
-updated_at = ?
-WHERE id = ?
-`
-
-type CancelAssignmentParams struct {
-	Canceled   bool
-	CanceledAt sql.NullTime
-	UpdatedAt  time.Time
-	ID         string
-}
-
-func (q *Queries) CancelAssignment(ctx context.Context, arg CancelAssignmentParams) error {
-	_, err := q.db.ExecContext(ctx, cancelAssignment,
-		arg.Canceled,
-		arg.CanceledAt,
-		arg.UpdatedAt,
-		arg.ID,
-	)
-	return err
-}
-
-const completeAssignment = `-- name: CompleteAssignment :exec
-UPDATE assignments
-SET completed = ?,
-completed_at = ?,
-updated_at = ?
-WHERE id = ?
-`
-
-type CompleteAssignmentParams struct {
-	Completed   bool
-	CompletedAt sql.NullTime
-	UpdatedAt   time.Time
-	ID          string
-}
-
-func (q *Queries) CompleteAssignment(ctx context.Context, arg CompleteAssignmentParams) error {
-	_, err := q.db.ExecContext(ctx, completeAssignment,
-		arg.Completed,
-		arg.CompletedAt,
-		arg.UpdatedAt,
-		arg.ID,
-	)
-	return err
-}
-
 const createAssignment = `-- name: CreateAssignment :exec
 INSERT INTO assignments (
     id, 
@@ -119,7 +69,6 @@ UPDATE assignments
 SET assigned_user_id = ?,
 scheduled_for = ?,
 notes = ?,
-created_at = ?,
 updated_at = ?,
 completed = ?,
 canceled = ?,
@@ -132,7 +81,6 @@ type EditAssignmentParams struct {
 	AssignedUserID string
 	ScheduledFor   sql.NullTime
 	Notes          sql.NullString
-	CreatedAt      time.Time
 	UpdatedAt      time.Time
 	Completed      bool
 	Canceled       bool
@@ -146,7 +94,6 @@ func (q *Queries) EditAssignment(ctx context.Context, arg EditAssignmentParams) 
 		arg.AssignedUserID,
 		arg.ScheduledFor,
 		arg.Notes,
-		arg.CreatedAt,
 		arg.UpdatedAt,
 		arg.Completed,
 		arg.Canceled,
@@ -231,9 +178,11 @@ SELECT
     a.id, a.template_id, a.assigned_user_id, a.instructions, a.notes, a.due_date, a.scheduled_for, a.completed, a.canceled, a.created_at, a.updated_at, a.completed_at, a.canceled_at, 
     ct.name,
     ct.duration, 
-    ct.cadence
+    ct.cadence,
+    u.first_name
 FROM assignments a
 JOIN chore_templates ct ON a.template_id = ct.id
+JOIN users u on a.assigned_user_id = u.id
 WHERE a.id = ?
 `
 
@@ -254,6 +203,7 @@ type GetAssignmentRow struct {
 	Name           string
 	Duration       int64
 	Cadence        string
+	FirstName      string
 }
 
 func (q *Queries) GetAssignment(ctx context.Context, id string) (GetAssignmentRow, error) {
@@ -276,6 +226,7 @@ func (q *Queries) GetAssignment(ctx context.Context, id string) (GetAssignmentRo
 		&i.Name,
 		&i.Duration,
 		&i.Cadence,
+		&i.FirstName,
 	)
 	return i, err
 }

@@ -47,6 +47,7 @@ func (s *Store) GetUserByUsername(ctx context.Context, username string) (domain.
 
 func (s *Store) GetUserByID(ctx context.Context, id string) (domain.User, error) {
 	res, err := s.Queries.GetUserByID(ctx, id)
+
 	if err != nil {
 		return domain.User{}, err
 	}

@@ -6,11 +6,12 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/mikelawson03/chores/internal/app"
 	"github.com/mikelawson03/chores/internal/domain"
 )
 
 type AssignmentRequest struct {
-	ChoreID        string     `json:"choreId"`
+	TemplateID     string     `json:"templateId"`
 	AssignedUserID string     `json:"assignedUserId"`
 	Instructions   string     `json:"instructions"`
 	DueDate        *time.Time `json:"dueDate"`
@@ -31,7 +32,7 @@ func decodeRequest(r *http.Request, target any) error {
 	return d.Decode(target)
 }
 
-func (cfg *apiCfg) handlerCreateAssignmentForUser(w http.ResponseWriter, r *http.Request) {
+func (cfg *apiCfg) handlerCreateAssignment(w http.ResponseWriter, r *http.Request) {
 	// Decode request into assignment request struct (make helper for this)
 	req := AssignmentRequest{}
 	err := decodeRequest(r, &req)
@@ -41,10 +42,15 @@ func (cfg *apiCfg) handlerCreateAssignmentForUser(w http.ResponseWriter, r *http
 	}
 	// call app layer for authorization and assignment creation
 
-	requesterID := r.Header.Get("X-User-ID")
 	ctx := r.Context()
 
-	assignment, err := cfg.App.CreateAssignmentForUser(ctx, requesterID, req.ChoreID, req.AssignedUserID, req.Instructions, req.DueDate, req.ScheduledFor)
+	assignment, err := cfg.App.CreateAssignmentFromTemplate(ctx, app.CreateAsssignmentRequest{
+		TemplateID:     req.TemplateID,
+		AssignedUserID: req.AssignedUserID,
+		Instructions:   req.Instructions,
+		DueDate:        req.DueDate,
+		ScheduledFor:   req.ScheduledFor,
+	})
 
 	if err != nil {
 		RespondWithError(w, err)
@@ -80,6 +86,7 @@ func (cfg *apiCfg) handlerGetAssignments(w http.ResponseWriter, r *http.Request)
 
 	if err != nil {
 		RespondWithError(w, err)
+		return
 	}
 
 	RespondWithJSON(w, http.StatusOK, assignments)
@@ -106,9 +113,15 @@ func (cfg *apiCfg) handlerEditAssignment(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	requesterID := r.Header.Get("X-User-ID")
 	ctx := r.Context()
-	res, err := cfg.App.EditAssignment(ctx, requesterID, assignmentID, req.AssignedUserID, req.Notes, req.Canceled, req.Completed, req.ScheduledFor)
+	res, err := cfg.App.EditAssignment(ctx, app.EditAssignmentRequest{
+		ID:             assignmentID,
+		AssignedUserID: req.AssignedUserID,
+		ScheduledFor:   req.ScheduledFor,
+		Notes:          req.Notes,
+		Completed:      req.Completed,
+		Canceled:       req.Canceled,
+	})
 	if err != nil {
 		RespondWithError(w, err)
 		return

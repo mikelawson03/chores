@@ -3,11 +3,35 @@ package store
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"time"
 
 	"github.com/mikelawson03/chores/internal/domain"
 	"github.com/mikelawson03/chores/internal/store/db"
 )
+
+type CreateAssignmentParams struct {
+	ID             string
+	TemplateID     string
+	AssignedUserID string
+	Instructions   string
+	DueDate        time.Time
+	ScheduledFor   *time.Time
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+}
+
+type EditAssignmentParams struct {
+	ID             string
+	AssignedUserID string
+	ScheduledFor   *time.Time
+	Notes          string
+	Completed      bool
+	Canceled       bool
+	UpdatedAt      time.Time
+	CompletedAt    *time.Time
+	CanceledAt     *time.Time
+}
 
 func dbAssignmentToDomainAssignment(dbAssignment db.Assignment) domain.Assignment {
 	var completedAt *time.Time
@@ -68,21 +92,23 @@ func mapGetAssignmentRow(r db.GetAssignmentRow) domain.Assignment {
 	}
 
 	return domain.Assignment{
-		ID:           r.ID,
-		TemplateID:   r.TemplateID,
-		TemplateName: r.Name,
-		Cadence:      r.Cadence,
-		Duration:     r.Duration,
-		Instructions: instructions,
-		Notes:        notes,
-		DueDate:      r.DueDate,
-		ScheduledFor: scheduledFor,
-		Completed:    r.Completed,
-		Canceled:     r.Canceled,
-		CreatedAt:    r.CreatedAt,
-		UpdatedAt:    r.UpdatedAt,
-		CompletedAt:  completedAt,
-		CanceledAt:   canceledAt,
+		ID:                    r.ID,
+		TemplateID:            r.TemplateID,
+		TemplateName:          r.Name,
+		AssignedUserID:        r.AssignedUserID,
+		AssignedUserFirstName: r.FirstName,
+		Cadence:               r.Cadence,
+		Duration:              r.Duration,
+		Instructions:          instructions,
+		Notes:                 notes,
+		DueDate:               r.DueDate,
+		ScheduledFor:          scheduledFor,
+		Completed:             r.Completed,
+		Canceled:              r.Canceled,
+		CreatedAt:             r.CreatedAt,
+		UpdatedAt:             r.UpdatedAt,
+		CompletedAt:           completedAt,
+		CanceledAt:            canceledAt,
 	}
 }
 
@@ -135,14 +161,14 @@ func mapGetAllAssignmentsRow(r db.GetAllAssignmentsRow) domain.Assignment {
 	}
 }
 
-func (s *Store) AddAssignment(ctx context.Context, assignment domain.Assignment) error {
+func (s *Store) AddAssignment(ctx context.Context, params CreateAssignmentParams) (domain.Assignment, error) {
 	var scheduledFor sql.NullTime
 	var instructions sql.NullString
 
-	if assignment.ScheduledFor != nil {
+	if params.ScheduledFor != nil {
 		scheduledFor = sql.NullTime{
 			Valid: true,
-			Time:  *assignment.ScheduledFor,
+			Time:  *params.ScheduledFor,
 		}
 	} else {
 		scheduledFor = sql.NullTime{
@@ -150,10 +176,10 @@ func (s *Store) AddAssignment(ctx context.Context, assignment domain.Assignment)
 		}
 	}
 
-	if assignment.Instructions != "" {
+	if params.Instructions != "" {
 		instructions = sql.NullString{
 			Valid:  true,
-			String: assignment.Instructions,
+			String: params.Instructions,
 		}
 	} else {
 		instructions = sql.NullString{
@@ -162,30 +188,36 @@ func (s *Store) AddAssignment(ctx context.Context, assignment domain.Assignment)
 	}
 
 	err := s.Queries.CreateAssignment(ctx, db.CreateAssignmentParams{
-		ID:             assignment.ID,
-		TemplateID:     assignment.TemplateID,
-		AssignedUserID: assignment.AssignedUserID,
+		ID:             params.ID,
+		TemplateID:     params.TemplateID,
+		AssignedUserID: params.AssignedUserID,
 		Instructions:   instructions,
-		DueDate:        assignment.DueDate,
+		DueDate:        params.DueDate,
 		ScheduledFor:   scheduledFor,
 		Completed:      false,
 		Canceled:       false,
-		CreatedAt:      assignment.CreatedAt,
-		UpdatedAt:      assignment.UpdatedAt,
+		CreatedAt:      params.CreatedAt,
+		UpdatedAt:      params.UpdatedAt,
 		CompletedAt:    sql.NullTime{Valid: false},
 		CanceledAt:     sql.NullTime{Valid: false},
 	})
 
 	if err != nil {
-		return err
+		return domain.Assignment{}, err
 	}
 
-	return nil
+	assignment, err := s.GetAssignment(ctx, params.ID)
+	if err != nil {
+		return domain.Assignment{}, err
+	}
+
+	return assignment, nil
 }
 
 func (s *Store) GetAssignment(ctx context.Context, id string) (domain.Assignment, error) {
 	dbAssignment, err := s.Queries.GetAssignment(ctx, id)
 	if err != nil {
+		fmt.Println("hit")
 		return domain.Assignment{}, err
 	}
 
@@ -212,65 +244,30 @@ func (s *Store) GetAllAssignments(ctx context.Context) ([]domain.Assignment, err
 	return assignments, nil
 }
 
-func (s *Store) EditAssignment(ctx context.Context, assignment domain.Assignment) error {
-	var scheduledFor sql.NullTime
-	var notes sql.NullString
-	var completedAt sql.NullTime
-	var canceledAt sql.NullTime
-
-	if assignment.ScheduledFor != nil {
-		scheduledFor = sql.NullTime{
-			Valid: true,
-			Time:  *assignment.ScheduledFor,
-		}
-	} else {
-		scheduledFor.Valid = false
-	}
-
-	if assignment.Notes != "" {
-		notes = sql.NullString{
-			Valid:  true,
-			String: assignment.Notes,
-		}
-	} else {
-		notes.Valid = false
-	}
-
-	if assignment.CompletedAt != nil {
-		completedAt = sql.NullTime{
-			Valid: true,
-			Time:  *assignment.CompletedAt,
-		}
-	} else {
-		completedAt.Valid = false
-	}
-
-	if assignment.CanceledAt != nil {
-		canceledAt = sql.NullTime{
-			Valid: true,
-			Time:  *assignment.CanceledAt,
-		}
-	} else {
-		canceledAt.Valid = false
-	}
+func (s *Store) EditAssignment(ctx context.Context, editRequest EditAssignmentParams) (domain.Assignment, error) {
 
 	err := s.Queries.EditAssignment(ctx, db.EditAssignmentParams{
-		AssignedUserID: assignment.AssignedUserID,
-		Notes:          notes,
-		ScheduledFor:   scheduledFor,
-		UpdatedAt:      assignment.UpdatedAt,
-		ID:             assignment.ID,
-		Completed:      assignment.Completed,
-		Canceled:       assignment.Canceled,
-		CompletedAt:    completedAt,
-		CanceledAt:     canceledAt,
+		AssignedUserID: editRequest.AssignedUserID,
+		Notes:          stringToNullString(editRequest.Notes),
+		ScheduledFor:   pointerTimeToNullTime(editRequest.ScheduledFor),
+		UpdatedAt:      editRequest.UpdatedAt,
+		ID:             editRequest.ID,
+		Completed:      editRequest.Completed,
+		Canceled:       editRequest.Canceled,
+		CompletedAt:    pointerTimeToNullTime(editRequest.CompletedAt),
+		CanceledAt:     pointerTimeToNullTime(editRequest.CanceledAt),
 	})
 
 	if err != nil {
-		return err
+		return domain.Assignment{}, err
 	}
 
-	return nil
+	assignment, err := s.GetAssignment(ctx, editRequest.ID)
+	if err != nil {
+		return domain.Assignment{}, err
+	}
+
+	return assignment, nil
 }
 
 func (s *Store) GetAssignmentsByTemplateID(ctx context.Context, id string) ([]domain.Assignment, error) {
@@ -365,8 +362,13 @@ func (s *Store) BulkUpdateAssignments(ctx context.Context, assignments []domain.
 	for _, assignment := range assignments {
 		err := qtx.EditAssignment(ctx, db.EditAssignmentParams{
 			AssignedUserID: assignment.AssignedUserID,
-			CreatedAt:      assignment.CreatedAt,
+			ScheduledFor:   pointerTimeToNullTime(assignment.ScheduledFor),
+			Notes:          stringToNullString(assignment.Notes),
 			UpdatedAt:      time.Now(),
+			Completed:      assignment.Completed,
+			Canceled:       assignment.Canceled,
+			CompletedAt:    pointerTimeToNullTime(assignment.CompletedAt),
+			CanceledAt:     pointerTimeToNullTime(assignment.CanceledAt),
 			ID:             assignment.ID,
 		})
 		if err != nil {

@@ -9,11 +9,27 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/mikelawson03/chores/internal/auth"
 	"github.com/mikelawson03/chores/internal/domain"
+	"github.com/mikelawson03/chores/internal/store"
 )
 
-// Compare requesting user to user assignment and ensure they match (return error if not)
-// Make and call helper to build Assignment add App.Assignments
+type CreateAsssignmentRequest struct {
+	TemplateID     string
+	AssignedUserID string
+	Instructions   string
+	DueDate        *time.Time
+	ScheduledFor   *time.Time
+}
+
+type EditAssignmentRequest struct {
+	ID             string
+	AssignedUserID string
+	ScheduledFor   *time.Time
+	Notes          string
+	Completed      bool
+	Canceled       bool
+}
 
 func (a *App) validateTemplateID(ctx context.Context, templateID string) error {
 	if strings.TrimSpace(templateID) == "" {
@@ -29,11 +45,30 @@ func (a *App) validateTemplateID(ctx context.Context, templateID string) error {
 }
 
 func (a *App) validateAssignedUserID(ctx context.Context, assignedUserID string) error {
-	if strings.TrimSpace(assignedUserID) == "" {
-		return errors.New("missing required assigned user ID")
-	}
 
 	_, err := a.GetUserByID(ctx, assignedUserID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return fmt.Errorf("%w: assigned user", ErrNotFound)
+	}
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (a *App) validateCreateAssignment(ctx context.Context, req CreateAsssignmentRequest) error {
+	err := a.validateTemplateID(ctx, req.TemplateID)
+	if err != nil {
+		return err
+	}
+
+	err = a.validateAssignedUserID(ctx, req.AssignedUserID)
+	if err != nil {
+		return err
+	}
+
+	err = validateDueDate(req.DueDate)
 	if err != nil {
 		return err
 	}
@@ -77,39 +112,33 @@ func (a *App) createNewAssignment(templateID, assignedUserID, instructions strin
 	return assignment
 }
 
-func (a *App) CreateAssignmentForUser(ctx context.Context, requesterID, templateID, assignedUserID, instructions string, dueDate, scheduledFor *time.Time) (domain.Assignment, error) {
-	// validate that templateID is provided and exists
-	err := a.validateTemplateID(ctx, templateID)
+func (a *App) CreateAssignmentFromTemplate(ctx context.Context, req CreateAsssignmentRequest) (domain.Assignment, error) {
+	user, err := AuthenticatedUser(ctx)
 	if err != nil {
 		return domain.Assignment{}, err
 	}
 
-	// validate that assignedUserID is provided and exists
-	err = a.validateAssignedUserID(ctx, assignedUserID)
-	if err != nil {
+	if err := a.validateCreateAssignment(ctx, req); err != nil {
 		return domain.Assignment{}, err
 	}
 
-	// validate schedule date exists and is in the future
-	err = validateDueDate(dueDate)
-	if err != nil {
-		return domain.Assignment{}, err
+	if !auth.CanAssignToUser(user, req.AssignedUserID) {
+		return domain.Assignment{}, fmt.Errorf("%w: may only assign chores to self", ErrForbidden)
 	}
 
-	// check authorization (may only assign to self)
-	if requesterID != assignedUserID {
-		return domain.Assignment{}, errors.New("may not assign chores to other users")
-	}
+	id := uuid.NewString()
+	now := time.Now()
 
-	// check that chore template exists
-	_, err = a.GetChoreTemplateByID(ctx, templateID)
-	if err != nil {
-		return domain.Assignment{}, err
-	}
-
-	assignment := a.createNewAssignment(templateID, assignedUserID, instructions, dueDate, scheduledFor)
-
-	err = a.Store.AddAssignment(ctx, assignment)
+	assignment, err := a.Store.AddAssignment(ctx, store.CreateAssignmentParams{
+		ID:             id,
+		TemplateID:     req.TemplateID,
+		AssignedUserID: req.AssignedUserID,
+		Instructions:   req.Instructions,
+		DueDate:        *req.DueDate,
+		ScheduledFor:   req.ScheduledFor,
+		CreatedAt:      now,
+		UpdatedAt:      now,
+	})
 	if err != nil {
 		return domain.Assignment{}, err
 	}
@@ -118,6 +147,11 @@ func (a *App) CreateAssignmentForUser(ctx context.Context, requesterID, template
 }
 
 func (a *App) GetAllAssignments(ctx context.Context) ([]domain.Assignment, error) {
+	_, err := CheckAdmin(ctx)
+	if err != nil {
+		return []domain.Assignment{}, err
+	}
+
 	assignments, err := a.Store.GetAllAssignments(ctx)
 	if err != nil {
 		return []domain.Assignment{}, err
@@ -127,6 +161,11 @@ func (a *App) GetAllAssignments(ctx context.Context) ([]domain.Assignment, error
 }
 
 func (a *App) GetAssignmentByID(ctx context.Context, id string) (domain.Assignment, error) {
+	user, err := AuthenticatedUser(ctx)
+	if err != nil {
+		return domain.Assignment{}, err
+	}
+
 	assignment, err := a.Store.GetAssignment(ctx, id)
 	if errors.Is(err, sql.ErrNoRows) {
 		return domain.Assignment{}, fmt.Errorf("assignment with ID %s not found", id)
@@ -136,69 +175,73 @@ func (a *App) GetAssignmentByID(ctx context.Context, id string) (domain.Assignme
 		return domain.Assignment{}, err
 	}
 
+	if !auth.CanGetAssignment(user, assignment) {
+		return domain.Assignment{}, ErrForbidden
+	}
+
 	return assignment, nil
 }
 
-func (a *App) EditAssignment(ctx context.Context, requesterID, assignmentID, assignedUserID, notes string, canceled, completed bool, scheduledFor *time.Time) (domain.Assignment, error) {
-	// check assignment exists
-	existing, err := a.GetAssignmentByID(ctx, assignmentID)
+func (a *App) EditAssignment(ctx context.Context, editRequest EditAssignmentRequest) (domain.Assignment, error) {
+
+	user, err := AuthenticatedUser(ctx)
 	if err != nil {
 		return domain.Assignment{}, err
 	}
 
-	// // check user owns assignment
-	// if existing.AssignedUserID != requesterID {
-	// 	return domain.Assignment{}, errors.New("may not edit chores belonging to other users")
-	// }
+	// check assignment exists
+	existing, err := a.Store.GetAssignment(ctx, editRequest.ID)
+	if err != nil {
+		return domain.Assignment{}, err
+	}
 
 	// check that userID is provided and valid
-	// err = a.validateAssignedUserID(ctx, assignedUserID)
-	// if err != nil {
-	// 	return domain.Assignment{}, err
-	// }
+	err = a.validateAssignedUserID(ctx, editRequest.AssignedUserID)
+	if err != nil {
+		return domain.Assignment{}, err
+	}
 
-	// // check assignment is to self
-	// if requesterID != assignedUserID {
-	// 	return domain.Assignment{}, errors.New("may not assign chores to other users")
-	// }
+	// check authorization
+	if !auth.CanEditAssignment(user, existing) {
+		return domain.Assignment{}, ErrForbidden
+	}
 
 	var completedAt *time.Time
 	var canceledAt *time.Time
 
-	if !existing.Completed && completed {
-		t := time.Now()
-		completedAt = &t
-	} else if existing.Completed && !completed {
-		completedAt = nil
+	if existing.Completed != editRequest.Completed {
+		if editRequest.Completed {
+			t := time.Now()
+			completedAt = &t
+		} else {
+			completedAt = nil
+		}
+	} else {
+		completedAt = existing.CompletedAt
 	}
 
-	if !existing.Canceled && canceled {
-		t := time.Now()
-		canceledAt = &t
-	} else if existing.Canceled && !canceled {
-		canceledAt = nil
+	if existing.Canceled != editRequest.Canceled {
+		if editRequest.Canceled {
+			t := time.Now()
+			canceledAt = &t
+		} else {
+			canceledAt = nil
+		}
+	} else {
+		canceledAt = existing.CanceledAt
 	}
 
-	assignment := domain.Assignment{
-		ID:             assignmentID,
-		TemplateID:     existing.TemplateID,
-		TemplateName:   existing.TemplateName,
-		AssignedUserID: assignedUserID,
-		Cadence:        existing.Cadence,
-		Duration:       existing.Duration,
-		Instructions:   existing.Instructions,
-		Notes:          notes,
-		DueDate:        existing.DueDate,
-		ScheduledFor:   scheduledFor,
-		Completed:      completed,
-		Canceled:       canceled,
-		CreatedAt:      existing.CreatedAt,
-		UpdatedAt:      time.Now(),
+	assignment, err := a.Store.EditAssignment(ctx, store.EditAssignmentParams{
+		ID:             editRequest.ID,
+		AssignedUserID: editRequest.AssignedUserID,
+		Notes:          editRequest.Notes,
+		ScheduledFor:   editRequest.ScheduledFor,
+		Completed:      editRequest.Completed,
+		Canceled:       editRequest.Canceled,
 		CompletedAt:    completedAt,
 		CanceledAt:     canceledAt,
-	}
-
-	err = a.Store.EditAssignment(ctx, assignment)
+		UpdatedAt:      time.Now(),
+	})
 	if err != nil {
 		return domain.Assignment{}, err
 	}
@@ -207,7 +250,12 @@ func (a *App) EditAssignment(ctx context.Context, requesterID, assignmentID, ass
 }
 
 func (a *App) GetAssignmentsByTemplateID(ctx context.Context, id string) ([]domain.Assignment, error) {
-	_, err := a.GetChoreTemplateByID(ctx, id)
+	_, err := CheckAdmin(ctx)
+	if err != nil {
+		return []domain.Assignment{}, err
+	}
+
+	_, err = a.GetChoreTemplateByID(ctx, id)
 	if err != nil {
 		return []domain.Assignment{}, err
 	}
@@ -221,9 +269,13 @@ func (a *App) GetAssignmentsByTemplateID(ctx context.Context, id string) ([]doma
 }
 
 func (a *App) GetAssignmentsByUserID(ctx context.Context, id string) ([]domain.Assignment, error) {
-	_, err := a.GetUserByID(ctx, id)
+	user, err := AuthenticatedUser(ctx)
 	if err != nil {
 		return []domain.Assignment{}, err
+	}
+
+	if !auth.CanGetUserAssignments(user, id) {
+		return []domain.Assignment{}, fmt.Errorf("%w: may only get own assignments", ErrForbidden)
 	}
 
 	assignments, err := a.Store.GetAssignmentsByUserID(ctx, id)

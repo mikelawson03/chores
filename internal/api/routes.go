@@ -13,7 +13,7 @@ func (cfg *apiCfg) RegisterRoutes(mux *http.ServeMux) {
 	mux.Handle("DELETE /chore-templates/{id}", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerDeleteChoreTemplate)))
 
 	// assigned chores
-	mux.Handle("POST /assignments", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerCreateAssignmentForUser)))
+	mux.Handle("POST /assignments", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerCreateAssignment)))
 	mux.Handle("GET /assignments", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerGetAssignments)))
 	mux.Handle("GET /assignments/{id}", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerGetAssignmentByID)))
 	mux.Handle("PUT /assignments/{id}", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerEditAssignment)))
