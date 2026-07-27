@@ -232,7 +232,7 @@ func (q *Queries) GetAssignment(ctx context.Context, id string) (GetAssignmentRo
 }
 
 const getAssignmentsByDateRange = `-- name: GetAssignmentsByDateRange :many
-SELECT id, template_id, assigned_user_id, instructions, notes, due_date, scheduled_for, completed, canceled, created_at, updated_at, completed_at, canceled_at
+SELECT id, template_id, due_date
 FROM assignments
 WHERE due_date >= ?
 AND due_date < ?
@@ -243,30 +243,22 @@ type GetAssignmentsByDateRangeParams struct {
 	DueDate_2 time.Time
 }
 
-func (q *Queries) GetAssignmentsByDateRange(ctx context.Context, arg GetAssignmentsByDateRangeParams) ([]Assignment, error) {
+type GetAssignmentsByDateRangeRow struct {
+	ID         string
+	TemplateID string
+	DueDate    time.Time
+}
+
+func (q *Queries) GetAssignmentsByDateRange(ctx context.Context, arg GetAssignmentsByDateRangeParams) ([]GetAssignmentsByDateRangeRow, error) {
 	rows, err := q.db.QueryContext(ctx, getAssignmentsByDateRange, arg.DueDate, arg.DueDate_2)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Assignment
+	var items []GetAssignmentsByDateRangeRow
 	for rows.Next() {
-		var i Assignment
-		if err := rows.Scan(
-			&i.ID,
-			&i.TemplateID,
-			&i.AssignedUserID,
-			&i.Instructions,
-			&i.Notes,
-			&i.DueDate,
-			&i.ScheduledFor,
-			&i.Completed,
-			&i.Canceled,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.CompletedAt,
-			&i.CanceledAt,
-		); err != nil {
+		var i GetAssignmentsByDateRangeRow
+		if err := rows.Scan(&i.ID, &i.TemplateID, &i.DueDate); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

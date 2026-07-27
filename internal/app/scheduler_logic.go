@@ -2,6 +2,8 @@ package app
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"time"
 
 	"github.com/mikelawson03/chores/internal/domain"
@@ -113,64 +115,64 @@ func (a *App) monthlyScheduler(horizonStart, horizonEnd time.Time, templates []d
 }
 
 func (a *App) RunScheduler(ctx context.Context) error {
-	// // calculate current scheduling horizon
-	// horizonStart, horizonEnd := a.getHorizonWindow()
+	// calculate current scheduling horizon
+	horizonStart, horizonEnd := a.getHorizonWindow()
 
-	// // retrieve users
-	// users, err := a.Store.GetAllUsers(ctx)
-	// if err != nil {
-	// 	return fmt.Errorf("error retrieving users - %s", err)
-	// }
-	// if len(users) == 0 {
-	// 	return errors.New("no users available for scheduling")
-	// }
+	// retrieve users
+	users, err := a.Store.GetAllUsers(ctx)
+	if err != nil {
+		return fmt.Errorf("error retrieving users - %s", err)
+	}
+	if len(users) == 0 {
+		return errors.New("no users available for scheduling")
+	}
 
-	// // retrieve current templates
-	// tmps, err := a.Store.GetChoreTemplates(ctx)
-	// if err != nil {
-	// 	return fmt.Errorf("error retrieving templates - %s", err)
-	// }
-	// if len(tmps) == 0 {
-	// 	return errors.New("no chore templates available for scheduling")
-	// }
+	// retrieve current templates
+	tmps, err := a.Store.GetChoreTemplates(ctx)
+	if err != nil {
+		return fmt.Errorf("error retrieving templates - %s", err)
+	}
+	if len(tmps) == 0 {
+		return errors.New("no chore templates available for scheduling")
+	}
 
-	// // retrieve existing assignments
-	// assignmentWindowEnd := schedulerAssignmentWindowEnd(horizonEnd)
-	// existingAssignments, err := a.Store.GetAssignmentsByDateRange(ctx, horizonStart, assignmentWindowEnd)
-	// if err != nil {
-	// 	return fmt.Errorf("error retrieving assignments - %s", err)
-	// }
+	// retrieve existing assignments
+	assignmentWindowEnd := schedulerAssignmentWindowEnd(horizonEnd)
+	existingAssignments, err := a.Store.GetAssignmentsByDateRange(ctx, horizonStart, assignmentWindowEnd)
+	if err != nil {
+		return fmt.Errorf("error retrieving assignments - %s", err)
+	}
 
-	// // run schedulers by cadence
-	// // newDailyAssignments := a.dailyScheduler(horizonStart, horizonEnd, tmps, existingAssignments)
-	// // newWeeklyAssignments := a.weeklyScheduler(horizonStart, horizonEnd, tmps, existingAssignments)
-	// // newMonthlyAssignments := a.monthlyScheduler(horizonStart, horizonEnd, tmps, existingAssignments)
+	// run schedulers by cadence
+	// newDailyAssignments := a.dailyScheduler(horizonStart, horizonEnd, tmps, existingAssignments)
+	// newWeeklyAssignments := a.weeklyScheduler(horizonStart, horizonEnd, tmps, existingAssignments)
+	// newMonthlyAssignments := a.monthlyScheduler(horizonStart, horizonEnd, tmps, existingAssignments)
 
-	// // // // persist assignments in DB
-	// // // for _, dailyAssignment := range newDailyAssignments {
-	// // // 	_, err = a.Store.AddAssignment(ctx, dailyAssignment)
-	// // // 	if err != nil {
-	// // // 		return fmt.Errorf("error committing new daily assignment to DB: %s", err)
-	// // // 	}
-	// // // }
+	// // // persist assignments in DB
+	// // for _, dailyAssignment := range newDailyAssignments {
+	// // 	_, err = a.Store.AddAssignment(ctx, dailyAssignment)
+	// // 	if err != nil {
+	// // 		return fmt.Errorf("error committing new daily assignment to DB: %s", err)
+	// // 	}
+	// // }
 
-	// // // for _, weeklyAssignment := range newWeeklyAssignments {
-	// // // 	_, err = a.Store.AddAssignment(ctx, weeklyAssignment)
-	// // // 	if err != nil {
-	// // // 		return fmt.Errorf("error committing new weekly assignment to DB: %s", err)
-	// // // 	}
-	// // // }
+	// // for _, weeklyAssignment := range newWeeklyAssignments {
+	// // 	_, err = a.Store.AddAssignment(ctx, weeklyAssignment)
+	// // 	if err != nil {
+	// // 		return fmt.Errorf("error committing new weekly assignment to DB: %s", err)
+	// // 	}
+	// // }
 
-	// // // for _, monthlyAssignment := range newMonthlyAssignments {
-	// // // 	_, err = a.Store.AddAssignment(ctx, monthlyAssignment)
-	// // // 	if err != nil {
-	// // // 		return fmt.Errorf("error committing new monthly assignment to DB: %s", err)
-	// // // 	}
-	// // // }
+	// // for _, monthlyAssignment := range newMonthlyAssignments {
+	// // 	_, err = a.Store.AddAssignment(ctx, monthlyAssignment)
+	// // 	if err != nil {
+	// // 		return fmt.Errorf("error committing new monthly assignment to DB: %s", err)
+	// // 	}
+	// // }
 
-	// // // // print new assignments created to console for debugging
-	// // // fmt.Printf("Daily Assignments created: %d\n", len(newDailyAssignments))
-	// // // fmt.Printf("Weekly Assignments created: %d\n", len(newWeeklyAssignments))
-	// // // fmt.Printf("Monthly Assignments created: %d\n", len(newMonthlyAssignments))
+	// // // print new assignments created to console for debugging
+	// // fmt.Printf("Daily Assignments created: %d\n", len(newDailyAssignments))
+	// // fmt.Printf("Weekly Assignments created: %d\n", len(newWeeklyAssignments))
+	// // fmt.Printf("Monthly Assignments created: %d\n", len(newMonthlyAssignments))
 	return nil
 }

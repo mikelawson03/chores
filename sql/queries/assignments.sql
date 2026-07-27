@@ -49,7 +49,7 @@ canceled_at = ?
 WHERE id = ?;
 
 -- name: GetAssignmentsByDateRange :many
-SELECT *
+SELECT id, template_id, due_date
 FROM assignments
 WHERE due_date >= ?
 AND due_date < ?;
