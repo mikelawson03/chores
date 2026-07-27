@@ -16,6 +16,7 @@ var (
 	ErrInvalidCredentials = errors.New("invalid credentials")
 	ErrNotFound           = errors.New("not found")
 	ErrValidation         = errors.New("invalid request")
+	ErrInvalidRole        = errors.New("invalid role")
 )
 
 type Config struct {

@@ -10,10 +10,11 @@ import (
 	"time"
 )
 
-const createUser = `-- name: CreateUser :exec
+const createUser = `-- name: CreateUser :one
 
 INSERT INTO users (id, username, role, first_name, created_at, updated_at)
 VALUES (?, ?, ?, ?, ?, ?)
+RETURNING id, username, first_name, role, created_at, updated_at
 `
 
 type CreateUserParams struct {
@@ -25,8 +26,8 @@ type CreateUserParams struct {
 	UpdatedAt time.Time
 }
 
-func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
-	_, err := q.db.ExecContext(ctx, createUser,
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, createUser,
 		arg.ID,
 		arg.Username,
 		arg.Role,
@@ -34,7 +35,16 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
 		arg.CreatedAt,
 		arg.UpdatedAt,
 	)
-	return err
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.FirstName,
+		&i.Role,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const deleteUser = `-- name: DeleteUser :one
@@ -50,22 +60,42 @@ func (q *Queries) DeleteUser(ctx context.Context, id string) (string, error) {
 	return id_2, err
 }
 
-const editUser = `-- name: EditUser :exec
+const editUser = `-- name: EditUser :one
 UPDATE users
 SET username = ?,
+first_name =?,
+role = ?,
 updated_at = ?
 WHERE id = ?
+RETURNING id, username, first_name, role, created_at, updated_at
 `
 
 type EditUserParams struct {
 	Username  string
+	FirstName string
+	Role      string
 	UpdatedAt time.Time
 	ID        string
 }
 
-func (q *Queries) EditUser(ctx context.Context, arg EditUserParams) error {
-	_, err := q.db.ExecContext(ctx, editUser, arg.Username, arg.UpdatedAt, arg.ID)
-	return err
+func (q *Queries) EditUser(ctx context.Context, arg EditUserParams) (User, error) {
+	row := q.db.QueryRowContext(ctx, editUser,
+		arg.Username,
+		arg.FirstName,
+		arg.Role,
+		arg.UpdatedAt,
+		arg.ID,
+	)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.FirstName,
+		&i.Role,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const getAllUsers = `-- name: GetAllUsers :many

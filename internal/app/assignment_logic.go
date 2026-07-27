@@ -206,6 +206,10 @@ func (a *App) EditAssignment(ctx context.Context, editRequest EditAssignmentRequ
 		return domain.Assignment{}, ErrForbidden
 	}
 
+	if !auth.CanAssignToUser(user, editRequest.AssignedUserID) {
+		return domain.Assignment{}, ErrForbidden
+	}
+
 	var completedAt *time.Time
 	var canceledAt *time.Time
 

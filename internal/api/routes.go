@@ -19,7 +19,7 @@ func (cfg *apiCfg) RegisterRoutes(mux *http.ServeMux) {
 	mux.Handle("PUT /assignments/{id}", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerEditAssignment)))
 
 	// users
-	mux.Handle("POST /users", http.HandlerFunc(cfg.handlerAddUser))
+	mux.Handle("POST /users", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerAddUser)))
 	mux.Handle("GET /users", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerGetUsers)))
 	mux.Handle("GET /users/{id}", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerGetUserByID)))
 	mux.Handle("PUT /users/{id}", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerEditUser)))

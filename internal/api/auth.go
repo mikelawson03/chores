@@ -13,7 +13,6 @@ import (
 func (cfg *apiCfg) middlewareAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		// id := r.Header.Get("X-User-ID")
 
 		tok, err := auth.GetBearerToken(r.Header)
 		if err != nil {
@@ -29,7 +28,7 @@ func (cfg *apiCfg) middlewareAuth(next http.Handler) http.Handler {
 			return
 		}
 
-		user, err := cfg.App.GetUserByID(ctx, uid)
+		user, err := cfg.App.Store.GetUserByID(ctx, uid)
 
 		if errors.Is(err, sql.ErrNoRows) {
 			err = fmt.Errorf("%w: user not found", app.ErrUnauthorized)

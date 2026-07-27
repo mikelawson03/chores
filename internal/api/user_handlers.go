@@ -7,10 +7,10 @@ import (
 	"net/http"
 )
 
-type NewUserRequest struct {
+type UserRequest struct {
 	Username  string `json:"username"`
 	Role      string `json:"role"`
-	FirstName string `json:"first_name"`
+	FirstName string `json:"firstName"`
 }
 
 type LoginRequest struct {
@@ -21,7 +21,7 @@ type LoginRequest struct {
 type UserResponse struct {
 	ID        string `json:"id"`
 	Username  string `json:"username"`
-	FirstName string `json:"first_name"`
+	FirstName string `json:"firstName"`
 	Role      string `json:"role"`
 }
 
@@ -30,13 +30,13 @@ type LoginResponse struct {
 	Token string       `json:"token"`
 }
 
-func CreateNewUserRequest(r *http.Request) (*NewUserRequest, error) {
+func CreateUserRequest(r *http.Request) (*UserRequest, error) {
 	d := json.NewDecoder(r.Body)
-	req := &NewUserRequest{}
+	req := &UserRequest{}
 
 	err := d.Decode(req)
 	if err != nil {
-		return &NewUserRequest{}, err
+		return &UserRequest{}, err
 	}
 
 	return req, nil
@@ -44,7 +44,7 @@ func CreateNewUserRequest(r *http.Request) (*NewUserRequest, error) {
 
 func (cfg *apiCfg) handlerAddUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	userReq, err := CreateNewUserRequest(r)
+	userReq, err := CreateUserRequest(r)
 	if err != nil {
 		RespondWithError(w, err)
 		return
@@ -61,8 +61,8 @@ func (cfg *apiCfg) handlerAddUser(w http.ResponseWriter, r *http.Request) {
 
 func (cfg *apiCfg) handlerGetUsers(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	users, err := cfg.App.GetAllUsers(ctx)
 
+	users, err := cfg.App.GetAllUsers(ctx)
 	if err != nil {
 		RespondWithError(w, err)
 		return
@@ -92,14 +92,13 @@ func (cfg *apiCfg) handlerGetUserByID(w http.ResponseWriter, r *http.Request) {
 func (cfg *apiCfg) handlerEditUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	id := r.PathValue("id")
-	requesterID := r.Header.Get("X-User-ID")
-	updatedUser, err := CreateNewUserRequest(r)
+	updateUser, err := CreateUserRequest(r)
 	if err != nil {
 		RespondWithError(w, err)
 		return
 	}
 
-	user, err := cfg.App.EditUser(ctx, id, updatedUser.Username, requesterID)
+	user, err := cfg.App.EditUser(ctx, id, updateUser.Username, updateUser.Role, updateUser.FirstName)
 
 	if err != nil {
 		RespondWithError(w, err)
@@ -112,8 +111,7 @@ func (cfg *apiCfg) handlerEditUser(w http.ResponseWriter, r *http.Request) {
 func (cfg *apiCfg) handlerDeleteUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	id := r.PathValue("id")
-	requesterID := r.Header.Get("X-User-ID")
-	err := cfg.App.DeleteUser(ctx, id, requesterID)
+	err := cfg.App.DeleteUser(ctx, id)
 
 	if errors.Is(err, sql.ErrNoRows) {
 		RespondWithError(w, err)

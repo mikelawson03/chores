@@ -34,3 +34,31 @@ func CanEditAssignment(user domain.User, assignment domain.Assignment) bool {
 
 	return true
 }
+
+func CanGetUser(reqUser domain.User, userID string) bool {
+	if reqUser.Role != domain.RoleAdmin && reqUser.ID != userID {
+		return false
+	}
+	return true
+}
+
+func CanEditUserName(reqUser domain.User, userID string) bool {
+	if reqUser.Role != domain.RoleAdmin && reqUser.ID != userID {
+		return false
+	}
+	return true
+}
+
+func CanEditRole(reqUser domain.User) bool {
+	if reqUser.Role != domain.RoleAdmin {
+		return false
+	}
+	return true
+}
+
+func CanEditFirstName(reqUser domain.User, userID string) bool {
+	if reqUser.Role != domain.RoleAdmin && reqUser.ID != userID {
+		return false
+	}
+	return true
+}

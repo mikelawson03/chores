@@ -1,7 +1,8 @@
--- name: CreateUser :exec
+-- name: CreateUser :one
 
 INSERT INTO users (id, username, role, first_name, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?, ?);
+VALUES (?, ?, ?, ?, ?, ?)
+RETURNING *;
 
 -- name: GetUserByUsername :one
 SELECT *
@@ -17,11 +18,14 @@ WHERE id = ?;
 SELECT *
 FROM users;
 
--- name: EditUser :exec
+-- name: EditUser :one
 UPDATE users
 SET username = ?,
+first_name =?,
+role = ?,
 updated_at = ?
-WHERE id = ?;
+WHERE id = ?
+RETURNING *;
 
 -- name: DeleteUser :one
 DELETE FROM users

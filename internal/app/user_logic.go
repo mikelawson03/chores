@@ -11,6 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/mikelawson03/chores/internal/auth"
 	"github.com/mikelawson03/chores/internal/domain"
+	"github.com/mikelawson03/chores/internal/store"
 )
 
 type LoginResult struct {
@@ -33,28 +34,69 @@ func (a *App) UsernameExists(ctx context.Context, username string) (bool, error)
 
 }
 
-func (a *App) CreateNewUser(ctx context.Context, username, role, firstName string) (domain.User, error) {
+func (a *App) validateNewUserRequest(ctx context.Context, username, role, firstName string) error {
 	exists, err := a.UsernameExists(ctx, username)
-
 	if err != nil {
-		return domain.User{}, err
+		return err
 	}
 
 	if exists {
 		err = fmt.Errorf("%w: username already exists", ErrValidation)
+	}
+
+	userRole := domain.Role(role)
+	if !userRole.IsValid() {
+		return ErrInvalidRole
+	}
+
+	if firstName == "" {
+		return errors.New("must provide first name")
+	}
+
+	return nil
+}
+
+func (a *App) validateEditUserRequest(ctx context.Context, newUsername, role, firstName string, user domain.User) error {
+	userRole := domain.Role(role)
+	if !userRole.IsValid() {
+		return ErrInvalidRole
+	}
+
+	userWithName, err := a.Store.GetUserByUsername(ctx, newUsername)
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		return err
+	}
+
+	if err == nil && userWithName.ID != user.ID {
+		return errors.New("username already in use")
+	}
+
+	if firstName == "" {
+		return errors.New("must provide first name")
+	}
+
+	return nil
+}
+
+func (a *App) CreateNewUser(ctx context.Context, username, role, firstName string) (domain.User, error) {
+	_, err := CheckAdmin(ctx)
+	if err != nil {
 		return domain.User{}, err
 	}
 
-	user := domain.User{
+	err = a.validateNewUserRequest(ctx, username, role, firstName)
+	if err != nil {
+		return domain.User{}, err
+	}
+
+	user, err := a.Store.CreateUser(ctx, store.CreateUserParams{
 		ID:        uuid.NewString(),
 		Username:  username,
 		Role:      domain.Role(role),
 		FirstName: firstName,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
-	}
-
-	err = a.Store.CreateUser(context.Background(), user)
+	})
 	if err != nil {
 		return domain.User{}, err
 	}
@@ -63,6 +105,11 @@ func (a *App) CreateNewUser(ctx context.Context, username, role, firstName strin
 }
 
 func (a *App) GetAllUsers(ctx context.Context) ([]domain.User, error) {
+	_, err := CheckAdmin(ctx)
+	if err != nil {
+		return []domain.User{}, err
+	}
+
 	users, err := a.Store.GetAllUsers(ctx)
 	if err != nil {
 		return []domain.User{}, err
@@ -72,6 +119,16 @@ func (a *App) GetAllUsers(ctx context.Context) ([]domain.User, error) {
 }
 
 func (a *App) GetUserByID(ctx context.Context, id string) (domain.User, error) {
+
+	reqUser, err := AuthenticatedUser(ctx)
+	if err != nil {
+		return domain.User{}, err
+	}
+
+	if !auth.CanGetUser(reqUser, id) {
+		return domain.User{}, ErrForbidden
+	}
+
 	user, err := a.Store.GetUserByID(ctx, id)
 	if err != nil {
 		return domain.User{}, err
@@ -80,35 +137,40 @@ func (a *App) GetUserByID(ctx context.Context, id string) (domain.User, error) {
 	return user, nil
 }
 
-func (a *App) EditUser(ctx context.Context, id, newUsername, requesterID string) (domain.User, error) {
-	existing, err := a.GetUserByID(ctx, id)
+func (a *App) EditUser(ctx context.Context, id, newUsername, role, firstName string) (domain.User, error) {
+	user, err := AuthenticatedUser(ctx)
 	if err != nil {
 		return domain.User{}, err
 	}
 
-	if id != requesterID {
-		return domain.User{}, errors.New("May not edit other users")
-	}
-
-	userWithName, err := a.Store.GetUserByUsername(ctx, newUsername)
-
-	if err != nil && !errors.Is(err, sql.ErrNoRows) {
+	existing, err := a.Store.GetUserByID(ctx, id)
+	if err != nil {
 		return domain.User{}, err
 	}
 
-	if err == nil && userWithName.ID != requesterID {
-		return domain.User{}, fmt.Errorf("User with name %s already exists", newUsername)
+	err = a.validateEditUserRequest(ctx, newUsername, role, firstName, user)
+
+	if newUsername != existing.Username && !auth.CanEditUserName(user, existing.ID) {
+		return domain.User{}, ErrForbidden
 	}
 
-	updatedUser := domain.User{
-		ID:        existing.ID,
+	userRole := domain.Role(role)
+
+	if userRole != existing.Role && !auth.CanEditRole(user) {
+		return domain.User{}, ErrForbidden
+	}
+
+	if firstName != existing.FirstName && !auth.CanEditFirstName(user, existing.ID) {
+		return domain.User{}, ErrForbidden
+	}
+
+	updatedUser, err := a.Store.EditUser(ctx, store.EditUserParams{
+		ID:        id,
 		Username:  newUsername,
-		Role:      existing.Role,
-		CreatedAt: existing.CreatedAt,
+		Role:      userRole,
+		FirstName: firstName,
 		UpdatedAt: time.Now(),
-	}
-
-	err = a.Store.EditUser(ctx, updatedUser)
+	})
 	if err != nil {
 		return domain.User{}, err
 	}
@@ -116,14 +178,10 @@ func (a *App) EditUser(ctx context.Context, id, newUsername, requesterID string)
 	return updatedUser, nil
 }
 
-func (a *App) DeleteUser(ctx context.Context, id, requesterID string) error {
-	_, err := a.GetUserByID(ctx, id)
+func (a *App) DeleteUser(ctx context.Context, id string) error {
+	_, err := CheckAdmin(ctx)
 	if err != nil {
 		return err
-	}
-
-	if id != requesterID {
-		return fmt.Errorf("May not delete other users")
 	}
 
 	err = a.Store.DeleteUser(ctx, id)

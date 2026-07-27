@@ -3,10 +3,28 @@ package store
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/mikelawson03/chores/internal/domain"
 	"github.com/mikelawson03/chores/internal/store/db"
 )
+
+type CreateUserParams struct {
+	ID        string
+	Username  string
+	Role      domain.Role
+	FirstName string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+type EditUserParams struct {
+	ID        string
+	Username  string
+	Role      domain.Role
+	FirstName string
+	UpdatedAt time.Time
+}
 
 func dbUserToDomainUser(user db.User) domain.User {
 	return domain.User{
@@ -19,21 +37,23 @@ func dbUserToDomainUser(user db.User) domain.User {
 	}
 }
 
-func (s *Store) CreateUser(ctx context.Context, u domain.User) error {
-	err := s.Queries.CreateUser(ctx, db.CreateUserParams{
-		ID:        u.ID,
-		Username:  u.Username,
-		Role:      string(u.Role),
-		FirstName: u.FirstName,
-		CreatedAt: u.CreatedAt,
-		UpdatedAt: u.UpdatedAt,
+func (s *Store) CreateUser(ctx context.Context, req CreateUserParams) (domain.User, error) {
+	res, err := s.Queries.CreateUser(ctx, db.CreateUserParams{
+		ID:        req.ID,
+		Username:  req.Username,
+		Role:      string(req.Role),
+		FirstName: req.FirstName,
+		CreatedAt: req.CreatedAt,
+		UpdatedAt: req.UpdatedAt,
 	})
 
 	if err != nil {
-		return err
+		return domain.User{}, err
 	}
 
-	return nil
+	user := dbUserToDomainUser(res)
+
+	return user, nil
 }
 
 func (s *Store) GetUserByUsername(ctx context.Context, username string) (domain.User, error) {
@@ -71,18 +91,22 @@ func (s *Store) GetAllUsers(ctx context.Context) ([]domain.User, error) {
 	return users, nil
 }
 
-func (s *Store) EditUser(ctx context.Context, u domain.User) error {
-	err := s.Queries.EditUser(ctx, db.EditUserParams{
-		Username:  u.Username,
-		UpdatedAt: u.UpdatedAt,
-		ID:        u.ID,
+func (s *Store) EditUser(ctx context.Context, req EditUserParams) (domain.User, error) {
+	res, err := s.Queries.EditUser(ctx, db.EditUserParams{
+		Username:  req.Username,
+		FirstName: req.FirstName,
+		Role:      string(req.Role),
+		UpdatedAt: req.UpdatedAt,
+		ID:        req.ID,
 	})
 
 	if err != nil {
-		return err
+		return domain.User{}, err
 	}
 
-	return nil
+	user := dbUserToDomainUser(res)
+
+	return user, nil
 }
 
 func (s *Store) DeleteUser(ctx context.Context, id string) error {
