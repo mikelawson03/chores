@@ -9,6 +9,12 @@ import (
 	"github.com/mikelawson03/chores/internal/domain"
 )
 
+type ExistingAssignment struct {
+	ID         string
+	TemplateID string
+	DueDate    time.Time
+}
+
 func sameDay(a, b time.Time) bool {
 	ay, am, ad := a.Date()
 	by, bm, bd := b.Date()
@@ -121,7 +127,7 @@ func (a *App) RunScheduler(ctx context.Context) error {
 	// retrieve users
 	users, err := a.Store.GetAllUsers(ctx)
 	if err != nil {
-		return fmt.Errorf("error retrieving users - %s", err)
+		return err
 	}
 	if len(users) == 0 {
 		return errors.New("no users available for scheduling")
@@ -130,7 +136,7 @@ func (a *App) RunScheduler(ctx context.Context) error {
 	// retrieve current templates
 	tmps, err := a.Store.GetChoreTemplates(ctx)
 	if err != nil {
-		return fmt.Errorf("error retrieving templates - %s", err)
+		return err
 	}
 	if len(tmps) == 0 {
 		return errors.New("no chore templates available for scheduling")
