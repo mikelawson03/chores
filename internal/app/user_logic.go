@@ -41,12 +41,12 @@ func (a *App) validateNewUserRequest(ctx context.Context, username, role, firstN
 	}
 
 	if exists {
-		err = fmt.Errorf("%w: username already exists", ErrValidation)
+		err = fmt.Errorf("%w: username already exists", domain.ErrValidation)
 	}
 
 	userRole := domain.Role(role)
 	if !userRole.IsValid() {
-		return ErrInvalidRole
+		return domain.ErrInvalidRole
 	}
 
 	if firstName == "" {
@@ -59,7 +59,7 @@ func (a *App) validateNewUserRequest(ctx context.Context, username, role, firstN
 func (a *App) validateEditUserRequest(ctx context.Context, newUsername, role, firstName string, user domain.User) error {
 	userRole := domain.Role(role)
 	if !userRole.IsValid() {
-		return ErrInvalidRole
+		return domain.ErrInvalidRole
 	}
 
 	userWithName, err := a.Store.GetUserByUsername(ctx, newUsername)
@@ -126,7 +126,7 @@ func (a *App) GetUserByID(ctx context.Context, id string) (domain.User, error) {
 	}
 
 	if !auth.CanGetUser(reqUser, id) {
-		return domain.User{}, ErrForbidden
+		return domain.User{}, domain.ErrForbidden
 	}
 
 	user, err := a.Store.GetUserByID(ctx, id)
@@ -151,17 +151,17 @@ func (a *App) EditUser(ctx context.Context, id, newUsername, role, firstName str
 	err = a.validateEditUserRequest(ctx, newUsername, role, firstName, user)
 
 	if newUsername != existing.Username && !auth.CanEditUserName(user, existing.ID) {
-		return domain.User{}, ErrForbidden
+		return domain.User{}, domain.ErrForbidden
 	}
 
 	userRole := domain.Role(role)
 
 	if userRole != existing.Role && !auth.CanEditRole(user) {
-		return domain.User{}, ErrForbidden
+		return domain.User{}, domain.ErrForbidden
 	}
 
 	if firstName != existing.FirstName && !auth.CanEditFirstName(user, existing.ID) {
-		return domain.User{}, ErrForbidden
+		return domain.User{}, domain.ErrForbidden
 	}
 
 	updatedUser, err := a.Store.EditUser(ctx, store.EditUserParams{

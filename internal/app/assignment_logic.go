@@ -48,7 +48,7 @@ func (a *App) validateAssignedUserID(ctx context.Context, assignedUserID string)
 
 	_, err := a.GetUserByID(ctx, assignedUserID)
 	if errors.Is(err, sql.ErrNoRows) {
-		return fmt.Errorf("%w: assigned user", ErrNotFound)
+		return fmt.Errorf("%w: assigned user", domain.ErrNotFound)
 	}
 	if err != nil {
 		return err
@@ -87,31 +87,6 @@ func validateDueDate(dueDate *time.Time) error {
 	return nil
 }
 
-func (a *App) createNewAssignment(templateID, assignedUserID, instructions string, dueDate *time.Time, scheduledFor *time.Time) domain.Assignment {
-	id := uuid.NewString()
-	now := time.Now()
-
-	var assignmentScheduledFor *time.Time
-
-	if scheduledFor != nil {
-		t := *scheduledFor
-		assignmentScheduledFor = &t
-	}
-
-	assignment := domain.Assignment{
-		ID:             id,
-		TemplateID:     templateID,
-		AssignedUserID: assignedUserID,
-		Instructions:   instructions,
-		DueDate:        *dueDate,
-		ScheduledFor:   assignmentScheduledFor,
-		CreatedAt:      now,
-		UpdatedAt:      now,
-	}
-
-	return assignment
-}
-
 func (a *App) CreateAssignmentFromTemplate(ctx context.Context, req CreateAsssignmentRequest) (domain.Assignment, error) {
 	user, err := AuthenticatedUser(ctx)
 	if err != nil {
@@ -123,13 +98,13 @@ func (a *App) CreateAssignmentFromTemplate(ctx context.Context, req CreateAsssig
 	}
 
 	if !auth.CanAssignToUser(user, req.AssignedUserID) {
-		return domain.Assignment{}, fmt.Errorf("%w: may only assign chores to self", ErrForbidden)
+		return domain.Assignment{}, fmt.Errorf("%w: may only assign chores to self", domain.ErrForbidden)
 	}
 
 	id := uuid.NewString()
 	now := time.Now()
 
-	assignment, err := a.Store.AddAssignment(ctx, store.CreateAssignmentParams{
+	err = a.Store.AddAssignment(ctx, store.CreateAssignmentParams{
 		ID:             id,
 		TemplateID:     req.TemplateID,
 		AssignedUserID: req.AssignedUserID,
@@ -142,6 +117,8 @@ func (a *App) CreateAssignmentFromTemplate(ctx context.Context, req CreateAsssig
 	if err != nil {
 		return domain.Assignment{}, err
 	}
+
+	assignment, err := a.Store.GetAssignment(ctx, id)
 
 	return assignment, nil
 }
@@ -176,7 +153,7 @@ func (a *App) GetAssignmentByID(ctx context.Context, id string) (domain.Assignme
 	}
 
 	if !auth.CanGetAssignment(user, assignment) {
-		return domain.Assignment{}, ErrForbidden
+		return domain.Assignment{}, domain.ErrForbidden
 	}
 
 	return assignment, nil
@@ -203,11 +180,11 @@ func (a *App) EditAssignment(ctx context.Context, editRequest EditAssignmentRequ
 
 	// check authorization
 	if !auth.CanEditAssignment(user, existing) {
-		return domain.Assignment{}, ErrForbidden
+		return domain.Assignment{}, domain.ErrForbidden
 	}
 
 	if !auth.CanAssignToUser(user, editRequest.AssignedUserID) {
-		return domain.Assignment{}, ErrForbidden
+		return domain.Assignment{}, domain.ErrForbidden
 	}
 
 	var completedAt *time.Time
@@ -279,7 +256,7 @@ func (a *App) GetAssignmentsByUserID(ctx context.Context, id string) ([]domain.A
 	}
 
 	if !auth.CanGetUserAssignments(user, id) {
-		return []domain.Assignment{}, fmt.Errorf("%w: may only get own assignments", ErrForbidden)
+		return []domain.Assignment{}, fmt.Errorf("%w: may only get own assignments", domain.ErrForbidden)
 	}
 
 	assignments, err := a.Store.GetAssignmentsByUserID(ctx, id)

@@ -11,6 +11,22 @@ import (
 	"time"
 )
 
+const allocateAssignments = `-- name: AllocateAssignments :exec
+UPDATE assignments
+SET assigned_user_id = ?
+WHERE id = ?
+`
+
+type AllocateAssignmentsParams struct {
+	AssignedUserID string
+	ID             string
+}
+
+func (q *Queries) AllocateAssignments(ctx context.Context, arg AllocateAssignmentsParams) error {
+	_, err := q.db.ExecContext(ctx, allocateAssignments, arg.AssignedUserID, arg.ID)
+	return err
+}
+
 const createAssignment = `-- name: CreateAssignment :exec
 INSERT INTO assignments (
     id, 
@@ -359,7 +375,12 @@ func (q *Queries) GetAssignmentsByUserID(ctx context.Context, assignedUserID str
 }
 
 const getAssignmentsWithMetadataForDateRange = `-- name: GetAssignmentsWithMetadataForDateRange :many
-SELECT a.id, a.template_id, a.assigned_user_id, a.instructions, a.notes, a.due_date, a.scheduled_for, a.completed, a.canceled, a.created_at, a.updated_at, a.completed_at, a.canceled_at, ct.duration, ct.cadence
+SELECT a.id,
+    a.template_id,
+    a.assigned_user_id,
+    a.due_date,
+    ct.duration,
+    ct.cadence
 FROM assignments a
 JOIN chore_templates ct ON a.template_id = ct.id
 WHERE (ct.cadence IN ("daily", "weekly") 
@@ -383,16 +404,7 @@ type GetAssignmentsWithMetadataForDateRangeRow struct {
 	ID             string
 	TemplateID     string
 	AssignedUserID string
-	Instructions   sql.NullString
-	Notes          sql.NullString
 	DueDate        time.Time
-	ScheduledFor   sql.NullTime
-	Completed      bool
-	Canceled       bool
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
-	CompletedAt    sql.NullTime
-	CanceledAt     sql.NullTime
 	Duration       int64
 	Cadence        string
 }
@@ -415,16 +427,7 @@ func (q *Queries) GetAssignmentsWithMetadataForDateRange(ctx context.Context, ar
 			&i.ID,
 			&i.TemplateID,
 			&i.AssignedUserID,
-			&i.Instructions,
-			&i.Notes,
 			&i.DueDate,
-			&i.ScheduledFor,
-			&i.Completed,
-			&i.Canceled,
-			&i.CreatedAt,
-			&i.UpdatedAt,
-			&i.CompletedAt,
-			&i.CanceledAt,
 			&i.Duration,
 			&i.Cadence,
 		); err != nil {

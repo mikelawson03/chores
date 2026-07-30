@@ -23,9 +23,3 @@ type Assignment struct {
 	CompletedAt           *time.Time `json:"completedAt"`
 	CanceledAt            *time.Time `json:"canceledAt"`
 }
-
-type AssignmentWithMetadata struct {
-	Assignment      Assignment
-	DurationMinutes int
-	Cadence         Cadence
-}

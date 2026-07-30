@@ -4,9 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/mikelawson03/chores/internal/domain"
+	"github.com/mikelawson03/chores/internal/store"
 )
 
 type ExistingAssignment struct {
@@ -30,7 +33,7 @@ func schedulerAssignmentWindowEnd(horizonEnd time.Time) time.Time {
 	).AddDate(0, 1, 0)
 }
 
-func assignmentExistsForTemplateAndDate(templateID string, date time.Time, assignments []domain.Assignment) bool {
+func assignmentExistsForTemplateAndDate(templateID string, date time.Time, assignments []store.ExistingAssignment) bool {
 	for _, assignment := range assignments {
 		if assignment.TemplateID != templateID {
 			continue
@@ -43,7 +46,7 @@ func assignmentExistsForTemplateAndDate(templateID string, date time.Time, assig
 	return false
 }
 
-func assignmentExistsForTemplateAndDateWindow(templateID string, windowStart, windowEnd time.Time, assignments []domain.Assignment) bool {
+func assignmentExistsForTemplateAndDateWindow(templateID string, windowStart, windowEnd time.Time, assignments []store.ExistingAssignment) bool {
 	for _, assignment := range assignments {
 		if assignment.TemplateID != templateID {
 			continue
@@ -61,8 +64,8 @@ func assignmentExistsForTemplateAndDateWindow(templateID string, windowStart, wi
 	return false
 }
 
-func (a *App) dailyScheduler(horizonStart, horizonEnd time.Time, templates []domain.ChoreTemplate, existingAssignments []domain.Assignment) []domain.Assignment {
-	var newAssignments []domain.Assignment
+func (a *App) dailyScheduler(ctx context.Context, horizonStart, horizonEnd time.Time, templates []domain.ChoreTemplate, existingAssignments []store.ExistingAssignment) error {
+	created := 0
 	for _, template := range templates {
 		if template.Cadence != domain.CadenceDaily {
 			continue
@@ -70,17 +73,35 @@ func (a *App) dailyScheduler(horizonStart, horizonEnd time.Time, templates []dom
 		currentDay := horizonStart
 		for currentDay.Before(horizonEnd) {
 			if !assignmentExistsForTemplateAndDate(template.ID, currentDay, existingAssignments) {
-				assignment := a.createNewAssignment(template.ID, template.Assignee, template.Instructions, &currentDay, &currentDay)
-				newAssignments = append(newAssignments, assignment)
+				err := a.Store.AddAssignment(ctx, store.CreateAssignmentParams{
+					ID:             uuid.NewString(),
+					TemplateID:     template.ID,
+					AssignedUserID: template.Assignee,
+					Instructions:   template.Instructions,
+					DueDate:        currentDay,
+					ScheduledFor:   &currentDay,
+					CreatedAt:      time.Now(),
+					UpdatedAt:      time.Now(),
+				})
+
+				if err != nil {
+					log.Printf("Daily scheduler aborted after creating %d assignments: %v",
+						created,
+						err)
+					return err
+				}
+
+				created++
 			}
 			currentDay = currentDay.AddDate(0, 0, 1)
 		}
 	}
-	return newAssignments
+	log.Printf("Daily scheduler run complete: %d assignments created.\n", created)
+	return nil
 }
 
-func (a *App) weeklyScheduler(horizonStart, horizonEnd time.Time, templates []domain.ChoreTemplate, existingAssignments []domain.Assignment) []domain.Assignment {
-	var newAssignments []domain.Assignment
+func (a *App) weeklyScheduler(ctx context.Context, horizonStart, horizonEnd time.Time, templates []domain.ChoreTemplate, existingAssignments []store.ExistingAssignment) error {
+	created := 0
 	for _, template := range templates {
 		if template.Cadence != domain.CadenceWeekly {
 			continue
@@ -90,17 +111,32 @@ func (a *App) weeklyScheduler(horizonStart, horizonEnd time.Time, templates []do
 			weekEnd := weekStart.AddDate(0, 0, 7)
 			if !assignmentExistsForTemplateAndDateWindow(template.ID, weekStart, weekEnd, existingAssignments) {
 				assignmentDate := weekEnd.AddDate(0, 0, -1)
-				assignment := a.createNewAssignment(template.ID, template.Assignee, template.Instructions, &assignmentDate, nil)
-				newAssignments = append(newAssignments, assignment)
+				err := a.Store.AddAssignment(ctx, store.CreateAssignmentParams{
+					ID:             uuid.NewString(),
+					TemplateID:     template.ID,
+					AssignedUserID: template.Assignee,
+					Instructions:   template.Instructions,
+					DueDate:        assignmentDate,
+					ScheduledFor:   nil,
+					CreatedAt:      time.Now(),
+					UpdatedAt:      time.Now(),
+				})
+				if err != nil {
+					log.Printf("Weekly scheduler aborted after creating %d assignments: %v",
+						created,
+						err)
+					return err
+				}
+				created++
 			}
 		}
 	}
-
-	return newAssignments
+	log.Printf("Weekly scheduler run complete: %d assignments created.\n", created)
+	return nil
 }
 
-func (a *App) monthlyScheduler(horizonStart, horizonEnd time.Time, templates []domain.ChoreTemplate, existingAssignments []domain.Assignment) []domain.Assignment {
-	var newAssignments []domain.Assignment
+func (a *App) monthlyScheduler(ctx context.Context, horizonStart, horizonEnd time.Time, templates []domain.ChoreTemplate, existingAssignments []store.ExistingAssignment) error {
+	created := 0
 	for _, template := range templates {
 		if template.Cadence != domain.CadenceMonthly {
 			continue
@@ -110,17 +146,37 @@ func (a *App) monthlyScheduler(horizonStart, horizonEnd time.Time, templates []d
 			nextMonthStart := thisMonthStart.AddDate(0, 1, 0)
 			thisMonthEnd := nextMonthStart.AddDate(0, 0, -1)
 			if !assignmentExistsForTemplateAndDateWindow(template.ID, thisMonthStart, nextMonthStart, existingAssignments) {
-				assignment := a.createNewAssignment(template.ID, template.Assignee, template.Instructions, &thisMonthEnd, nil)
-				newAssignments = append(newAssignments, assignment)
+				err := a.Store.AddAssignment(ctx, store.CreateAssignmentParams{
+					ID:             uuid.NewString(),
+					TemplateID:     template.ID,
+					AssignedUserID: template.Assignee,
+					Instructions:   template.Instructions,
+					DueDate:        thisMonthEnd,
+					ScheduledFor:   nil,
+					CreatedAt:      time.Now(),
+					UpdatedAt:      time.Now(),
+				})
+				if err != nil {
+					log.Printf("Monthly scheduler aborted after creating %d assignments: %v",
+						created,
+						err)
+					return err
+				}
+				created++
 			}
 			thisMonthStart = nextMonthStart
 		}
 	}
-
-	return newAssignments
+	log.Printf("Weekly scheduler run complete: %d assignments created.\n", created)
+	return nil
 }
 
 func (a *App) RunScheduler(ctx context.Context) error {
+	_, err := CheckAdmin(ctx)
+	if err != nil {
+		return err
+	}
+
 	// calculate current scheduling horizon
 	horizonStart, horizonEnd := a.getHorizonWindow()
 
@@ -149,36 +205,20 @@ func (a *App) RunScheduler(ctx context.Context) error {
 		return fmt.Errorf("error retrieving assignments - %s", err)
 	}
 
-	// run schedulers by cadence
-	// newDailyAssignments := a.dailyScheduler(horizonStart, horizonEnd, tmps, existingAssignments)
-	// newWeeklyAssignments := a.weeklyScheduler(horizonStart, horizonEnd, tmps, existingAssignments)
-	// newMonthlyAssignments := a.monthlyScheduler(horizonStart, horizonEnd, tmps, existingAssignments)
+	//run schedulers by cadence
+	err = a.dailyScheduler(ctx, horizonStart, horizonEnd, tmps, existingAssignments)
+	if err != nil {
+		return err
+	}
+	err = a.weeklyScheduler(ctx, horizonStart, horizonEnd, tmps, existingAssignments)
+	if err != nil {
+		return err
+	}
 
-	// // // persist assignments in DB
-	// // for _, dailyAssignment := range newDailyAssignments {
-	// // 	_, err = a.Store.AddAssignment(ctx, dailyAssignment)
-	// // 	if err != nil {
-	// // 		return fmt.Errorf("error committing new daily assignment to DB: %s", err)
-	// // 	}
-	// // }
+	err = a.monthlyScheduler(ctx, horizonStart, horizonEnd, tmps, existingAssignments)
+	if err != nil {
+		return err
+	}
 
-	// // for _, weeklyAssignment := range newWeeklyAssignments {
-	// // 	_, err = a.Store.AddAssignment(ctx, weeklyAssignment)
-	// // 	if err != nil {
-	// // 		return fmt.Errorf("error committing new weekly assignment to DB: %s", err)
-	// // 	}
-	// // }
-
-	// // for _, monthlyAssignment := range newMonthlyAssignments {
-	// // 	_, err = a.Store.AddAssignment(ctx, monthlyAssignment)
-	// // 	if err != nil {
-	// // 		return fmt.Errorf("error committing new monthly assignment to DB: %s", err)
-	// // 	}
-	// // }
-
-	// // // print new assignments created to console for debugging
-	// // fmt.Printf("Daily Assignments created: %d\n", len(newDailyAssignments))
-	// // fmt.Printf("Weekly Assignments created: %d\n", len(newWeeklyAssignments))
-	// // fmt.Printf("Monthly Assignments created: %d\n", len(newMonthlyAssignments))
 	return nil
 }

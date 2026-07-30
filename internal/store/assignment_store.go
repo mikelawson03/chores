@@ -33,6 +33,15 @@ type EditAssignmentParams struct {
 	CanceledAt     *time.Time
 }
 
+type BalancerAssignment struct {
+	ID             string
+	TemplateID     string
+	AssignedUserID string
+	DueDate        time.Time
+	Cadence        domain.Cadence
+	Duration       int
+}
+
 func dbAssignmentToDomainAssignment(dbAssignment db.Assignment) domain.Assignment {
 	var completedAt *time.Time
 	var canceledAt *time.Time
@@ -161,7 +170,7 @@ func mapGetAllAssignmentsRow(r db.GetAllAssignmentsRow) domain.Assignment {
 	}
 }
 
-func (s *Store) AddAssignment(ctx context.Context, params CreateAssignmentParams) (domain.Assignment, error) {
+func (s *Store) AddAssignment(ctx context.Context, params CreateAssignmentParams) error {
 	var scheduledFor sql.NullTime
 	var instructions sql.NullString
 
@@ -203,21 +212,16 @@ func (s *Store) AddAssignment(ctx context.Context, params CreateAssignmentParams
 	})
 
 	if err != nil {
-		return domain.Assignment{}, err
+		return err
 	}
 
-	assignment, err := s.GetAssignment(ctx, params.ID)
-	if err != nil {
-		return domain.Assignment{}, err
-	}
-
-	return assignment, nil
+	return nil
 }
 
 func (s *Store) GetAssignment(ctx context.Context, id string) (domain.Assignment, error) {
 	dbAssignment, err := s.Queries.GetAssignment(ctx, id)
 	if err != nil {
-		fmt.Println("hit")
+		fmt.Println(id)
 		return domain.Assignment{}, err
 	}
 
@@ -298,58 +302,46 @@ func (s *Store) GetAssignmentsByUserID(ctx context.Context, id string) ([]domain
 	return assignments, nil
 }
 
-func (s *Store) GetAssignmentsForBalancing(ctx context.Context, horizonStart, horizonEnd, monthlyPlanningEnd time.Time) ([]domain.AssignmentWithMetadata, error) {
-	dbAssignmentsWithMetadata, err := s.Queries.GetAssignmentsWithMetadataForDateRange(ctx, db.GetAssignmentsWithMetadataForDateRangeParams{
-		DueDate:   horizonStart,
-		DueDate_2: horizonEnd,
-		DueDate_3: horizonStart,
-		DueDate_4: monthlyPlanningEnd,
-	})
+func (s *Store) GetAssignmentsForBalancing(ctx context.Context,
+	horizonStart,
+	horizonEnd,
+	monthlyPlanningEnd time.Time) ([]BalancerAssignment, error) {
+	res, err := s.Queries.GetAssignmentsWithMetadataForDateRange(ctx,
+		db.GetAssignmentsWithMetadataForDateRangeParams{
+			DueDate:   horizonStart,
+			DueDate_2: horizonEnd,
+			DueDate_3: horizonStart,
+			DueDate_4: monthlyPlanningEnd,
+		})
 	if err != nil {
-		return []domain.AssignmentWithMetadata{}, err
+		return []BalancerAssignment{}, err
 	}
 
-	var assignments []domain.AssignmentWithMetadata
-	for _, dbAssignmentWithMetadata := range dbAssignmentsWithMetadata {
-		var completedAt *time.Time
-		var canceledAt *time.Time
-		if dbAssignmentWithMetadata.CompletedAt.Valid {
-			t := dbAssignmentWithMetadata.CompletedAt.Time
-			completedAt = &t
+	var assignments []BalancerAssignment
+	for _, assignment := range res {
+
+		cadence := domain.Cadence(assignment.Cadence)
+		if !cadence.IsValid() {
+			return []BalancerAssignment{}, domain.ErrInvalidCadence
 		}
 
-		if dbAssignmentWithMetadata.CanceledAt.Valid {
-			t := dbAssignmentWithMetadata.CanceledAt.Time
-			canceledAt = &t
+		assignment := BalancerAssignment{
+			ID:             assignment.ID,
+			TemplateID:     assignment.TemplateID,
+			AssignedUserID: assignment.AssignedUserID,
+			DueDate:        assignment.DueDate,
+			Cadence:        cadence,
+			Duration:       int(assignment.Duration),
 		}
 
-		assignment := domain.Assignment{
-			ID:             dbAssignmentWithMetadata.ID,
-			TemplateID:     dbAssignmentWithMetadata.TemplateID,
-			AssignedUserID: dbAssignmentWithMetadata.AssignedUserID,
-			DueDate:        dbAssignmentWithMetadata.DueDate,
-			Completed:      dbAssignmentWithMetadata.Completed,
-			Canceled:       dbAssignmentWithMetadata.Canceled,
-			CreatedAt:      dbAssignmentWithMetadata.CreatedAt,
-			UpdatedAt:      dbAssignmentWithMetadata.UpdatedAt,
-			CompletedAt:    completedAt,
-			CanceledAt:     canceledAt,
-		}
-
-		assignmentWithDuration := domain.AssignmentWithMetadata{
-			Assignment:      assignment,
-			DurationMinutes: int(dbAssignmentWithMetadata.Duration),
-			Cadence:         domain.Cadence(dbAssignmentWithMetadata.Cadence),
-		}
-
-		assignments = append(assignments, assignmentWithDuration)
+		assignments = append(assignments, assignment)
 	}
 
 	return assignments, nil
 
 }
 
-func (s *Store) BulkUpdateAssignments(ctx context.Context, assignments []domain.Assignment) error {
+func (s *Store) BulkAssignmentAllocations(ctx context.Context, assignments []BalancerAssignment) error {
 	tx, err := s.Db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -360,15 +352,8 @@ func (s *Store) BulkUpdateAssignments(ctx context.Context, assignments []domain.
 	qtx := s.Queries.WithTx(tx)
 
 	for _, assignment := range assignments {
-		err := qtx.EditAssignment(ctx, db.EditAssignmentParams{
+		err := qtx.AllocateAssignments(ctx, db.AllocateAssignmentsParams{
 			AssignedUserID: assignment.AssignedUserID,
-			ScheduledFor:   pointerTimeToNullTime(assignment.ScheduledFor),
-			Notes:          stringToNullString(assignment.Notes),
-			UpdatedAt:      time.Now(),
-			Completed:      assignment.Completed,
-			Canceled:       assignment.Canceled,
-			CompletedAt:    pointerTimeToNullTime(assignment.CompletedAt),
-			CanceledAt:     pointerTimeToNullTime(assignment.CanceledAt),
 			ID:             assignment.ID,
 		})
 		if err != nil {

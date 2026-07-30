@@ -65,7 +65,12 @@ FROM assignments
 WHERE assigned_user_id = ?;
 
 -- name: GetAssignmentsWithMetadataForDateRange :many
-SELECT a.*, ct.duration, ct.cadence
+SELECT a.id,
+    a.template_id,
+    a.assigned_user_id,
+    a.due_date,
+    ct.duration,
+    ct.cadence
 FROM assignments a
 JOIN chore_templates ct ON a.template_id = ct.id
 WHERE (ct.cadence IN ("daily", "weekly") 
@@ -76,3 +81,8 @@ OR (ct.cadence = "monthly"
     AND a.due_date >= ?
     AND a.due_date < ?
     AND a.canceled = false);
+
+-- name: AllocateAssignments :exec
+UPDATE assignments
+SET assigned_user_id = ?
+WHERE id = ?;

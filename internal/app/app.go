@@ -2,21 +2,11 @@ package app
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/mikelawson03/chores/internal/auth"
 	"github.com/mikelawson03/chores/internal/domain"
 	"github.com/mikelawson03/chores/internal/store"
-)
-
-var (
-	ErrUnauthorized       = errors.New("unauthorized")
-	ErrForbidden          = errors.New("forbidden")
-	ErrInvalidCredentials = errors.New("invalid credentials")
-	ErrNotFound           = errors.New("not found")
-	ErrValidation         = errors.New("invalid request")
-	ErrInvalidRole        = errors.New("invalid role")
 )
 
 type Config struct {
@@ -74,7 +64,7 @@ func (a *App) getMonthlyPlanningEnd(horizonStart, horizonEnd time.Time) time.Tim
 func AuthenticatedUser(ctx context.Context) (domain.User, error) {
 	user, ok := auth.UserFromContext(ctx)
 	if !ok {
-		return domain.User{}, ErrUnauthorized
+		return domain.User{}, domain.ErrUnauthorized
 	}
 
 	return user, nil
@@ -87,7 +77,7 @@ func CheckAdmin(ctx context.Context) (domain.User, error) {
 	}
 
 	if user.Role != domain.RoleAdmin {
-		return domain.User{}, ErrForbidden
+		return domain.User{}, domain.ErrForbidden
 	}
 
 	return user, nil

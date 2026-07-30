@@ -6,7 +6,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/mikelawson03/chores/internal/app"
+	"github.com/mikelawson03/chores/internal/domain"
 )
 
 func RespondWithError(w http.ResponseWriter, err error) {
@@ -15,15 +15,15 @@ func RespondWithError(w http.ResponseWriter, err error) {
 	}
 
 	switch {
-	case errors.Is(err, app.ErrForbidden):
+	case errors.Is(err, domain.ErrForbidden):
 		RespondWithJSON(w, http.StatusForbidden, errorResponse{
 			Error: "Forbidden",
 		})
-	case errors.Is(err, app.ErrUnauthorized):
+	case errors.Is(err, domain.ErrUnauthorized):
 		RespondWithJSON(w, http.StatusUnauthorized, errorResponse{
 			Error: "Unauthorized",
 		})
-	case errors.Is(err, app.ErrNotFound):
+	case errors.Is(err, domain.ErrNotFound):
 		RespondWithJSON(w, http.StatusNotFound, errorResponse{
 			Error: err.Error(),
 		})

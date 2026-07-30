@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/mikelawson03/chores/internal/app"
 	"github.com/mikelawson03/chores/internal/auth"
+	"github.com/mikelawson03/chores/internal/domain"
 )
 
 func (cfg *apiCfg) middlewareAuth(next http.Handler) http.Handler {
@@ -16,14 +16,14 @@ func (cfg *apiCfg) middlewareAuth(next http.Handler) http.Handler {
 
 		tok, err := auth.GetBearerToken(r.Header)
 		if err != nil {
-			err = fmt.Errorf("%w: error retrieving token", app.ErrUnauthorized)
+			err = fmt.Errorf("%w: error retrieving token", domain.ErrUnauthorized)
 			RespondWithError(w, err)
 			return
 		}
 
 		uid, err := auth.ValidateToken(tok, cfg.App.Config.JWTSigninSecret)
 		if err != nil {
-			err = fmt.Errorf("%w: error validating token", app.ErrUnauthorized)
+			err = fmt.Errorf("%w: error validating token", domain.ErrUnauthorized)
 			RespondWithError(w, err)
 			return
 		}
@@ -31,7 +31,7 @@ func (cfg *apiCfg) middlewareAuth(next http.Handler) http.Handler {
 		user, err := cfg.App.Store.GetUserByID(ctx, uid)
 
 		if errors.Is(err, sql.ErrNoRows) {
-			err = fmt.Errorf("%w: user not found", app.ErrUnauthorized)
+			err = fmt.Errorf("%w: user not found", domain.ErrUnauthorized)
 			RespondWithError(w, err)
 			return
 		}

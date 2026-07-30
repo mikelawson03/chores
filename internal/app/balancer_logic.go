@@ -6,6 +6,7 @@ import (
 	"sort"
 
 	"github.com/mikelawson03/chores/internal/domain"
+	"github.com/mikelawson03/chores/internal/store"
 )
 
 type userLoad struct {
@@ -17,15 +18,15 @@ type userLoad struct {
 
 // retrieve slice of assignments and cadence. creates new slice for assignments that match that cadence and
 // sorts them in descending order by the duration of the task in minutes (largest first)
-func sortedAssignmentsForCadence(assignments []domain.AssignmentWithMetadata, cadence domain.Cadence) []domain.AssignmentWithMetadata {
-	var cadenceAssignments []domain.AssignmentWithMetadata
+func sortedAssignmentsForCadence(assignments []store.BalancerAssignment, cadence domain.Cadence) []store.BalancerAssignment {
+	var cadenceAssignments []store.BalancerAssignment
 	for _, assignment := range assignments {
 		if assignment.Cadence == cadence {
 			cadenceAssignments = append(cadenceAssignments, assignment)
 		}
 	}
 	sort.Slice(cadenceAssignments, func(i, j int) bool {
-		return cadenceAssignments[i].DurationMinutes > cadenceAssignments[j].DurationMinutes
+		return cadenceAssignments[i].Duration > cadenceAssignments[j].Duration
 	})
 	return cadenceAssignments
 }
@@ -46,15 +47,15 @@ func getLoadForCadence(load *userLoad, cadence domain.Cadence) *int {
 
 // receives a list of userLoads and a list of assignments. adds assignment duration to assigned user's workload
 // for the appropriate cadence
-func populateCurrentLoads(userLoads []userLoad, assignments []domain.AssignmentWithMetadata) {
+func populateCurrentLoads(userLoads []userLoad, assignments []store.BalancerAssignment) {
 	for _, assignment := range assignments {
-		if assignment.Assignment.AssignedUserID == "" {
+		if assignment.AssignedUserID == "" {
 			continue
 		}
 		for i := range userLoads {
-			if userLoads[i].userId == assignment.Assignment.AssignedUserID {
+			if userLoads[i].userId == assignment.AssignedUserID {
 				load := getLoadForCadence(&userLoads[i], assignment.Cadence)
-				*load += assignment.DurationMinutes
+				*load += assignment.Duration
 
 			}
 		}
@@ -80,27 +81,32 @@ func findLowestUserLoad(userLoads []userLoad, cadence domain.Cadence) *userLoad 
 // loops through assignments, ignores previously assigned, finds lowest load for cadence, assigns current
 // assignment in loop to user with lowest load, retrieve cadence load pointer within userLoad struct, and
 // increments it. Then adds assignment to newAssignments slice and returns that to caller
-func balanceUserLoads(assignments []domain.AssignmentWithMetadata, userLoads []userLoad, cadence domain.Cadence) []domain.Assignment {
-	var newAssignments []domain.Assignment
+func balanceUserLoads(assignments []store.BalancerAssignment, userLoads []userLoad, cadence domain.Cadence) []store.BalancerAssignment {
+	var newAssignments []store.BalancerAssignment
 
 	for _, assignment := range assignments {
-		if assignment.Assignment.AssignedUserID != "" {
+		if assignment.AssignedUserID != "" {
 			continue
 		}
 
 		lowestLoad := findLowestUserLoad(userLoads, cadence)
 
-		assignment.Assignment.AssignedUserID = lowestLoad.userId
+		assignment.AssignedUserID = lowestLoad.userId
 
 		load := getLoadForCadence(lowestLoad, cadence)
-		*load += assignment.DurationMinutes
+		*load += assignment.Duration
 
-		newAssignments = append(newAssignments, assignment.Assignment)
+		newAssignments = append(newAssignments, assignment)
 	}
 	return newAssignments
 }
 
 func (a *App) RunBalancer(ctx context.Context) error {
+	_, err := CheckAdmin(ctx)
+	if err != nil {
+		return err
+	}
+
 	// Get planning horizon window and monthly planning end
 	horizonStart, horizonEnd := a.getHorizonWindow()
 	monthlyPlanningEnd := a.getMonthlyPlanningEnd(horizonStart, horizonEnd)
@@ -130,36 +136,36 @@ func (a *App) RunBalancer(ctx context.Context) error {
 	populateCurrentLoads(userLoads, assignments)
 
 	// Get lists of assignments, balance unassigned by cadence, and append new assignments to persistence slice
-	var assignmentsToPersist []domain.Assignment
+	var allocationPlan []store.BalancerAssignment
 
 	dailyAssignments := sortedAssignmentsForCadence(assignments, domain.CadenceDaily)
-	newDailyAssignments := balanceUserLoads(dailyAssignments, userLoads, domain.CadenceDaily)
-	for _, assignment := range newDailyAssignments {
-		assignmentsToPersist = append(assignmentsToPersist, assignment)
+	newDailyAllocations := balanceUserLoads(dailyAssignments, userLoads, domain.CadenceDaily)
+	for _, assignment := range newDailyAllocations {
+		allocationPlan = append(allocationPlan, assignment)
 	}
 
 	weeklyAssignments := sortedAssignmentsForCadence(assignments, domain.CadenceWeekly)
-	newWeeklyAssignments := balanceUserLoads(weeklyAssignments, userLoads, domain.CadenceWeekly)
-	for _, assignment := range newWeeklyAssignments {
-		assignmentsToPersist = append(assignmentsToPersist, assignment)
+	newWeeklyAllocations := balanceUserLoads(weeklyAssignments, userLoads, domain.CadenceWeekly)
+	for _, assignment := range newWeeklyAllocations {
+		allocationPlan = append(allocationPlan, assignment)
 	}
 
 	monthlyAssignments := sortedAssignmentsForCadence(assignments, domain.CadenceMonthly)
-	newMonthlyAssignments := balanceUserLoads(monthlyAssignments, userLoads, domain.CadenceMonthly)
-	for _, assignment := range newMonthlyAssignments {
-		assignmentsToPersist = append(assignmentsToPersist, assignment)
+	newMonthlyAllocations := balanceUserLoads(monthlyAssignments, userLoads, domain.CadenceMonthly)
+	for _, assignment := range newMonthlyAllocations {
+		allocationPlan = append(allocationPlan, assignment)
 	}
 
 	// Send new assignments to persistence layer
-	err = a.Store.BulkUpdateAssignments(ctx, assignmentsToPersist)
+	err = a.Store.BulkAssignmentAllocations(ctx, allocationPlan)
 	if err != nil {
 		return err
 	}
 
 	// Print metrics to console
-	fmt.Println("Daily Assignments Made: ", len(newDailyAssignments))
-	fmt.Println("Weekly Assignments Made: ", len(newWeeklyAssignments))
-	fmt.Println("Monthly Assignments Made: ", len(newMonthlyAssignments))
+	fmt.Println("Daily Assignments Made: ", len(newDailyAllocations))
+	fmt.Println("Weekly Assignments Made: ", len(newWeeklyAllocations))
+	fmt.Println("Monthly Assignments Made: ", len(newMonthlyAllocations))
 
 	for _, user := range userLoads {
 		fmt.Println(user.userId)
