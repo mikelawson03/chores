@@ -13,6 +13,7 @@ type CreateUserParams struct {
 	ID        string
 	Username  string
 	Role      domain.Role
+	HashedPW  string
 	FirstName string
 	CreatedAt time.Time
 	UpdatedAt time.Time
@@ -24,6 +25,11 @@ type EditUserParams struct {
 	Role      domain.Role
 	FirstName string
 	UpdatedAt time.Time
+}
+
+type LoginUser struct {
+	User         domain.User
+	PasswordHash string
 }
 
 func dbUserToDomainUser(user db.User) domain.User {
@@ -39,12 +45,13 @@ func dbUserToDomainUser(user db.User) domain.User {
 
 func (s *Store) CreateUser(ctx context.Context, req CreateUserParams) (domain.User, error) {
 	res, err := s.Queries.CreateUser(ctx, db.CreateUserParams{
-		ID:        req.ID,
-		Username:  req.Username,
-		Role:      string(req.Role),
-		FirstName: req.FirstName,
-		CreatedAt: req.CreatedAt,
-		UpdatedAt: req.UpdatedAt,
+		ID:           req.ID,
+		Username:     req.Username,
+		PasswordHash: req.HashedPW,
+		Role:         string(req.Role),
+		FirstName:    req.FirstName,
+		CreatedAt:    req.CreatedAt,
+		UpdatedAt:    req.UpdatedAt,
 	})
 
 	if err != nil {
@@ -62,7 +69,19 @@ func (s *Store) GetUserByUsername(ctx context.Context, username string) (domain.
 		return domain.User{}, err
 	}
 
-	return dbUserToDomainUser(res), nil
+	role := domain.Role(res.Role)
+	if !role.IsValid() {
+		return domain.User{}, domain.ErrInvalidRole
+	}
+
+	return domain.User{
+		ID:        res.ID,
+		Username:  res.Username,
+		FirstName: res.FirstName,
+		Role:      domain.Role(res.Role),
+		CreatedAt: res.CreatedAt,
+		UpdatedAt: res.UpdatedAt,
+	}, nil
 }
 
 func (s *Store) GetUserByID(ctx context.Context, id string) (domain.User, error) {
@@ -72,7 +91,19 @@ func (s *Store) GetUserByID(ctx context.Context, id string) (domain.User, error)
 		return domain.User{}, err
 	}
 
-	return dbUserToDomainUser(res), nil
+	role := domain.Role(res.Role)
+	if !role.IsValid() {
+		return domain.User{}, domain.ErrInvalidRole
+	}
+
+	return domain.User{
+		ID:        res.ID,
+		Username:  res.Username,
+		FirstName: res.FirstName,
+		Role:      domain.Role(res.Role),
+		CreatedAt: res.CreatedAt,
+		UpdatedAt: res.UpdatedAt,
+	}, nil
 }
 
 func (s *Store) GetAllUsers(ctx context.Context) ([]domain.User, error) {
@@ -85,7 +116,18 @@ func (s *Store) GetAllUsers(ctx context.Context) ([]domain.User, error) {
 	}
 
 	for _, user := range res {
-		users = append(users, dbUserToDomainUser(user))
+		role := domain.Role(user.Role)
+		if !role.IsValid() {
+			return []domain.User{}, domain.ErrInvalidRole
+		}
+		users = append(users, domain.User{
+			ID:        user.ID,
+			Username:  user.Username,
+			FirstName: user.FirstName,
+			Role:      role,
+			CreatedAt: user.CreatedAt,
+			UpdatedAt: user.UpdatedAt,
+		})
 	}
 
 	return users, nil
@@ -117,4 +159,39 @@ func (s *Store) DeleteUser(ctx context.Context, id string) error {
 	}
 
 	return nil
+}
+
+func (s *Store) GetUserCount(ctx context.Context) (int64, error) {
+	count, err := s.Queries.GetUserCount(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
+func (s *Store) GetUserWithHashedPW(ctx context.Context, username string) (LoginUser, error) {
+	res, err := s.Queries.GetHashForUsername(ctx, username)
+	if err != nil {
+		return LoginUser{}, err
+	}
+
+	role := domain.Role(res.Role)
+	if !role.IsValid() {
+		return LoginUser{}, domain.ErrInvalidRole
+	}
+
+	user := LoginUser{
+		PasswordHash: res.PasswordHash,
+		User: domain.User{
+			ID:        res.ID,
+			Username:  res.Username,
+			FirstName: res.FirstName,
+			Role:      role,
+			CreatedAt: res.CreatedAt,
+			UpdatedAt: res.UpdatedAt,
+		},
+	}
+
+	return user, nil
 }

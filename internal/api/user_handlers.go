@@ -5,10 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+
+	"github.com/mikelawson03/chores/internal/auth"
 )
 
 type UserRequest struct {
 	Username  string `json:"username"`
+	Password  string `json:"password"`
 	Role      string `json:"role"`
 	FirstName string `json:"firstName"`
 }
@@ -26,7 +29,7 @@ type UserResponse struct {
 }
 
 type LoginResponse struct {
-	User  UserResponse `json:"id"`
+	User  UserResponse `json:"user"`
 	Token string       `json:"token"`
 }
 
@@ -50,7 +53,7 @@ func (cfg *apiCfg) handlerAddUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := cfg.App.CreateNewUser(ctx, userReq.Username, userReq.Role, userReq.FirstName)
+	user, err := cfg.App.CreateNewUser(ctx, userReq.Username, userReq.Role, userReq.FirstName, userReq.Password)
 	if err != nil {
 		RespondWithError(w, err)
 		return
@@ -155,4 +158,14 @@ func (cfg *apiCfg) handlerLogin(w http.ResponseWriter, r *http.Request) {
 
 	RespondWithJSON(w, http.StatusOK, resp)
 
+}
+
+func (cfg *apiCfg) handlerGetMe(w http.ResponseWriter, r *http.Request) {
+	user, err := auth.AuthenticatedUser(r.Context())
+	if err != nil {
+		RespondWithError(w, err)
+		return
+	}
+
+	RespondWithJSON(w, http.StatusOK, user)
 }

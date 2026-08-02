@@ -1,21 +1,36 @@
 -- name: CreateUser :one
 
-INSERT INTO users (id, username, role, first_name, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?, ?)
+INSERT INTO users (id, username, password_hash, role, first_name, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?, ?)
 RETURNING *;
 
 -- name: GetUserByUsername :one
-SELECT *
+SELECT id,
+    username,
+    role,
+    first_name,
+    created_at,
+    updated_at
 FROM users
 WHERE username = ?;
 
 -- name: GetUserByID :one
-SELECT *
+SELECT id,
+    username,
+    role,
+    first_name,
+    created_at,
+    updated_at
 FROM users
 WHERE id = ?;
 
 -- name: GetAllUsers :many
-SELECT *
+SELECT id,
+    username,
+    role,
+    first_name,
+    created_at,
+    updated_at
 FROM users;
 
 -- name: EditUser :one
@@ -31,3 +46,11 @@ RETURNING *;
 DELETE FROM users
 WHERE id = ?
 RETURNING id;
+
+-- name: GetUserCount :one
+SELECT COUNT(*) FROM users;
+
+-- name: GetHashForUsername :one
+SELECT *
+FROM users
+WHERE username = ?;

@@ -5,9 +5,10 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"os"
+	"strings"
 	"time"
 
+	"github.com/alexedwards/argon2id"
 	"github.com/google/uuid"
 	"github.com/mikelawson03/chores/internal/auth"
 	"github.com/mikelawson03/chores/internal/domain"
@@ -17,6 +18,22 @@ import (
 type LoginResult struct {
 	User  domain.User
 	Token string
+}
+
+func hashPassword(password string) (string, error) {
+	return argon2id.CreateHash(password, argon2id.DefaultParams)
+}
+
+func validatePassword(password string) error {
+	if strings.TrimSpace(password) == "" {
+		return domain.ErrPasswordRequired
+	}
+
+	if len(password) < 8 {
+		return domain.ErrPasswordTooShort
+	}
+
+	return nil
 }
 
 func (a *App) UsernameExists(ctx context.Context, username string) (bool, error) {
@@ -34,7 +51,7 @@ func (a *App) UsernameExists(ctx context.Context, username string) (bool, error)
 
 }
 
-func (a *App) validateNewUserRequest(ctx context.Context, username, role, firstName string) error {
+func (a *App) validateNewUserRequest(ctx context.Context, username, role, firstName, password string) error {
 	exists, err := a.UsernameExists(ctx, username)
 	if err != nil {
 		return err
@@ -51,6 +68,10 @@ func (a *App) validateNewUserRequest(ctx context.Context, username, role, firstN
 
 	if firstName == "" {
 		return errors.New("must provide first name")
+	}
+
+	if err = validatePassword(password); err != nil {
+		return err
 	}
 
 	return nil
@@ -78,21 +99,24 @@ func (a *App) validateEditUserRequest(ctx context.Context, newUsername, role, fi
 	return nil
 }
 
-func (a *App) CreateNewUser(ctx context.Context, username, role, firstName string) (domain.User, error) {
+func (a *App) CreateNewUser(ctx context.Context, username, role, firstName, password string) (domain.User, error) {
 	_, err := CheckAdmin(ctx)
 	if err != nil {
 		return domain.User{}, err
 	}
 
-	err = a.validateNewUserRequest(ctx, username, role, firstName)
+	err = a.validateNewUserRequest(ctx, username, role, firstName, password)
 	if err != nil {
 		return domain.User{}, err
 	}
+
+	hashedPW, err := hashPassword(password)
 
 	user, err := a.Store.CreateUser(ctx, store.CreateUserParams{
 		ID:        uuid.NewString(),
 		Username:  username,
 		Role:      domain.Role(role),
+		HashedPW:  hashedPW,
 		FirstName: firstName,
 		CreatedAt: time.Now(),
 		UpdatedAt: time.Now(),
@@ -120,7 +144,7 @@ func (a *App) GetAllUsers(ctx context.Context) ([]domain.User, error) {
 
 func (a *App) GetUserByID(ctx context.Context, id string) (domain.User, error) {
 
-	reqUser, err := AuthenticatedUser(ctx)
+	reqUser, err := auth.AuthenticatedUser(ctx)
 	if err != nil {
 		return domain.User{}, err
 	}
@@ -138,7 +162,7 @@ func (a *App) GetUserByID(ctx context.Context, id string) (domain.User, error) {
 }
 
 func (a *App) EditUser(ctx context.Context, id, newUsername, role, firstName string) (domain.User, error) {
-	user, err := AuthenticatedUser(ctx)
+	user, err := auth.AuthenticatedUser(ctx)
 	if err != nil {
 		return domain.User{}, err
 	}
@@ -194,25 +218,25 @@ func (a *App) DeleteUser(ctx context.Context, id string) error {
 
 func (a *App) LoginUser(ctx context.Context, username, password string) (LoginResult, error) {
 
-	devUsername := os.Getenv("DEV_USERNAME")
-	devPassword := os.Getenv("DEV_PASSWORD")
+	// devUsername := os.Getenv("DEV_USERNAME")
+	// devPassword := os.Getenv("DEV_PASSWORD")
 
-	if username != devUsername || password != devPassword {
-		return LoginResult{}, errors.New("Invalid credentials")
-	}
+	// if username != devUsername || password != devPassword {
+	// 	return LoginResult{}, errors.New("Invalid credentials")
+	// }
 
-	user, err := a.Store.GetUserByUsername(ctx, username)
+	user, err := a.Store.GetUserWithHashedPW(ctx, username)
 	if err != nil {
 		return LoginResult{}, err
 	}
 
-	token, err := auth.GenerateToken(user.ID, a.Config.JWTSigninSecret, time.Hour*24*30)
+	token, err := auth.GenerateToken(user.User.ID, a.Config.JWTSigninSecret, time.Hour*24*30)
 	if err != nil {
 		return LoginResult{}, err
 	}
 
 	return LoginResult{
-		User:  user,
+		User:  user.User,
 		Token: token,
 	}, err
 

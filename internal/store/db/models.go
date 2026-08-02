@@ -37,10 +37,11 @@ type ChoreTemplate struct {
 }
 
 type User struct {
-	ID        string
-	Username  string
-	FirstName string
-	Role      string
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID           string
+	Username     string
+	FirstName    string
+	PasswordHash string
+	Role         string
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
 }

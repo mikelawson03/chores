@@ -12,24 +12,26 @@ import (
 
 const createUser = `-- name: CreateUser :one
 
-INSERT INTO users (id, username, role, first_name, created_at, updated_at)
-VALUES (?, ?, ?, ?, ?, ?)
-RETURNING id, username, first_name, role, created_at, updated_at
+INSERT INTO users (id, username, password_hash, role, first_name, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?, ?)
+RETURNING id, username, first_name, password_hash, role, created_at, updated_at
 `
 
 type CreateUserParams struct {
-	ID        string
-	Username  string
-	Role      string
-	FirstName string
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID           string
+	Username     string
+	PasswordHash string
+	Role         string
+	FirstName    string
+	CreatedAt    time.Time
+	UpdatedAt    time.Time
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
 	row := q.db.QueryRowContext(ctx, createUser,
 		arg.ID,
 		arg.Username,
+		arg.PasswordHash,
 		arg.Role,
 		arg.FirstName,
 		arg.CreatedAt,
@@ -40,6 +42,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.ID,
 		&i.Username,
 		&i.FirstName,
+		&i.PasswordHash,
 		&i.Role,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -67,7 +70,7 @@ first_name =?,
 role = ?,
 updated_at = ?
 WHERE id = ?
-RETURNING id, username, first_name, role, created_at, updated_at
+RETURNING id, username, first_name, password_hash, role, created_at, updated_at
 `
 
 type EditUserParams struct {
@@ -91,6 +94,7 @@ func (q *Queries) EditUser(ctx context.Context, arg EditUserParams) (User, error
 		&i.ID,
 		&i.Username,
 		&i.FirstName,
+		&i.PasswordHash,
 		&i.Role,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -99,24 +103,38 @@ func (q *Queries) EditUser(ctx context.Context, arg EditUserParams) (User, error
 }
 
 const getAllUsers = `-- name: GetAllUsers :many
-SELECT id, username, first_name, role, created_at, updated_at
+SELECT id,
+    username,
+    role,
+    first_name,
+    created_at,
+    updated_at
 FROM users
 `
 
-func (q *Queries) GetAllUsers(ctx context.Context) ([]User, error) {
+type GetAllUsersRow struct {
+	ID        string
+	Username  string
+	Role      string
+	FirstName string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+func (q *Queries) GetAllUsers(ctx context.Context) ([]GetAllUsersRow, error) {
 	rows, err := q.db.QueryContext(ctx, getAllUsers)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []User
+	var items []GetAllUsersRow
 	for rows.Next() {
-		var i User
+		var i GetAllUsersRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Username,
-			&i.FirstName,
 			&i.Role,
+			&i.FirstName,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 		); err != nil {
@@ -133,19 +151,20 @@ func (q *Queries) GetAllUsers(ctx context.Context) ([]User, error) {
 	return items, nil
 }
 
-const getUserByID = `-- name: GetUserByID :one
-SELECT id, username, first_name, role, created_at, updated_at
+const getHashForUsername = `-- name: GetHashForUsername :one
+SELECT id, username, first_name, password_hash, role, created_at, updated_at
 FROM users
-WHERE id = ?
+WHERE username = ?
 `
 
-func (q *Queries) GetUserByID(ctx context.Context, id string) (User, error) {
-	row := q.db.QueryRowContext(ctx, getUserByID, id)
+func (q *Queries) GetHashForUsername(ctx context.Context, username string) (User, error) {
+	row := q.db.QueryRowContext(ctx, getHashForUsername, username)
 	var i User
 	err := row.Scan(
 		&i.ID,
 		&i.Username,
 		&i.FirstName,
+		&i.PasswordHash,
 		&i.Role,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -153,22 +172,81 @@ func (q *Queries) GetUserByID(ctx context.Context, id string) (User, error) {
 	return i, err
 }
 
-const getUserByUsername = `-- name: GetUserByUsername :one
-SELECT id, username, first_name, role, created_at, updated_at
+const getUserByID = `-- name: GetUserByID :one
+SELECT id,
+    username,
+    role,
+    first_name,
+    created_at,
+    updated_at
 FROM users
-WHERE username = ?
+WHERE id = ?
 `
 
-func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User, error) {
-	row := q.db.QueryRowContext(ctx, getUserByUsername, username)
-	var i User
+type GetUserByIDRow struct {
+	ID        string
+	Username  string
+	Role      string
+	FirstName string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+func (q *Queries) GetUserByID(ctx context.Context, id string) (GetUserByIDRow, error) {
+	row := q.db.QueryRowContext(ctx, getUserByID, id)
+	var i GetUserByIDRow
 	err := row.Scan(
 		&i.ID,
 		&i.Username,
-		&i.FirstName,
 		&i.Role,
+		&i.FirstName,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const getUserByUsername = `-- name: GetUserByUsername :one
+SELECT id,
+    username,
+    role,
+    first_name,
+    created_at,
+    updated_at
+FROM users
+WHERE username = ?
+`
+
+type GetUserByUsernameRow struct {
+	ID        string
+	Username  string
+	Role      string
+	FirstName string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+func (q *Queries) GetUserByUsername(ctx context.Context, username string) (GetUserByUsernameRow, error) {
+	row := q.db.QueryRowContext(ctx, getUserByUsername, username)
+	var i GetUserByUsernameRow
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.Role,
+		&i.FirstName,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getUserCount = `-- name: GetUserCount :one
+SELECT COUNT(*) FROM users
+`
+
+func (q *Queries) GetUserCount(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getUserCount)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
 }

@@ -2,8 +2,10 @@ package app
 
 import (
 	"context"
+	"errors"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/mikelawson03/chores/internal/auth"
 	"github.com/mikelawson03/chores/internal/domain"
 	"github.com/mikelawson03/chores/internal/store"
@@ -61,23 +63,49 @@ func (a *App) getMonthlyPlanningEnd(horizonStart, horizonEnd time.Time) time.Tim
 	return nextMonthStart.AddDate(0, 1, 0)
 }
 
-func AuthenticatedUser(ctx context.Context) (domain.User, error) {
-	user, ok := auth.UserFromContext(ctx)
-	if !ok {
-		return domain.User{}, domain.ErrUnauthorized
-	}
-
-	return user, nil
-}
-
 func CheckAdmin(ctx context.Context) (domain.User, error) {
-	user, err := AuthenticatedUser(ctx)
+	user, err := auth.AuthenticatedUser(ctx)
 	if err != nil {
 		return domain.User{}, err
 	}
 
 	if user.Role != domain.RoleAdmin {
 		return domain.User{}, domain.ErrForbidden
+	}
+
+	return user, nil
+}
+
+func (a *App) Bootstrap(ctx context.Context, username, firstName, password string) (domain.User, error) {
+	userCount, err := a.Store.GetUserCount(ctx)
+	if err != nil {
+		return domain.User{}, err
+	}
+
+	if userCount != 0 {
+		return domain.User{}, errors.New("may only use bootstrap if no users exist")
+	}
+
+	if err = validatePassword(password); err != nil {
+		return domain.User{}, err
+	}
+
+	hashedPW, err := hashPassword(password)
+	if err != nil {
+		return domain.User{}, err
+	}
+
+	user, err := a.Store.CreateUser(ctx, store.CreateUserParams{
+		ID:        uuid.NewString(),
+		Username:  username,
+		Role:      domain.RoleAdmin,
+		HashedPW:  hashedPW,
+		FirstName: firstName,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	})
+	if err != nil {
+		return domain.User{}, err
 	}
 
 	return user, nil

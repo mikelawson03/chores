@@ -10,4 +10,6 @@ var (
 	ErrValidation         = errors.New("invalid request")
 	ErrInvalidRole        = errors.New("invalid role")
 	ErrInvalidCadence     = errors.New("invalid cadence")
+	ErrPasswordRequired   = errors.New("password required")
+	ErrPasswordTooShort   = errors.New("password too short")
 )

@@ -19,3 +19,12 @@ func UserFromContext(ctx context.Context) (domain.User, bool) {
 	user, ok := ctx.Value(userContextKey).(domain.User)
 	return user, ok
 }
+
+func AuthenticatedUser(ctx context.Context) (domain.User, error) {
+	user, ok := UserFromContext(ctx)
+	if !ok {
+		return domain.User{}, domain.ErrUnauthorized
+	}
+
+	return user, nil
+}

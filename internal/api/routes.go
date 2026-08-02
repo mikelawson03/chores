@@ -24,9 +24,11 @@ func (cfg *apiCfg) RegisterRoutes(mux *http.ServeMux) {
 	mux.Handle("GET /users/{id}", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerGetUserByID)))
 	mux.Handle("PUT /users/{id}", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerEditUser)))
 	mux.Handle("DELETE /users/{id}", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerDeleteUser)))
+	mux.Handle("GET /me", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerGetMe)))
 
 	// admin
 	mux.Handle("POST /scheduler/run", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerRunScheduler)))
 	mux.Handle("POST /balancer/run", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerRunBalancer)))
 	mux.Handle("POST /login", http.HandlerFunc(cfg.handlerLogin))
+	mux.Handle("POST /bootstrap", http.HandlerFunc(cfg.handlerBootstrap))
 }

@@ -4,6 +4,7 @@ CREATE TABLE users (
     id TEXT PRIMARY KEY,
     username TEXT UNIQUE NOT NULL,
     first_name TEXT NOT NULL,
+    password_hash TEXT NOT NULL,
     role TEXT NOT NULL,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL

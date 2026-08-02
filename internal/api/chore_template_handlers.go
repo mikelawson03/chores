@@ -32,6 +32,7 @@ func (cfg *apiCfg) handlerGetChoreTemplates(w http.ResponseWriter, r *http.Reque
 	chores, err := cfg.App.GetChoreTemplates(ctx)
 	if err != nil {
 		RespondWithError(w, err)
+		return
 	}
 	if len(chores) == 0 {
 		RespondWithJSON(w, http.StatusOK, []domain.ChoreTemplate{})

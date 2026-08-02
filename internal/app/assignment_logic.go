@@ -88,7 +88,7 @@ func validateDueDate(dueDate *time.Time) error {
 }
 
 func (a *App) CreateAssignmentFromTemplate(ctx context.Context, req CreateAsssignmentRequest) (domain.Assignment, error) {
-	user, err := AuthenticatedUser(ctx)
+	user, err := auth.AuthenticatedUser(ctx)
 	if err != nil {
 		return domain.Assignment{}, err
 	}
@@ -138,7 +138,7 @@ func (a *App) GetAllAssignments(ctx context.Context) ([]domain.Assignment, error
 }
 
 func (a *App) GetAssignmentByID(ctx context.Context, id string) (domain.Assignment, error) {
-	user, err := AuthenticatedUser(ctx)
+	user, err := auth.AuthenticatedUser(ctx)
 	if err != nil {
 		return domain.Assignment{}, err
 	}
@@ -161,7 +161,7 @@ func (a *App) GetAssignmentByID(ctx context.Context, id string) (domain.Assignme
 
 func (a *App) EditAssignment(ctx context.Context, editRequest EditAssignmentRequest) (domain.Assignment, error) {
 
-	user, err := AuthenticatedUser(ctx)
+	user, err := auth.AuthenticatedUser(ctx)
 	if err != nil {
 		return domain.Assignment{}, err
 	}
@@ -250,7 +250,7 @@ func (a *App) GetAssignmentsByTemplateID(ctx context.Context, id string) ([]doma
 }
 
 func (a *App) GetAssignmentsByUserID(ctx context.Context, id string) ([]domain.Assignment, error) {
-	user, err := AuthenticatedUser(ctx)
+	user, err := auth.AuthenticatedUser(ctx)
 	if err != nil {
 		return []domain.Assignment{}, err
 	}
