@@ -218,16 +218,18 @@ func (a *App) DeleteUser(ctx context.Context, id string) error {
 
 func (a *App) LoginUser(ctx context.Context, username, password string) (LoginResult, error) {
 
-	// devUsername := os.Getenv("DEV_USERNAME")
-	// devPassword := os.Getenv("DEV_PASSWORD")
-
-	// if username != devUsername || password != devPassword {
-	// 	return LoginResult{}, errors.New("Invalid credentials")
-	// }
-
 	user, err := a.Store.GetUserWithHashedPW(ctx, username)
 	if err != nil {
 		return LoginResult{}, err
+	}
+
+	match, err := argon2id.ComparePasswordAndHash(password, user.PasswordHash)
+	if err != nil {
+		return LoginResult{}, err
+	}
+
+	if !match {
+		return LoginResult{}, domain.ErrInvalidCredentials
 	}
 
 	token, err := auth.GenerateToken(user.User.ID, a.Config.JWTSigninSecret, time.Hour*24*30)
@@ -240,4 +242,34 @@ func (a *App) LoginUser(ctx context.Context, username, password string) (LoginRe
 		Token: token,
 	}, err
 
+}
+
+func (a *App) ChangePassword(ctx context.Context, oldPassword, newPassword string) error {
+	user, err := auth.AuthenticatedUser(ctx)
+	if err != nil {
+		return err
+	}
+
+	userWithHash, err := a.Store.GetUserWithHashedPW(ctx, user.Username)
+
+	match, err := argon2id.ComparePasswordAndHash(oldPassword, userWithHash.PasswordHash)
+	if err != nil {
+		return err
+	}
+
+	if !match {
+		return domain.ErrInvalidCredentials
+	}
+
+	newPWHash, err := hashPassword(newPassword)
+	if err != nil {
+		return err
+	}
+
+	err = a.Store.ChangePassword(ctx, user.ID, newPWHash)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

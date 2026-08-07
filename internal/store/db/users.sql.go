@@ -250,3 +250,19 @@ func (q *Queries) GetUserCount(ctx context.Context) (int64, error) {
 	err := row.Scan(&count)
 	return count, err
 }
+
+const updatePassword = `-- name: UpdatePassword :exec
+UPDATE users
+SET password_hash = ?
+WHERE id = ?
+`
+
+type UpdatePasswordParams struct {
+	PasswordHash string
+	ID           string
+}
+
+func (q *Queries) UpdatePassword(ctx context.Context, arg UpdatePasswordParams) error {
+	_, err := q.db.ExecContext(ctx, updatePassword, arg.PasswordHash, arg.ID)
+	return err
+}

@@ -195,3 +195,16 @@ func (s *Store) GetUserWithHashedPW(ctx context.Context, username string) (Login
 
 	return user, nil
 }
+
+func (s *Store) ChangePassword(ctx context.Context, id, newPWHash string) error {
+	err := s.Queries.UpdatePassword(ctx, db.UpdatePasswordParams{
+		PasswordHash: newPWHash,
+		ID:           id,
+	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

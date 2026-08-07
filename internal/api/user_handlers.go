@@ -33,6 +33,11 @@ type LoginResponse struct {
 	Token string       `json:"token"`
 }
 
+type ChangePasswordRequest struct {
+	OldPassword string `json:"oldPassword"`
+	NewPassword string `json:"newPassword"`
+}
+
 func CreateUserRequest(r *http.Request) (*UserRequest, error) {
 	d := json.NewDecoder(r.Body)
 	req := &UserRequest{}
@@ -168,4 +173,25 @@ func (cfg *apiCfg) handlerGetMe(w http.ResponseWriter, r *http.Request) {
 	}
 
 	RespondWithJSON(w, http.StatusOK, user)
+}
+
+func (cfg *apiCfg) handlerChangePassword(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	d := json.NewDecoder(r.Body)
+	pwReq := ChangePasswordRequest{}
+
+	err := d.Decode(pwReq)
+	if err != nil {
+		RespondWithError(w, err)
+		return
+	}
+
+	err = cfg.App.ChangePassword(ctx, pwReq.OldPassword, pwReq.NewPassword)
+	if err != nil {
+		RespondWithError(w, err)
+		return
+	}
+
+	RespondWithJSON(w, http.StatusNoContent, nil)
+
 }

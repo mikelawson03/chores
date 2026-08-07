@@ -54,3 +54,8 @@ SELECT COUNT(*) FROM users;
 SELECT *
 FROM users
 WHERE username = ?;
+
+-- name: UpdatePassword :exec
+UPDATE users
+SET password_hash = ?
+WHERE id = ?
