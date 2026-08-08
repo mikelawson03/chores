@@ -26,6 +26,7 @@ func (cfg *apiCfg) RegisterRoutes(mux *http.ServeMux) {
 	mux.Handle("DELETE /users/{id}", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerDeleteUser)))
 	mux.Handle("GET /me", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerGetMe)))
 	mux.Handle("PUT /me/password", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerChangePassword)))
+	mux.Handle("PUT /users/{id}/reset-password", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerResetPassword)))
 
 	// admin
 	mux.Handle("POST /scheduler/run", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerRunScheduler)))

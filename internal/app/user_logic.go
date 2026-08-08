@@ -273,3 +273,22 @@ func (a *App) ChangePassword(ctx context.Context, oldPassword, newPassword strin
 
 	return nil
 }
+
+func (a *App) ResetPassword(ctx context.Context, id, tempPassword string) error {
+	_, err := CheckAdmin(ctx)
+	if err != nil {
+		return err
+	}
+
+	tempPWHash, err := hashPassword(tempPassword)
+	if err != nil {
+		return err
+	}
+
+	err = a.Store.ChangePassword(ctx, id, tempPWHash)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

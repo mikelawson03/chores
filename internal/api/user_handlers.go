@@ -38,6 +38,10 @@ type ChangePasswordRequest struct {
 	NewPassword string `json:"newPassword"`
 }
 
+type ResetPasswordRequest struct {
+	TempPassword string `json:"tempPassword"`
+}
+
 func CreateUserRequest(r *http.Request) (*UserRequest, error) {
 	d := json.NewDecoder(r.Body)
 	req := &UserRequest{}
@@ -178,7 +182,7 @@ func (cfg *apiCfg) handlerGetMe(w http.ResponseWriter, r *http.Request) {
 func (cfg *apiCfg) handlerChangePassword(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	d := json.NewDecoder(r.Body)
-	pwReq := ChangePasswordRequest{}
+	pwReq := &ChangePasswordRequest{}
 
 	err := d.Decode(pwReq)
 	if err != nil {
@@ -194,4 +198,26 @@ func (cfg *apiCfg) handlerChangePassword(w http.ResponseWriter, r *http.Request)
 
 	RespondWithJSON(w, http.StatusNoContent, nil)
 
+}
+
+func (cfg *apiCfg) handlerResetPassword(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	id := r.PathValue("id")
+
+	d := json.NewDecoder(r.Body)
+	req := &ResetPasswordRequest{}
+
+	err := d.Decode(req)
+	if err != nil {
+		RespondWithError(w, err)
+		return
+	}
+
+	err = cfg.App.ResetPassword(ctx, id, req.TempPassword)
+	if err != nil {
+		RespondWithError(w, err)
+		return
+	}
+
+	RespondWithJSON(w, http.StatusNoContent, nil)
 }
