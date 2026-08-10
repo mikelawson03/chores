@@ -1,5 +1,6 @@
 import { Box, Container, Stack } from "@mui/material";
 import Sidebar from "../components/Sidebar";
+import { Outlet } from "react-router-dom";
 
 export default function AppLayout({ children, maxWidth }) {
     return (
@@ -10,10 +11,9 @@ export default function AppLayout({ children, maxWidth }) {
             <Stack direction="row" sx= {{flex: 1, minHeight: 0}}>
                 <Sidebar />
                 <Box sx={{ overflow: "hidden", flex: 1, minHeight: 0 }}>
-                    {children}
+                    <Outlet />
                 </Box>
             </Stack>
-            {/* {children} */}
         </Container>
     );
 }

@@ -15,6 +15,20 @@ export async function getTasks() {
     return await response.json();
 }
 
+export async function getTasksForUser(id) {
+    const response = await fetch(`${API_HOST}/assignments?user_id=${id}`, {
+        method: "GET",
+        headers: getHeaders(),
+    })
+
+    if (!response.ok) {
+        const error = await response.text();
+        throw new Error(`Server returned ${response.status}: ${error}`);
+    }
+
+    return await response.json();
+}
+
 export async function updateTask(task) {
     const response = await fetch(`${API_HOST}/assignments/${task.id}`,{
         method: "PUT",
@@ -29,3 +43,4 @@ export async function updateTask(task) {
 
     return await response.json();
 }
+

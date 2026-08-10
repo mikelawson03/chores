@@ -2,31 +2,49 @@ import AppLayout from "./layouts/AppLayout";
 import Calendar from "./pages/Calendar";
 import Chores from "./pages/Chores";
 import Dashboard from "./pages/Dashboard";
-import Sidebar from "./components/Sidebar";
+import Login from "./pages/Login";
+import Settings from "./pages/Settings"
 import WeeklyPlanner from "./pages/WeeklyPlanner";
 import TaskDetails from "./components/TaskDetails"
 import { Box, CssBaseline, Stack } from "@mui/material";
 import { useEffect, useState } from "react";
 import { Route, Routes } from "react-router-dom"
 import dayjs from "dayjs";
-import { getTasks, updateTask } from "./api/tasks";
+import { getTasks, getTasksForUser, updateTask } from "./api/tasks";
 import { tasksEqual } from "./utils/taskHelpers";
+import { useAuth } from "./auth/useAuth";
+import ProtectedRoute from "./auth/ProtectedRoute";
+import AdminRoute from "./auth/AdminRoute";
 
 
 function App() {
 
+  const { user } = useAuth();
   const [taskDetailsOpen, setTaskDetailsOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState();
-  const [tasks, setTasks] = useState([])
-  
+  const [tasks, setTasks] = useState([]);
 
   useEffect(() => {
-    async function loadTasks() {
-      const fetchedTasks = await getTasks();
-      setTasks(fetchedTasks);
+    if (!user) {
+      return;
     }
-    loadTasks();
-  }, [])
+
+    const load = async() => {
+      const fetchedTasks = await loadTasks();
+      console.log(fetchedTasks);
+      setTasks(fetchedTasks);
+    };
+
+    load();
+  }, [user])
+
+  const loadTasks = async () => {
+    if (user.role === "admin") {
+      return await getTasks();
+    }
+
+    return await getTasksForUser(user.id);
+  }
 
   function openTaskDetails(task) {
     setSelectedTask(task);
@@ -65,15 +83,11 @@ function App() {
       task.scheduledFor = dayjs().format();
     }
 
-    console.log(task.scheduledFor)
-
     saveTask(task);
   }
 
   return (
     <>
-      <CssBaseline />
-      <AppLayout>
         <Box 
           sx={{
             flex: 1,
@@ -83,45 +97,32 @@ function App() {
           }}
         >
         <Routes>
-          <Route path="/"
-              element={
-                <Dashboard 
-                  tasks={tasks} 
-                  toggleTaskComplete={toggleTaskComplete}
-                  openTaskDetails={openTaskDetails}
-              />
-            }
-          />
+          <Route path ="/login" element={<Login />} />
+          <Route element={<ProtectedRoute />}>
+            <Route element={<AppLayout />}>
+              <Route path="/" element={<Dashboard 
+                tasks={tasks} 
+                toggleTaskComplete={toggleTaskComplete}
+                openTaskDetails={openTaskDetails}
+              />} />
 
-          <Route 
-            path="/calendar"
-            element={
-              <Calendar 
+              <Route path="/calendar" element={<Calendar 
                 tasks={tasks} 
                 openTaskDetails={openTaskDetails}
                 toggleTaskComplete={toggleTaskComplete}
-              />
-            } 
-          />
+              />} />
 
-          <Route 
-            path="/chores"
-            element={
-              <Chores />
-            }
-          />
-
-          <Route 
-            path="/planner"
-            element={
-              <WeeklyPlanner 
+              <Route path="/planner" element={<WeeklyPlanner 
                 tasks={tasks} 
                 openTaskDetails={openTaskDetails}
                 toggleTaskComplete={toggleTaskComplete}
-              /> 
-            }
-          />
-
+              />} />
+              <Route element={<AdminRoute />}>
+                <Route path="/chores" element={<Chores />} />
+                <Route path="/admin" element={<Settings />} />
+              </Route>
+            </Route>
+          </Route>
         </Routes>
         
         {selectedTask && (
@@ -132,8 +133,6 @@ function App() {
           />
         )}
         </Box>
-        
-      </AppLayout>
     </>
 
   );

@@ -42,31 +42,103 @@ type BalancerAssignment struct {
 	Duration       int
 }
 
-func dbAssignmentToDomainAssignment(dbAssignment db.Assignment) domain.Assignment {
+func mapGetAssignmentsByTemplateID(r db.GetAssignmentsByTemplateIDRow) domain.Assignment {
 	var completedAt *time.Time
 	var canceledAt *time.Time
+	var scheduledFor *time.Time
+	var instructions string
+	var notes string
 
-	if dbAssignment.CompletedAt.Valid {
-		t := dbAssignment.CompletedAt.Time
+	if r.CompletedAt.Valid {
+		t := r.CompletedAt.Time
 		completedAt = &t
 	}
 
-	if dbAssignment.CanceledAt.Valid {
-		t := dbAssignment.CanceledAt.Time
+	if r.CanceledAt.Valid {
+		t := r.CanceledAt.Time
 		completedAt = &t
+	}
+	if r.Instructions.Valid {
+		instructions = r.Instructions.String
+	}
+
+	if r.Notes.Valid {
+		notes = r.Notes.String
+	}
+
+	if r.ScheduledFor.Valid {
+		t := r.ScheduledFor.Time
+		scheduledFor = &t
 	}
 
 	return domain.Assignment{
-		ID:             dbAssignment.ID,
-		TemplateID:     dbAssignment.TemplateID,
-		AssignedUserID: dbAssignment.AssignedUserID,
-		DueDate:        dbAssignment.DueDate,
-		Completed:      dbAssignment.Completed,
-		Canceled:       dbAssignment.Canceled,
-		CreatedAt:      dbAssignment.CreatedAt,
-		UpdatedAt:      dbAssignment.UpdatedAt,
-		CompletedAt:    completedAt,
-		CanceledAt:     canceledAt,
+		ID:                    r.ID,
+		TemplateID:            r.TemplateID,
+		TemplateName:          r.Name,
+		AssignedUserID:        r.AssignedUserID,
+		AssignedUserFirstName: r.FirstName,
+		Cadence:               r.Cadence,
+		Duration:              r.Duration,
+		Instructions:          instructions,
+		Notes:                 notes,
+		DueDate:               r.DueDate,
+		ScheduledFor:          scheduledFor,
+		Completed:             r.Completed,
+		Canceled:              r.Canceled,
+		CreatedAt:             r.CreatedAt,
+		UpdatedAt:             r.UpdatedAt,
+		CompletedAt:           completedAt,
+		CanceledAt:            canceledAt,
+	}
+}
+
+func mapGetAssignmentsByUserIDRow(r db.GetAssignmentsByUserIDRow) domain.Assignment {
+	var completedAt *time.Time
+	var canceledAt *time.Time
+	var scheduledFor *time.Time
+	var instructions string
+	var notes string
+
+	if r.CompletedAt.Valid {
+		t := r.CompletedAt.Time
+		completedAt = &t
+	}
+
+	if r.CanceledAt.Valid {
+		t := r.CanceledAt.Time
+		completedAt = &t
+	}
+	if r.Instructions.Valid {
+		instructions = r.Instructions.String
+	}
+
+	if r.Notes.Valid {
+		notes = r.Notes.String
+	}
+
+	if r.ScheduledFor.Valid {
+		t := r.ScheduledFor.Time
+		scheduledFor = &t
+	}
+
+	return domain.Assignment{
+		ID:                    r.ID,
+		TemplateID:            r.TemplateID,
+		TemplateName:          r.Name,
+		AssignedUserID:        r.AssignedUserID,
+		AssignedUserFirstName: r.FirstName,
+		Cadence:               r.Cadence,
+		Duration:              r.Duration,
+		Instructions:          instructions,
+		Notes:                 notes,
+		DueDate:               r.DueDate,
+		ScheduledFor:          scheduledFor,
+		Completed:             r.Completed,
+		Canceled:              r.Canceled,
+		CreatedAt:             r.CreatedAt,
+		UpdatedAt:             r.UpdatedAt,
+		CompletedAt:           completedAt,
+		CanceledAt:            canceledAt,
 	}
 }
 
@@ -282,7 +354,7 @@ func (s *Store) GetAssignmentsByTemplateID(ctx context.Context, id string) ([]do
 
 	var assignments []domain.Assignment
 	for _, assignment := range dbAssignments {
-		assignments = append(assignments, dbAssignmentToDomainAssignment(assignment))
+		assignments = append(assignments, mapGetAssignmentsByTemplateID(assignment))
 	}
 
 	return assignments, nil
@@ -296,7 +368,7 @@ func (s *Store) GetAssignmentsByUserID(ctx context.Context, id string) ([]domain
 
 	var assignments []domain.Assignment
 	for _, assignment := range dbAssignments {
-		assignments = append(assignments, dbAssignmentToDomainAssignment(assignment))
+		assignments = append(assignments, mapGetAssignmentsByUserIDRow(assignment))
 	}
 
 	return assignments, nil

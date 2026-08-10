@@ -167,7 +167,7 @@ func (a *App) monthlyScheduler(ctx context.Context, horizonStart, horizonEnd tim
 			thisMonthStart = nextMonthStart
 		}
 	}
-	log.Printf("Weekly scheduler run complete: %d assignments created.\n", created)
+	log.Printf("Monthly scheduler run complete: %d assignments created.\n", created)
 	return nil
 }
 

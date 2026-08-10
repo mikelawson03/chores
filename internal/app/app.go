@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -66,7 +65,6 @@ func (a *App) getMonthlyPlanningEnd(horizonStart, horizonEnd time.Time) time.Tim
 
 func CheckAdmin(ctx context.Context) (domain.User, error) {
 	user, err := auth.AuthenticatedUser(ctx)
-	fmt.Println(user.Role)
 	if err != nil {
 		return domain.User{}, err
 	}

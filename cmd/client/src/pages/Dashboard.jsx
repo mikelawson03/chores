@@ -15,8 +15,6 @@ export default function Dashboard({tasks, openTaskDetails, toggleTaskComplete}) 
   const todaysTasks = getScheduledTasksForDay(dayjs(), activeTasks);
   const completedTasks = getCompletedTasks(tasks);
 
-  console.log(weeklyTasks)
-
   return (
   <Container maxWidth="lg">
     <PageHeader title="Dashboard" />

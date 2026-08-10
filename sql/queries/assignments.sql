@@ -55,14 +55,28 @@ WHERE due_date >= ?
 AND due_date < ?;
 
 -- name: GetAssignmentsByTemplateID :many
-SELECT *
-FROM assignments
-WHERE template_id = ?;
+SELECT 
+    a.*, 
+    ct.name,
+    ct.duration, 
+    ct.cadence,
+    u.first_name
+FROM assignments a
+JOIN chore_templates ct ON a.template_id = ct.id
+JOIN users u on a.assigned_user_id = u.id
+WHERE a.template_id = ?;
 
 -- name: GetAssignmentsByUserID :many
-SELECT *
-FROM assignments
-WHERE assigned_user_id = ?;
+SELECT 
+    a.*, 
+    ct.name,
+    ct.duration, 
+    ct.cadence,
+    u.first_name
+FROM assignments a
+JOIN chore_templates ct ON a.template_id = ct.id
+JOIN users u on a.assigned_user_id = u.id
+WHERE a.assigned_user_id = ?;
 
 -- name: GetAssignmentsWithMetadataForDateRange :many
 SELECT a.id,

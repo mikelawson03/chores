@@ -2,11 +2,15 @@ import { Drawer, List, ListItem, ListItemButton, ListItemText } from "@mui/mater
 import { useState } from "react";
 import { clickableText } from "../styles/typography";
 import { NavLink } from "react-router-dom";
+import { useAuth } from "../auth/useAuth";
 
 
 export default function Sidebar() {
   const DRAWER_WIDTH = 240;
   const MINI_DRAWER_WIDTH = 72;
+
+  const { user } = useAuth();
+  const isAdmin = user?.role ==="admin"
 
   const [open, setOpen] = useState(true)
   const navItems = [
@@ -17,6 +21,7 @@ export default function Sidebar() {
     {
       text: "Chores",
       route: "/chores",
+      adminOnly: true,
     },
     {
       text: "Planner",
@@ -29,8 +34,14 @@ export default function Sidebar() {
     {
       text: "Settings",
       route: "/admin",
+      adminOnly: true,
     },
   ]
+
+  const visibleNavItems = navItems.filter(
+    (item) => !item.adminOnly || isAdmin
+  );
+  
 
   return(
     <Drawer 
@@ -45,7 +56,7 @@ export default function Sidebar() {
       }}
     >
     <List>
-      {navItems.map(item => (
+      {visibleNavItems.map(item => (
         <ListItem sx={{p: 3}} key={item.text}>
           <ListItemButton component={NavLink} to={item.route}>
             <ListItemText 

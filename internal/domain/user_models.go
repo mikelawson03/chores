@@ -5,12 +5,12 @@ import "time"
 type Role string
 
 type User struct {
-	ID        string
-	Username  string
-	FirstName string
-	Role      Role
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	ID        string    `json:"id"`
+	Username  string    `json:"username"`
+	FirstName string    `json:"firstName"`
+	Role      Role      `json:"role"`
+	CreatedAt time.Time `json:"createdAt"`
+	UpdatedAt time.Time `json:"udpatedAt"`
 }
 
 const (

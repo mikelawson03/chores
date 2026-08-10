@@ -289,20 +289,47 @@ func (q *Queries) GetAssignmentsByDateRange(ctx context.Context, arg GetAssignme
 }
 
 const getAssignmentsByTemplateID = `-- name: GetAssignmentsByTemplateID :many
-SELECT id, template_id, assigned_user_id, instructions, notes, due_date, scheduled_for, completed, canceled, created_at, updated_at, completed_at, canceled_at
-FROM assignments
-WHERE template_id = ?
+SELECT 
+    a.id, a.template_id, a.assigned_user_id, a.instructions, a.notes, a.due_date, a.scheduled_for, a.completed, a.canceled, a.created_at, a.updated_at, a.completed_at, a.canceled_at, 
+    ct.name,
+    ct.duration, 
+    ct.cadence,
+    u.first_name
+FROM assignments a
+JOIN chore_templates ct ON a.template_id = ct.id
+JOIN users u on a.assigned_user_id = u.id
+WHERE a.template_id = ?
 `
 
-func (q *Queries) GetAssignmentsByTemplateID(ctx context.Context, templateID string) ([]Assignment, error) {
+type GetAssignmentsByTemplateIDRow struct {
+	ID             string
+	TemplateID     string
+	AssignedUserID string
+	Instructions   sql.NullString
+	Notes          sql.NullString
+	DueDate        time.Time
+	ScheduledFor   sql.NullTime
+	Completed      bool
+	Canceled       bool
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+	CompletedAt    sql.NullTime
+	CanceledAt     sql.NullTime
+	Name           string
+	Duration       int64
+	Cadence        string
+	FirstName      string
+}
+
+func (q *Queries) GetAssignmentsByTemplateID(ctx context.Context, templateID string) ([]GetAssignmentsByTemplateIDRow, error) {
 	rows, err := q.db.QueryContext(ctx, getAssignmentsByTemplateID, templateID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Assignment
+	var items []GetAssignmentsByTemplateIDRow
 	for rows.Next() {
-		var i Assignment
+		var i GetAssignmentsByTemplateIDRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.TemplateID,
@@ -317,6 +344,10 @@ func (q *Queries) GetAssignmentsByTemplateID(ctx context.Context, templateID str
 			&i.UpdatedAt,
 			&i.CompletedAt,
 			&i.CanceledAt,
+			&i.Name,
+			&i.Duration,
+			&i.Cadence,
+			&i.FirstName,
 		); err != nil {
 			return nil, err
 		}
@@ -332,20 +363,47 @@ func (q *Queries) GetAssignmentsByTemplateID(ctx context.Context, templateID str
 }
 
 const getAssignmentsByUserID = `-- name: GetAssignmentsByUserID :many
-SELECT id, template_id, assigned_user_id, instructions, notes, due_date, scheduled_for, completed, canceled, created_at, updated_at, completed_at, canceled_at
-FROM assignments
-WHERE assigned_user_id = ?
+SELECT 
+    a.id, a.template_id, a.assigned_user_id, a.instructions, a.notes, a.due_date, a.scheduled_for, a.completed, a.canceled, a.created_at, a.updated_at, a.completed_at, a.canceled_at, 
+    ct.name,
+    ct.duration, 
+    ct.cadence,
+    u.first_name
+FROM assignments a
+JOIN chore_templates ct ON a.template_id = ct.id
+JOIN users u on a.assigned_user_id = u.id
+WHERE a.assigned_user_id = ?
 `
 
-func (q *Queries) GetAssignmentsByUserID(ctx context.Context, assignedUserID string) ([]Assignment, error) {
+type GetAssignmentsByUserIDRow struct {
+	ID             string
+	TemplateID     string
+	AssignedUserID string
+	Instructions   sql.NullString
+	Notes          sql.NullString
+	DueDate        time.Time
+	ScheduledFor   sql.NullTime
+	Completed      bool
+	Canceled       bool
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+	CompletedAt    sql.NullTime
+	CanceledAt     sql.NullTime
+	Name           string
+	Duration       int64
+	Cadence        string
+	FirstName      string
+}
+
+func (q *Queries) GetAssignmentsByUserID(ctx context.Context, assignedUserID string) ([]GetAssignmentsByUserIDRow, error) {
 	rows, err := q.db.QueryContext(ctx, getAssignmentsByUserID, assignedUserID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Assignment
+	var items []GetAssignmentsByUserIDRow
 	for rows.Next() {
-		var i Assignment
+		var i GetAssignmentsByUserIDRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.TemplateID,
@@ -360,6 +418,10 @@ func (q *Queries) GetAssignmentsByUserID(ctx context.Context, assignedUserID str
 			&i.UpdatedAt,
 			&i.CompletedAt,
 			&i.CanceledAt,
+			&i.Name,
+			&i.Duration,
+			&i.Cadence,
+			&i.FirstName,
 		); err != nil {
 			return nil, err
 		}
