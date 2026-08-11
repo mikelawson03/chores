@@ -125,9 +125,11 @@ SELECT
     a.id, a.template_id, a.assigned_user_id, a.instructions, a.notes, a.due_date, a.scheduled_for, a.completed, a.canceled, a.created_at, a.updated_at, a.completed_at, a.canceled_at, 
     ct.name,
     ct.duration, 
-    ct.cadence
+    ct.cadence,
+    u.first_name
 FROM assignments a
 JOIN chore_templates ct ON a.template_id = ct.id
+JOIN users u ON a.assigned_user_id = u.id
 `
 
 type GetAllAssignmentsRow struct {
@@ -147,6 +149,7 @@ type GetAllAssignmentsRow struct {
 	Name           string
 	Duration       int64
 	Cadence        string
+	FirstName      string
 }
 
 func (q *Queries) GetAllAssignments(ctx context.Context) ([]GetAllAssignmentsRow, error) {
@@ -175,6 +178,7 @@ func (q *Queries) GetAllAssignments(ctx context.Context) ([]GetAllAssignmentsRow
 			&i.Name,
 			&i.Duration,
 			&i.Cadence,
+			&i.FirstName,
 		); err != nil {
 			return nil, err
 		}

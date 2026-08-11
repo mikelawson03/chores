@@ -31,7 +31,6 @@ function App() {
 
     const load = async() => {
       const fetchedTasks = await loadTasks();
-      console.log(fetchedTasks);
       setTasks(fetchedTasks);
     };
 

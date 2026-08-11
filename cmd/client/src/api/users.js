@@ -32,3 +32,15 @@ export async function getMe() {
 
     return response.json();
 }
+
+export async function getUsers() {
+    const response = await fetch(`${API_HOST}/users`, {
+        method: "GET",
+        headers: getHeaders(),
+    })
+    if (!response.ok) {
+        throw new Error("Users not found");
+    }
+
+    return response.json();
+}

@@ -5,18 +5,31 @@ import EditChore from "../components/chores/EditChore";
 import { EMPTY_CHORE_TEMPLATE } from "../constants/choreTemplate";
 import { useEffect, useState } from "react";
 import { createChoreTemplate, deleteChoreTemplate, getChoreTemplates, updateChoreTemplate } from "../api/choreTemplates";
+import { getUsers } from "../api/users";
 
 export default function Chores() {
   const [editedChoreTemplate, setEditedChoreTemplate] = useState(null);
   const [editChoreOpen, setEditChoreOpen] = useState(false);
   const [editChoreMode, setEditChoreMode] = useState(null);
-
   const [choreTemplates, setChoreTemplates]=useState([])
+
+  const [users, setUsers] = useState([]);
+
+  useEffect(() => {
+    const loadUsers = async() => {
+        const fetchedUsers = await getUsers();
+        setUsers(fetchedUsers);
+        console.log(fetchedUsers)
+    };
+
+    loadUsers();
+  }, [])
 
   useEffect(() => {
     async function loadChores() {
       const chores = await getChoreTemplates();
       setChoreTemplates(chores);
+      console.log(chores)
     }
     loadChores();
   },[])
@@ -90,7 +103,7 @@ export default function Chores() {
         >
           <PageHeader title="Chore Management" />
         </Box>
-          <ChoresTable choreTemplates={choreTemplates} openEditChore={openEditChore} editNewChore={editNewChore}/>
+          <ChoresTable choreTemplates={choreTemplates} openEditChore={openEditChore} editNewChore={editNewChore} users={users}/>
           {editedChoreTemplate && 
             <EditChore 
               open={editChoreOpen} 
@@ -101,6 +114,7 @@ export default function Chores() {
               onChoreDetailChange={onChoreDetailChange} 
               saveChore={saveChore}
               deleteChore={deleteChore}
+              users={users}
             />}
       </Stack>
 )

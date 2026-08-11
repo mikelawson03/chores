@@ -9,7 +9,7 @@ export default function Sidebar() {
   const DRAWER_WIDTH = 240;
   const MINI_DRAWER_WIDTH = 72;
 
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const isAdmin = user?.role ==="admin"
 
   const [open, setOpen] = useState(true)
@@ -35,7 +35,7 @@ export default function Sidebar() {
       text: "Settings",
       route: "/admin",
       adminOnly: true,
-    },
+    }
   ]
 
   const visibleNavItems = navItems.filter(
@@ -61,7 +61,6 @@ export default function Sidebar() {
           <ListItemButton component={NavLink} to={item.route}>
             <ListItemText 
               primary={item.text} 
-              // sx={clickableText}
               slotProps={{
                 primary: {
                   variant: "h6",
@@ -71,7 +70,19 @@ export default function Sidebar() {
           </ListItemButton>
         </ListItem>
       ))
-      }  
+      }
+      <ListItem sx={{p: 3}}>
+        <ListItemButton onClick={logout}>
+          <ListItemText
+            primary="Logout"
+            slotProps={{
+              primary: {
+                variant: "h6",
+              }
+            }}
+          />
+        </ListItemButton>
+      </ListItem>  
     </List>     
     </Drawer>)
 }

@@ -20,9 +20,12 @@ SELECT
     a.*, 
     ct.name,
     ct.duration, 
-    ct.cadence
+    ct.cadence,
+    u.first_name
 FROM assignments a
-JOIN chore_templates ct ON a.template_id = ct.id;
+JOIN chore_templates ct ON a.template_id = ct.id
+JOIN users u ON a.assigned_user_id = u.id;
+
 
 -- name: GetAssignment :one
 SELECT 

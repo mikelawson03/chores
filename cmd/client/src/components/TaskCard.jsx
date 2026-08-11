@@ -24,7 +24,7 @@ export default function TaskCard({ task, openTaskDetails, toggleTaskComplete }) 
         {task.templateName}
       </Typography>
       <Typography variant="body2" sx = {{ color: 'text.secondary', textDecoration: task.completed ? "line-through" : "none"}}>
-        {task.userName ? `Assigned to: ${task.userName}` : "Unassigned"}
+        {task.userFirstName ? `Assigned to: ${task.userFirstName}` : "Unassigned"}
       </Typography>
       <Stack 
         direction="row" 

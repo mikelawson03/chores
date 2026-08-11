@@ -224,21 +224,23 @@ func mapGetAllAssignmentsRow(r db.GetAllAssignmentsRow) domain.Assignment {
 	}
 
 	return domain.Assignment{
-		ID:           r.ID,
-		TemplateID:   r.TemplateID,
-		TemplateName: r.Name,
-		Cadence:      r.Cadence,
-		Duration:     r.Duration,
-		Instructions: instructions,
-		Notes:        notes,
-		DueDate:      r.DueDate,
-		ScheduledFor: scheduledFor,
-		Completed:    r.Completed,
-		Canceled:     r.Canceled,
-		CreatedAt:    r.CreatedAt,
-		UpdatedAt:    r.UpdatedAt,
-		CompletedAt:  completedAt,
-		CanceledAt:   canceledAt,
+		ID:                    r.ID,
+		TemplateID:            r.TemplateID,
+		TemplateName:          r.Name,
+		AssignedUserID:        r.AssignedUserID,
+		AssignedUserFirstName: r.FirstName,
+		Cadence:               r.Cadence,
+		Duration:              r.Duration,
+		Instructions:          instructions,
+		Notes:                 notes,
+		DueDate:               r.DueDate,
+		ScheduledFor:          scheduledFor,
+		Completed:             r.Completed,
+		Canceled:              r.Canceled,
+		CreatedAt:             r.CreatedAt,
+		UpdatedAt:             r.UpdatedAt,
+		CompletedAt:           completedAt,
+		CanceledAt:            canceledAt,
 	}
 }
 

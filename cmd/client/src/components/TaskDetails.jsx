@@ -11,6 +11,7 @@ export default function TaskDetails({task, open, finishTaskEditing}) {
 
   useEffect(() => {
     setTaskDraft({...task});
+    console.log(taskDraft)
     }, [task]
   );
 
@@ -47,7 +48,7 @@ export default function TaskDetails({task, open, finishTaskEditing}) {
               <Stack direction="column" spacing={2}>
                 <DetailRow label="Due Date" value={formatTimestamp(taskDraft.dueDate)} />
                 <DetailRow label="Instructions" value={taskDraft.instructions} />
-                <DetailRow label="Assigned To" value={taskDraft.assignee ? task.assignee : "Unassigned"} />
+                <DetailRow label="Assigned To" value={taskDraft.userFirstName ? task.userFirstName : "Unassigned"} />
                 <DetailRow label="Duration" value={formatDuration(taskDraft.duration)} />
               </Stack>
               <Stack>
@@ -73,7 +74,7 @@ export default function TaskDetails({task, open, finishTaskEditing}) {
               <Button variant="contained" onClick={() => {taskDraft.completed=!taskDraft.completed; finishTaskEditing(taskDraft); }}>
                 {task.completed ? "Reopen Task" : "Complete Task"}
               </Button>
-              <Button variant="text" onClick={() => {taskDraft.canceled=!taskDraft.completed; finishTaskEditing(taskDraft); }}>{taskDraft.canceled ? "Restore Task" : "Cancel Task"}</Button>
+              <Button variant="text" onClick={() => {taskDraft.canceled=!taskDraft.canceled; finishTaskEditing(taskDraft); }}>{taskDraft.canceled ? "Restore Task" : "Cancel Task"}</Button>
             </Stack>
         </Drawer>
     )

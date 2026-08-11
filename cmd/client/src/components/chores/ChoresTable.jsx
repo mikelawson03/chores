@@ -5,7 +5,7 @@ import ChoresTableRow from "./ChoresTableRow";
 import { useState } from "react";
 import dayjs from "dayjs";
 
-export default function ChoresTable({ choreTemplates, editNewChore, openEditChore }) {
+export default function ChoresTable({ choreTemplates, editNewChore, openEditChore, users }) {
   const [sort, setSort] = useState(
       {
         column: "updated_at",
@@ -101,7 +101,7 @@ export default function ChoresTable({ choreTemplates, editNewChore, openEditChor
         onSortClick={onSortClick}
       />
       {displayedChores.map( chore => (
-      <ChoresTableRow key={chore.id} choreTemplate={chore} openEditChore={openEditChore} />))}
+      <ChoresTableRow key={chore.id} choreTemplate={chore} openEditChore={openEditChore} users={users} />))}
     </Stack>
   )
 }

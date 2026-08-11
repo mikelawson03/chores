@@ -2,23 +2,29 @@ import { Box, Button, Drawer, Stack, Typography } from "@mui/material";
 import DetailRow from "../details/DetailRow";
 import DetailRowSelect from "../details/DetailRowSelect";
 import { CADENCES } from "../../constants/cadences";
-import { USERS } from "../../config/dev";
 import DetailRowNumber from "../details/DetailRowNumber";
 import DetailRowLargeText from "../details/DetailRowLargeText";
 import DetailRowTitle from "../details/DetailRowTitle";
 import { formatTimestamp } from "../../utils/formatters";
 
-export default function EditChore({ open, chore, closeEditChore, createNewChore, editChoreMode, onChoreDetailChange, saveChore, deleteChore}) {
+
+export default function EditChore({ open, chore, closeEditChore, createNewChore, editChoreMode, onChoreDetailChange, saveChore, deleteChore, users}) {
     const DRAWER_DETAIL_WIDTH=680
-    // TODO: Verify behavior for nullable assignee ID
-    const user_options=[
+
+    const userOptions=[
         { value: "", label: "Unassigned"},
-        ...USERS.map(user => ({
+        ...users.map(user => ({
             key: user.id,
             value: user.id,
-            label: user.name,
+            label: user.firstName,
         })),
     ]
+
+    const getUserName = (userId) => {
+        const user = users.find((user) => user.id === userId);
+        return user?.firstName ?? "Unassigned";
+    }
+
     return (
         <Drawer variant="temporary" anchor="right" open={open} onClose={closeEditChore} sx={{
             "& .MuiDrawer-paper": {
@@ -34,7 +40,7 @@ export default function EditChore({ open, chore, closeEditChore, createNewChore,
                 </Stack> */}
                 <Stack direction="column" spacing={2}>
                     <DetailRowSelect label="Frequency" field="cadence" value={chore.cadence} options={CADENCES} onValueChange={onChoreDetailChange}/>
-                    <DetailRowSelect label="Assigned To" field="assignee" value={chore.assignee} options={user_options} onValueChange={onChoreDetailChange}/>
+                    <DetailRowSelect label="Assigned To" field="assignee" value={chore.assignee} options={userOptions} onValueChange={onChoreDetailChange}/>
                     <DetailRowNumber label="Duration" field="duration" value={chore.duration} onValueChange={onChoreDetailChange} units="mins" />
                 </Stack>
                 <Stack>
@@ -42,7 +48,6 @@ export default function EditChore({ open, chore, closeEditChore, createNewChore,
                 </Stack>
                 <Stack direction="column" spacing={2}>
                     <Button variant="contained" onClick={() => {editChoreMode === "edit" ? saveChore() : createNewChore(); closeEditChore();}}>{editChoreMode === "edit" ? "Save" : "Create"}</Button>
-                    {/* <Button variant="text" onClick={() => {editChoreMode === "edit" ? deleteChore(chore) : undefined; closeEditChore();}}>{editChoreMode === "edit" ? "Delete" : "Discard"}</Button> */}
                     {editChoreMode === "edit" && <Button variant="text" onClick={() => {deleteChore(); closeEditChore();}}>Delete</Button>}
                     {editChoreMode === "create" && <Button variant="text" onClick={() => {closeEditChore();}}>Discard</Button>}
                 </Stack>

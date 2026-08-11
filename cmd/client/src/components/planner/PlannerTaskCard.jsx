@@ -45,7 +45,7 @@ export default function PlannerTaskCard({ task, toggleTaskComplete, width, openT
           {task.templateName}
         </Typography>
         <Typography variant="body2" sx = {{ color: txtColor, textDecoration: txtDecoration, mb: 0.25, lineHeight: 1.15}}>
-          {task.userName ? task.userName : "Unassigned"}
+          {task.userFirstName ? task.userFirstName : "Unassigned"}
         </Typography>
         <Stack 
           direction="row" 
