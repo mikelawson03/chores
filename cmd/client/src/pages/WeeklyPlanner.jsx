@@ -3,12 +3,27 @@ import PlannerToolbar from "../components/planner/PlannerToolbar";
 import WeeklyGrid from "../components/planner/WeeklyGrid";
 import { useState } from "react";
 import isoWeek from "dayjs/plugin/isoWeek";
-import { Stack } from "@mui/material";
+import { Box, CircularProgress, Stack } from "@mui/material";
 import StagingArea from "../components/planner/StagingArea";
+import { useAuth } from "../auth/useAuth";
+import { getAssignments } from "../utils/assignmentHelpers";
+import { useQuery } from "@tanstack/react-query";
 
 
-export default function WeeklyPlanner({ tasks, toggleTaskComplete, openTaskDetails }) {
+export default function WeeklyPlanner({ toggleTaskComplete, openTaskDetails }) {
   dayjs.extend(isoWeek);
+  const { user } = useAuth();
+  const { 
+    data: tasks = [],
+    isPending,
+    isError,
+    error,
+  } = useQuery({
+    queryKey: ["assignments", user?.id],
+    queryFn: () => getAssignments(user),
+    enabled: !!user,
+  });
+
   const [currentWeek, setCurrentWeek] = useState(dayjs());
   
   const weekStart = currentWeek.startOf("isoWeek");
@@ -42,6 +57,20 @@ export default function WeeklyPlanner({ tasks, toggleTaskComplete, openTaskDetai
   const handleNextWeek = () => {
     setCurrentWeek(currentWeek.add(1, "week"))
   };
+
+   if (isPending){
+    return (
+      <Box sx ={{
+          width: "100%",
+          height: "100vh",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center"
+        }}>
+          <CircularProgress />
+      </Box>
+    )
+  }
 
   return (
     <Stack spacing={4} direction="column" sx={{height: "100%"}}>

@@ -49,6 +49,6 @@ export async function deleteChoreTemplate(id) {
 
   if (!response.ok) {
     const error = await response.text();
-    throw newError(`Server returned ${response.status}: ${error}`);
+    throw new Error(`Server returned ${response.status}: ${error}`);
   }
 }

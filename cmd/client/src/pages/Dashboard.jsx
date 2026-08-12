@@ -1,11 +1,25 @@
 import PageHeader from "../components/PageHeader";
 import TaskCard from "../components/TaskCard";
 import TaskListCard from "../components/TaskListCard";
-import { Container, Grid, Stack, Typography } from "@mui/material"
+import { Box, CircularProgress, Container, Grid, Stack, Typography } from "@mui/material"
 import { getActiveTasks, getScheduledTasksForDay, getUnscheduledTasks, getWeeklyTasks, getMonthlyTasks, removeCompletedTasks, getCompletedTasks } from "../utils/taskHelpers";
 import dayjs from "dayjs";
+import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "../auth/useAuth";
+import { getAssignments } from "../utils/assignmentHelpers";
 
-export default function Dashboard({tasks, openTaskDetails, toggleTaskComplete}) {
+export default function Dashboard({openTaskDetails, toggleTaskComplete}) {
+  const { user } = useAuth();
+  const { 
+    data: tasks = [],
+    isPending,
+    isError,
+    error,
+  } = useQuery({
+    queryKey: ["assignments", user?.id],
+    queryFn: () => getAssignments(user),
+    enabled: !!user,
+  });
 
   const activeTasks = getActiveTasks(tasks)
   const activeAndUnscheduledTasks = getUnscheduledTasks(activeTasks)
@@ -14,6 +28,20 @@ export default function Dashboard({tasks, openTaskDetails, toggleTaskComplete}) 
   const monthlyTasks = getMonthlyTasks(activeAndUnscheduledTasks);
   const todaysTasks = getScheduledTasksForDay(dayjs(), activeTasks);
   const completedTasks = getCompletedTasks(tasks);
+
+  if (isPending){
+    return (
+      <Box sx ={{
+          width: "100%",
+          height: "100vh",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center"
+        }}>
+          <CircularProgress />
+      </Box>
+    )
+  }
 
   return (
   <Container maxWidth="lg">

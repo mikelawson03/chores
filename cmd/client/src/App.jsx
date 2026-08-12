@@ -1,49 +1,37 @@
+import { Box } from "@mui/material";
+import { useMutation } from "@tanstack/react-query";
+import dayjs from "dayjs";
+import { useState } from "react";
+import { Route, Routes } from "react-router-dom";
+import AdminRoute from "./auth/AdminRoute";
+import ProtectedRoute from "./auth/ProtectedRoute";
+import { useAuth } from "./auth/useAuth";
+import TaskDetails from "./components/TaskDetails";
 import AppLayout from "./layouts/AppLayout";
 import Calendar from "./pages/Calendar";
 import Chores from "./pages/Chores";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
-import Settings from "./pages/Settings"
+import Settings from "./pages/Settings";
 import WeeklyPlanner from "./pages/WeeklyPlanner";
-import TaskDetails from "./components/TaskDetails"
-import { Box, CssBaseline, Stack } from "@mui/material";
-import { useEffect, useState } from "react";
-import { Route, Routes } from "react-router-dom"
-import dayjs from "dayjs";
-import { getTasks, getTasksForUser, updateTask } from "./api/tasks";
+import { queryClient } from "./query/queryClient";
+import { updateAssignment } from "./utils/assignmentHelpers";
 import { tasksEqual } from "./utils/taskHelpers";
-import { useAuth } from "./auth/useAuth";
-import ProtectedRoute from "./auth/ProtectedRoute";
-import AdminRoute from "./auth/AdminRoute";
-
 
 function App() {
 
   const { user } = useAuth();
   const [taskDetailsOpen, setTaskDetailsOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState();
-  const [tasks, setTasks] = useState([]);
 
-  useEffect(() => {
-    if (!user) {
-      return;
-    }
-
-    const load = async() => {
-      const fetchedTasks = await loadTasks();
-      setTasks(fetchedTasks);
-    };
-
-    load();
-  }, [user])
-
-  const loadTasks = async () => {
-    if (user.role === "admin") {
-      return await getTasks();
-    }
-
-    return await getTasksForUser(user.id);
-  }
+  const updateTaskMutation = useMutation({
+    mutationFn: updateAssignment,
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["assignments", user.id],
+      });
+    },
+  });
 
   function openTaskDetails(task) {
     setSelectedTask(task);
@@ -60,22 +48,18 @@ function App() {
       return;
     }
 
-    const savedTask = await updateTask(updatedTask)
-
-    setTasks(current =>
-      current.map(t =>
-        t.id === savedTask.id ? savedTask : t
-      )
-    );
+    const savedTask = await updateTaskMutation.mutateAsync(updatedTask);
 
     return savedTask;
   }
+
+  
 
   // TODO: 
   // - expand to add activity log entry, 
   // - save to backend
   // - render undo toast
-  function toggleTaskComplete(task) {   
+  function toggleTaskComplete(task) { 
     task.completed = !task.completed;
 
     if (!task.scheduledFor && task.completed) {
@@ -100,19 +84,16 @@ function App() {
           <Route element={<ProtectedRoute />}>
             <Route element={<AppLayout />}>
               <Route path="/" element={<Dashboard 
-                tasks={tasks} 
                 toggleTaskComplete={toggleTaskComplete}
                 openTaskDetails={openTaskDetails}
               />} />
 
               <Route path="/calendar" element={<Calendar 
-                tasks={tasks} 
                 openTaskDetails={openTaskDetails}
                 toggleTaskComplete={toggleTaskComplete}
               />} />
 
               <Route path="/planner" element={<WeeklyPlanner 
-                tasks={tasks} 
                 openTaskDetails={openTaskDetails}
                 toggleTaskComplete={toggleTaskComplete}
               />} />

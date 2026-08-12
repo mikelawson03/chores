@@ -1,38 +1,30 @@
-import { Box, Stack } from "@mui/material";
+import { Box, CircularProgress, Stack } from "@mui/material";
 import ChoresTable from "../components/chores/ChoresTable";
 import PageHeader from "../components/PageHeader";
 import EditChore from "../components/chores/EditChore";
 import { EMPTY_CHORE_TEMPLATE } from "../constants/choreTemplate";
-import { useEffect, useState } from "react";
-import { createChoreTemplate, deleteChoreTemplate, getChoreTemplates, updateChoreTemplate } from "../api/choreTemplates";
-import { getUsers } from "../api/users";
+import { useState } from "react";
+import { getUsers } from "../utils/userHelpers";
+import { getChores } from "../utils/choreHelpers";
+import { useQuery } from "@tanstack/react-query";
 
 export default function Chores() {
   const [editedChoreTemplate, setEditedChoreTemplate] = useState(null);
   const [editChoreOpen, setEditChoreOpen] = useState(false);
   const [editChoreMode, setEditChoreMode] = useState(null);
-  const [choreTemplates, setChoreTemplates]=useState([])
 
-  const [users, setUsers] = useState([]);
+  const usersQuery = useQuery({
+    queryKey: ["users"],
+    queryFn: () => getUsers(),
+  })
 
-  useEffect(() => {
-    const loadUsers = async() => {
-        const fetchedUsers = await getUsers();
-        setUsers(fetchedUsers);
-        console.log(fetchedUsers)
-    };
+  const choreTemplatesQuery = useQuery({
+    queryKey: ["choreTemplates"],
+    queryFn: () => getChores(),
+  })
 
-    loadUsers();
-  }, [])
-
-  useEffect(() => {
-    async function loadChores() {
-      const chores = await getChoreTemplates();
-      setChoreTemplates(chores);
-      console.log(chores)
-    }
-    loadChores();
-  },[])
+  const users = usersQuery.data ?? [];
+  const choreTemplates = choreTemplatesQuery.data ?? [];
 
   function openEditChore(choreTemplate) {
     setEditedChoreTemplate({...choreTemplate});
@@ -40,7 +32,7 @@ export default function Chores() {
     setEditChoreOpen(true);
   }
 
-  function closeEditChore(choreTemplate) {
+  function closeEditChore() {
     setEditChoreOpen(false);
   }
 
@@ -57,33 +49,19 @@ export default function Chores() {
     setEditChoreOpen(true);
   }
 
-  async function createNewChore(){
-    const newChore = await createChoreTemplate(editedChoreTemplate);
-    setChoreTemplates([...choreTemplates, newChore]
+   if (usersQuery.isPending || choreTemplatesQuery.isPending) {
+      return( 
+        <Box sx ={{
+          width: "100%",
+          height: "100vh",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center"
+        }}>
+          <CircularProgress />
+        </Box>
     )
-  }
-
-  // To-Do:  Log save event
-  async function saveChore() {
-    const updatedChore = await updateChoreTemplate(editedChoreTemplate)
-    setChoreTemplates(choreTemplates.map( template => {
-      if (updatedChore.id === template.id) {
-        return {
-          ...updatedChore
-        };
-      }
-      return template;
-    }));
-  }
-
-  // TO-DO: 1. Make API Call to delete chore from DB
-  // 2. Log delete event
-  async function deleteChore() {
-    await deleteChoreTemplate(editedChoreTemplate.id);
-    setChoreTemplates(previousChores => 
-      previousChores.filter(chore => chore.id !== editedChoreTemplate.id)
-    );
-  }
+    }
 
   return (
       <Stack spacing={4} sx={{
@@ -109,11 +87,8 @@ export default function Chores() {
               open={editChoreOpen} 
               chore={editedChoreTemplate} 
               closeEditChore={closeEditChore} 
-              createNewChore={createNewChore}
               editChoreMode={editChoreMode}
               onChoreDetailChange={onChoreDetailChange} 
-              saveChore={saveChore}
-              deleteChore={deleteChore}
               users={users}
             />}
       </Stack>

@@ -1,14 +1,16 @@
-import { Box, Button, Drawer, Stack, Typography } from "@mui/material";
-import DetailRow from "../details/DetailRow";
+import { Button, Drawer, Stack, Typography } from "@mui/material";
 import DetailRowSelect from "../details/DetailRowSelect";
 import { CADENCES } from "../../constants/cadences";
 import DetailRowNumber from "../details/DetailRowNumber";
 import DetailRowLargeText from "../details/DetailRowLargeText";
 import DetailRowTitle from "../details/DetailRowTitle";
 import { formatTimestamp } from "../../utils/formatters";
+import { useMutation } from "@tanstack/react-query";
+import { createChore, deleteChore, updateChore } from "../../utils/choreHelpers";
+import { queryClient } from "../../query/queryClient";
 
 
-export default function EditChore({ open, chore, closeEditChore, createNewChore, editChoreMode, onChoreDetailChange, saveChore, deleteChore, users}) {
+export default function EditChore({ open, chore, closeEditChore, editChoreMode, onChoreDetailChange, users}) {
     const DRAWER_DETAIL_WIDTH=680
 
     const userOptions=[
@@ -20,10 +22,35 @@ export default function EditChore({ open, chore, closeEditChore, createNewChore,
         })),
     ]
 
-    const getUserName = (userId) => {
-        const user = users.find((user) => user.id === userId);
-        return user?.firstName ?? "Unassigned";
-    }
+    const newChoreMutation = useMutation({
+        mutationFn: createChore,
+        onSuccess: () => {
+            queryClient.invalidateQueries({
+                queryKey: ["choreTemplates"],
+            });
+            closeEditChore();
+        },
+    });
+
+    const editChoreMutation = useMutation({
+        mutationFn: updateChore,
+        onSuccess: () => {
+            queryClient.invalidateQueries({
+                queryKey: ["choreTemplates"],
+            });
+            closeEditChore();
+        },
+    });
+
+    const deleteChoreMutation = useMutation({
+        mutationFn: deleteChore,
+        onSuccess: () => {
+            queryClient.invalidateQueries({
+                queryKey: ["choreTemplates"],
+            });
+            closeEditChore();
+        },
+    });
 
     return (
         <Drawer variant="temporary" anchor="right" open={open} onClose={closeEditChore} sx={{
@@ -47,8 +74,8 @@ export default function EditChore({ open, chore, closeEditChore, createNewChore,
                     <DetailRowLargeText label="Instructions" field="instructions" value={chore.instructions} onValueChange={onChoreDetailChange} />
                 </Stack>
                 <Stack direction="column" spacing={2}>
-                    <Button variant="contained" onClick={() => {editChoreMode === "edit" ? saveChore() : createNewChore(); closeEditChore();}}>{editChoreMode === "edit" ? "Save" : "Create"}</Button>
-                    {editChoreMode === "edit" && <Button variant="text" onClick={() => {deleteChore(); closeEditChore();}}>Delete</Button>}
+                    <Button variant="contained" onClick={() => {editChoreMode === "edit" ? editChoreMutation.mutate(chore) : newChoreMutation.mutate(chore); closeEditChore();}}>{editChoreMode === "edit" ? "Save" : "Create"}</Button>
+                    {editChoreMode === "edit" && <Button variant="text" onClick={() => {deleteChoreMutation.mutate(chore.id); closeEditChore();}}>Delete</Button>}
                     {editChoreMode === "create" && <Button variant="text" onClick={() => {closeEditChore();}}>Discard</Button>}
                 </Stack>
                 {editChoreMode === "edit" && <Stack direction="column" spacing={0.25} sx={{borderBottom: 1, borderColor: "divider", pb: 4}}>

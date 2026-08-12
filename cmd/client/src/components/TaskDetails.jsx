@@ -11,7 +11,6 @@ export default function TaskDetails({task, open, finishTaskEditing}) {
 
   useEffect(() => {
     setTaskDraft({...task});
-    console.log(taskDraft)
     }, [task]
   );
 

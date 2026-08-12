@@ -4,11 +4,26 @@ import CalendarToolbar from "../components/calendar/CalendarToolbar";
 import CalendarContent from "../components/calendar/CalendarContent";
 import DailyAgenda from "../components/dailyAgenda/DailyAgenda";
 import { useState } from "react";
-import { Stack } from "@mui/material";
+import { Box, CircularProgress, Stack } from "@mui/material";
 import { getActiveTasks, getMonthlyTasks, getUnscheduledTasks, getTasksDueInMonth, getWeeklyTasks, removeCompletedTasks } from "../utils/taskHelpers";
+import { useAuth } from "../auth/useAuth";
+import { useQuery } from "@tanstack/react-query";
+import { getAssignments } from "../utils/assignmentHelpers";
 
-export default function Calendar({ tasks, openTaskDetails, toggleTaskComplete }) {
+export default function Calendar({ openTaskDetails, toggleTaskComplete }) {
   dayjs.extend(isoWeek);
+  const { user } = useAuth();
+  const { 
+    data: tasks = [],
+    isPending,
+    isError,
+    error,
+  } = useQuery({
+    queryKey: ["assignments", user?.id],
+    queryFn: () => getAssignments(user),
+    enabled: !!user,
+  });
+
   const MAX_CALENDAR_DAY_ITEMS = 4;
   const [currentDate, setCurrentDate] = useState(dayjs());
   const [agendaDate, setAgendaDate] = useState(dayjs())
@@ -60,6 +75,20 @@ export default function Calendar({ tasks, openTaskDetails, toggleTaskComplete })
   function handleDailyAgendaOpen(date) {
     setAgendaDate(date);
     setDailyAgendaOpen(true);
+  }
+
+  if (isPending){
+    return (
+      <Box sx ={{
+          width: "100%",
+          height: "100vh",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center"
+        }}>
+          <CircularProgress />
+      </Box>
+    )
   }
 
   return (
