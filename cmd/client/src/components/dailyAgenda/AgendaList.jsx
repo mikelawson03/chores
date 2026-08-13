@@ -1,8 +1,8 @@
-import { Box, Fade, Stack, Typography } from "@mui/material";
+import { Stack, Typography } from "@mui/material";
 import AgendaCard from "./AgendaCard";
-import { getScheduledTasksForDay } from "../../utils/taskHelpers";
 
-export default function AgendaList({ tasks, openTaskDetails, toggleTaskComplete }) {
+
+export default function AgendaList({ tasks, toggleTaskComplete }) {
     return (
         <Stack spacing= {2} sx={{flex: 1}}>
                 {tasks.length === 0 && <Typography sx={{fontStyle: "italic"}}>No tasks scheduled for this date...</Typography>}
@@ -10,7 +10,6 @@ export default function AgendaList({ tasks, openTaskDetails, toggleTaskComplete 
                     <AgendaCard 
                         key={task.id}
                         task={task}
-                        openTaskDetails={openTaskDetails}
                         toggleTaskComplete={toggleTaskComplete}
                     />
                 ))}

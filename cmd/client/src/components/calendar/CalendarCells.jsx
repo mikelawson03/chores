@@ -2,7 +2,7 @@ import { Box } from "@mui/material";
 import dayjs from "dayjs";
 import CalendarDay from "./CalendarDay";
 
-export default function CalendarCells({currentDate, days, maxDayItems, onOverflowClick, openTaskDetails}) {
+export default function CalendarCells({currentDate, days, maxDayItems, onOverflowClick}) {
     return(
         <Box sx={{
             flex: 1,
@@ -20,7 +20,6 @@ export default function CalendarCells({currentDate, days, maxDayItems, onOverflo
                     tasks={tasks}
                     maxDayItems={maxDayItems}
                     onOverflowClick={onOverflowClick}
-                    openTaskDetails={openTaskDetails}
                     isLastColumn={(index + 1) % 7 === 0}
                     isLastRow={index > 35}
                     isCurrentMonth={day.isSame(currentDate, "month")}

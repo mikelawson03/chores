@@ -10,7 +10,7 @@ import { getAssignments } from "../utils/assignmentHelpers";
 import { useQuery } from "@tanstack/react-query";
 
 
-export default function WeeklyPlanner({ toggleTaskComplete, openTaskDetails }) {
+export default function WeeklyPlanner({ toggleTaskComplete }) {
   dayjs.extend(isoWeek);
   const { user } = useAuth();
   const { 
@@ -83,7 +83,6 @@ export default function WeeklyPlanner({ toggleTaskComplete, openTaskDetails }) {
       <WeeklyGrid
         plannerDays = {plannerDays}
         toggleTaskComplete={toggleTaskComplete}
-        openTaskDetails={openTaskDetails}
         sx = {{
           flex: 1,
           minHeight:600
@@ -93,7 +92,6 @@ export default function WeeklyPlanner({ toggleTaskComplete, openTaskDetails }) {
         weeklyTasks = {weeklyBacklog}
         monthlyTasks = {monthlyBacklog}
         toggleTaskComplete={toggleTaskComplete}
-        openTaskDetails={openTaskDetails}
         />
     </Stack>
   )

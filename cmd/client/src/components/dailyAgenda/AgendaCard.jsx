@@ -1,8 +1,12 @@
-import { Box, Card, Checkbox, Stack, Typography } from "@mui/material";
+import { Card, Checkbox, Stack, Typography } from "@mui/material";
 import { clickableSurface } from "../../styles/surfaces";
+import { useTaskStore } from "../../stores/taskStore";
 
 
-export default function AgendaCard({ task, openTaskDetails, toggleTaskComplete }) {
+export default function AgendaCard({ task, toggleTaskComplete }) {
+    const openTaskDetails = useTaskStore(
+        (state) => state.openTaskDetails
+    );
     return (
         <Card sx={clickableSurface} onClick={() => openTaskDetails(task)}> 
             <Stack spacing={3} sx={{ p: 2 }}>

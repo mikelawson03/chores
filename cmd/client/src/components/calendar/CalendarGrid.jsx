@@ -2,7 +2,7 @@ import { Stack } from "@mui/material";
 import CalendarGridHeader from "./CalendarGridHeader";
 import CalendarCells from "./CalendarCells";
 
-export default function CalendarGrid({ currentDate, days, maxDayItems, onOverflowClick, openTaskDetails }) {
+export default function CalendarGrid({ currentDate, days, maxDayItems, onOverflowClick }) {
     return(
         <Stack 
             direction="column" 
@@ -19,7 +19,6 @@ export default function CalendarGrid({ currentDate, days, maxDayItems, onOverflo
                 days={days} 
                 maxDayItems={maxDayItems} 
                 onOverflowClick={onOverflowClick}
-                openTaskDetails={openTaskDetails}
                 sx = {{ flex: 1 }} />
         </Stack>
     )

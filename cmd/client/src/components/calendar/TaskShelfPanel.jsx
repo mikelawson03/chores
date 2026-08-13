@@ -1,7 +1,11 @@
 import { Box, Stack, Typography } from "@mui/material";
 import dayjs from "dayjs";
+import { useTaskStore } from "../../stores/taskStore";
 
-export default function TaskShelfPanel({ title, tasks, openTaskDetails }) {
+export default function TaskShelfPanel({ tasks,  }) {
+    const openTaskDetails = useTaskStore(
+        (state) => state.openTaskDetails
+    );
     return(
         <Stack spacing={2} 
             sx={{pt: 2}}

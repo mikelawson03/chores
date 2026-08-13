@@ -1,7 +1,7 @@
 import { Stack, Typography } from "@mui/material";
 import PlannerTaskCard from "./PlannerTaskCard";
 
-export default function StagingSection({title, tasks, toggleTaskComplete, openTaskDetails}) {
+export default function StagingSection({title, tasks, toggleTaskComplete }) {
     return (
     <Stack direction="column">
         <Typography variant="h6" gutterBottom>
@@ -13,7 +13,6 @@ export default function StagingSection({title, tasks, toggleTaskComplete, openTa
                     key={task.id}
                     task={task}
                     toggleTaskComplete={toggleTaskComplete}
-                    openTaskDetails={openTaskDetails}
                     width={175}
                     />
             ))}

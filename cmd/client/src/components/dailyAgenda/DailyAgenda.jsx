@@ -1,10 +1,10 @@
-import { Box, Dialog, DialogContent, DialogTitle, IconButton, Stack, Typography } from "@mui/material";
+import { Dialog, DialogContent, DialogTitle } from "@mui/material";
 import AgendaHeader from "./AgendaHeader";
 import AgendaList from "./AgendaList";
 import { getScheduledTasksForDay } from "../../utils/taskHelpers";
 
 
-export default function DailyAgenda({ activeTasks, dailyAgendaOpen, onDailyAgendaClose, agendaDate, onNextAgendaDay, onPreviousAgendaDay, openTaskDetails, toggleTaskComplete }) {
+export default function DailyAgenda({ activeTasks, dailyAgendaOpen, onDailyAgendaClose, agendaDate, onNextAgendaDay, onPreviousAgendaDay, toggleTaskComplete }) {
     return(
         <Dialog
             maxWidth="sm"
@@ -42,7 +42,6 @@ export default function DailyAgenda({ activeTasks, dailyAgendaOpen, onDailyAgend
             </DialogTitle>
             <DialogContent>
                 <AgendaList 
-                    openTaskDetails={openTaskDetails} 
                     tasks={getScheduledTasksForDay(agendaDate, activeTasks)}
                     toggleTaskComplete={toggleTaskComplete}
                 />

@@ -10,7 +10,7 @@ import { useAuth } from "../auth/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { getAssignments } from "../utils/assignmentHelpers";
 
-export default function Calendar({ openTaskDetails, toggleTaskComplete }) {
+export default function Calendar({ toggleTaskComplete }) {
   dayjs.extend(isoWeek);
   const { user } = useAuth();
   const { 
@@ -30,7 +30,6 @@ export default function Calendar({ openTaskDetails, toggleTaskComplete }) {
   const [dailyAgendaOpen, setDailyAgendaOpen] = useState(false)
 
   const monthDisplayStart = currentDate.date(1).startOf("isoWeek")
-  const monthDisplayEnd = monthDisplayStart.add(41, "day")
   
   const days = Array.from(
     { length: 42 },
@@ -102,7 +101,6 @@ export default function Calendar({ openTaskDetails, toggleTaskComplete }) {
         currentDate={currentDate} 
         days={calendarDays} 
         maxDayItems={MAX_CALENDAR_DAY_ITEMS}
-        openTaskDetails={openTaskDetails}
         weeklyTasks={weeklyTasks}
         monthlyTasks={monthlyTasks}
         onOverflowClick={handleDailyAgendaOpen}
@@ -111,7 +109,6 @@ export default function Calendar({ openTaskDetails, toggleTaskComplete }) {
         agendaDate={agendaDate}
         activeTasks={getActiveTasks(tasks)}
         dailyAgendaOpen={dailyAgendaOpen}
-        openTaskDetails={openTaskDetails}
         toggleTaskComplete={toggleTaskComplete}
         onDailyAgendaClose={handleDailyAgendaClose}
         onPreviousAgendaDay={handlePreviousAgendaDay}

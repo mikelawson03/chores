@@ -1,7 +1,6 @@
 import { Box } from "@mui/material";
 import { useMutation } from "@tanstack/react-query";
 import dayjs from "dayjs";
-import { useState } from "react";
 import { Route, Routes } from "react-router-dom";
 import AdminRoute from "./auth/AdminRoute";
 import ProtectedRoute from "./auth/ProtectedRoute";
@@ -17,12 +16,19 @@ import WeeklyPlanner from "./pages/WeeklyPlanner";
 import { queryClient } from "./query/queryClient";
 import { updateAssignment } from "./utils/assignmentHelpers";
 import { tasksEqual } from "./utils/taskHelpers";
+import { useTaskStore } from "./stores/taskStore";
 
 function App() {
 
   const { user } = useAuth();
-  const [taskDetailsOpen, setTaskDetailsOpen] = useState(false);
-  const [selectedTask, setSelectedTask] = useState();
+
+  const selectedTask = useTaskStore(
+    (state) => state.selectedTask
+  );
+
+  const closeTaskDetails = useTaskStore(
+    (state) => state.closeTaskDetails
+  );
 
   const updateTaskMutation = useMutation({
     mutationFn: updateAssignment,
@@ -33,14 +39,9 @@ function App() {
     },
   });
 
-  function openTaskDetails(task) {
-    setSelectedTask(task);
-    setTaskDetailsOpen(true);
-  }
-
   async function finishTaskEditing(task) {
     await saveTask(task, selectedTask)
-    setTaskDetailsOpen(false);
+    closeTaskDetails();
   }
 
   async function saveTask(updatedTask, originalTask = null) {
@@ -53,12 +54,6 @@ function App() {
     return savedTask;
   }
 
-  
-
-  // TODO: 
-  // - expand to add activity log entry, 
-  // - save to backend
-  // - render undo toast
   function toggleTaskComplete(task) { 
     task.completed = !task.completed;
 
@@ -85,16 +80,13 @@ function App() {
             <Route element={<AppLayout />}>
               <Route path="/" element={<Dashboard 
                 toggleTaskComplete={toggleTaskComplete}
-                openTaskDetails={openTaskDetails}
               />} />
 
               <Route path="/calendar" element={<Calendar 
-                openTaskDetails={openTaskDetails}
                 toggleTaskComplete={toggleTaskComplete}
               />} />
 
               <Route path="/planner" element={<WeeklyPlanner 
-                openTaskDetails={openTaskDetails}
                 toggleTaskComplete={toggleTaskComplete}
               />} />
               <Route element={<AdminRoute />}>
@@ -108,7 +100,6 @@ function App() {
         {selectedTask && (
           <TaskDetails 
             task={selectedTask} 
-            open={taskDetailsOpen}
             finishTaskEditing={finishTaskEditing}
           />
         )}

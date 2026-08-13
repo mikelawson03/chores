@@ -8,7 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../auth/useAuth";
 import { getAssignments } from "../utils/assignmentHelpers";
 
-export default function Dashboard({openTaskDetails, toggleTaskComplete}) {
+export default function Dashboard({ toggleTaskComplete }) {
   const { user } = useAuth();
   const { 
     data: tasks = [],
@@ -20,6 +20,8 @@ export default function Dashboard({openTaskDetails, toggleTaskComplete}) {
     queryFn: () => getAssignments(user),
     enabled: !!user,
   });
+
+  
 
   const activeTasks = getActiveTasks(tasks)
   const activeAndUnscheduledTasks = getUnscheduledTasks(activeTasks)
@@ -53,7 +55,6 @@ export default function Dashboard({openTaskDetails, toggleTaskComplete}) {
         maxItems={3}
         footerText="View planner →"
         toggleTaskComplete={toggleTaskComplete}
-        openTaskDetails={openTaskDetails}
       />
       <TaskListCard 
         cardName="Monthly Tasks"
@@ -61,7 +62,6 @@ export default function Dashboard({openTaskDetails, toggleTaskComplete}) {
         maxItems={3}
         footerText="View planner →"
         toggleTaskComplete={toggleTaskComplete}
-        openTaskDetails={openTaskDetails}
       />
       <TaskListCard 
         cardName="Completed Tasks"
@@ -69,7 +69,6 @@ export default function Dashboard({openTaskDetails, toggleTaskComplete}) {
         maxItems={3}
         footerText="View completed →"
         toggleTaskComplete={toggleTaskComplete}
-        openTaskDetails={openTaskDetails}
       />
     </Stack>
     <Typography variant="h4" sx={{ marginBottom: 4, marginTop: 8}}>Today's Tasks</Typography>
@@ -79,7 +78,6 @@ export default function Dashboard({openTaskDetails, toggleTaskComplete}) {
         <TaskCard 
           task = {task}
           toggleTaskComplete={toggleTaskComplete}
-          openTaskDetails={openTaskDetails}
           />
         </Grid>
     ))}

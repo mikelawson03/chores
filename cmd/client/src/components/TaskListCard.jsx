@@ -1,7 +1,12 @@
 import { Card, Checkbox, List, ListItem, ListItemIcon, ListItemText, Typography } from "@mui/material";
 import { clickableText } from "../styles/typography";
+import { useTaskStore } from "../stores/taskStore";
 
-export default function TaskListCard({ cardName, tasks, maxItems, footerText, openTaskDetails, toggleTaskComplete}) {
+export default function TaskListCard({ cardName, tasks, maxItems, footerText, toggleTaskComplete}) {
+  const openTaskDetails = useTaskStore(
+    (state) => state.openTaskDetails
+  )
+
   return (
     <Card sx={{
         width: "100%",

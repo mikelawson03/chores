@@ -4,7 +4,7 @@ import { useState } from "react";
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 
-export default function TaskShelf({ weeklyTasks, monthlyTasks, openTaskDetails }) {
+export default function TaskShelf({ weeklyTasks, monthlyTasks }) {
     const [activeTab, setActiveTab] = useState(0);
 
     const handleTabChange = (event, newValue) => {
@@ -29,7 +29,6 @@ export default function TaskShelf({ weeklyTasks, monthlyTasks, openTaskDetails }
                 <TaskShelfPanel
                     title="Weekly Tasks"
                     tasks={weeklyTasks}
-                    openTaskDetails={openTaskDetails}
                 />
             )}
 
@@ -37,7 +36,6 @@ export default function TaskShelf({ weeklyTasks, monthlyTasks, openTaskDetails }
                 <TaskShelfPanel 
                     title="Monthly Tasks"
                     tasks={monthlyTasks}
-                    openTaskDetails={openTaskDetails}
                 />
             )}
         </Box>

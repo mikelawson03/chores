@@ -2,10 +2,15 @@ import { Box, Button, Drawer, Stack, TextField, Typography } from "@mui/material
 import { useEffect, useState } from "react";
 import DetailRow from "./details/DetailRow"
 import { formatDuration, formatTimestamp } from "../utils/formatters";
+import { useTaskStore } from "../stores/taskStore";
 
-export default function TaskDetails({task, open, finishTaskEditing}) {
+export default function TaskDetails({task, finishTaskEditing}) {
   const TASK_DETAIL_WIDTH=680
   const [taskDraft, setTaskDraft] = useState(() => ({...task}))
+  const taskDetailsOpen = useTaskStore(
+    (state) => state.taskDetailsOpen
+  )
+
   let statusColor;
   let statusName;
 
@@ -29,7 +34,7 @@ export default function TaskDetails({task, open, finishTaskEditing}) {
         <Drawer 
           variant="temporary"
           anchor="right"  
-          open={open} 
+          open={taskDetailsOpen} 
           onClose={() => finishTaskEditing(taskDraft)}
           sx={{
             zIndex: (theme) => theme.zIndex.modal + 1,

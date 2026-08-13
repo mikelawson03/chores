@@ -4,9 +4,10 @@ import { Stack } from "@mui/material";
 import { Checkbox } from "@mui/material";
 import { clickableSurface } from "../../styles/surfaces";
 import { formatDuration } from "../../utils/formatters";
+import { useTaskStore } from "../../stores/taskStore";
 
 
-export default function PlannerTaskCard({ task, toggleTaskComplete, width, openTaskDetails }) {
+export default function PlannerTaskCard({ task, toggleTaskComplete, width }) {
   let bgColor;
   let txtColor;
   let txtDecoration;
@@ -28,6 +29,10 @@ export default function PlannerTaskCard({ task, toggleTaskComplete, width, openT
     txtDecoration = "none";
     checkboxVisible = false
   }
+
+  const openTaskDetails = useTaskStore(
+    (state) => state.openTaskDetails
+  );
 
   return (
     <Card onClick={() => openTaskDetails(task)}

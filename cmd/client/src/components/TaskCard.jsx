@@ -4,8 +4,12 @@ import { Stack } from "@mui/material";
 import { Checkbox } from "@mui/material";
 import { clickableSurface } from "../styles/surfaces";
 import { formatDuration } from "../utils/formatters";
+import { useTaskStore } from "../stores/taskStore";
 
-export default function TaskCard({ task, openTaskDetails, toggleTaskComplete }) {
+export default function TaskCard({ task, toggleTaskComplete }) {
+  const openTaskDetails = useTaskStore(
+    (state) => state.openTaskDetails
+  )
   return (
     <Card 
       onClick={() => openTaskDetails(task)}
