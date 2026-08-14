@@ -15,16 +15,37 @@ func RespondWithError(w http.ResponseWriter, err error) {
 	}
 
 	switch {
-	case errors.Is(err, domain.ErrForbidden):
-		RespondWithJSON(w, http.StatusForbidden, errorResponse{
-			Error: "Forbidden",
-		})
 	case errors.Is(err, domain.ErrUnauthorized):
 		RespondWithJSON(w, http.StatusUnauthorized, errorResponse{
 			Error: "Unauthorized",
 		})
+
+	case errors.Is(err, domain.ErrForbidden):
+		RespondWithJSON(w, http.StatusForbidden, errorResponse{
+			Error: "Forbidden",
+		})
+
+	case errors.Is(err, domain.ErrInvalidCredentials):
+		RespondWithJSON(w, http.StatusUnauthorized, errorResponse{
+			Error: err.Error(),
+		})
+
 	case errors.Is(err, domain.ErrNotFound):
 		RespondWithJSON(w, http.StatusNotFound, errorResponse{
+			Error: err.Error(),
+		})
+
+	case errors.Is(err, domain.ErrInvalidRole),
+		errors.Is(err, domain.ErrInvalidCadence),
+		errors.Is(err, domain.ErrPasswordRequired),
+		errors.Is(err, domain.ErrPasswordTooShort),
+		errors.Is(err, domain.ErrInvalidRequest):
+		RespondWithJSON(w, http.StatusBadRequest, errorResponse{
+			Error: err.Error(),
+		})
+
+	case errors.Is(err, domain.ErrConflict):
+		RespondWithJSON(w, http.StatusConflict, errorResponse{
 			Error: err.Error(),
 		})
 

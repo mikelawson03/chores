@@ -1,7 +1,6 @@
 package api
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
 	"net/http"
@@ -13,7 +12,6 @@ import (
 func (cfg *apiCfg) middlewareAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-
 		tok, err := auth.GetBearerToken(r.Header)
 		if err != nil {
 			err = fmt.Errorf("%w: error retrieving token", domain.ErrUnauthorized)
@@ -29,8 +27,7 @@ func (cfg *apiCfg) middlewareAuth(next http.Handler) http.Handler {
 		}
 
 		user, err := cfg.App.Store.GetUserByID(ctx, uid)
-
-		if errors.Is(err, sql.ErrNoRows) {
+		if errors.Is(err, domain.ErrNotFound) {
 			err = fmt.Errorf("%w: user not found", domain.ErrUnauthorized)
 			RespondWithError(w, err)
 			return

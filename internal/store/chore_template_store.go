@@ -3,6 +3,8 @@ package store
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"fmt"
 	"time"
 
 	"github.com/mikelawson03/chores/internal/domain"
@@ -76,6 +78,10 @@ func (s *Store) GetTemplateByName(ctx context.Context, name string) (domain.Chor
 func (s *Store) GetTemplateByID(ctx context.Context, id string) (domain.ChoreTemplate, error) {
 	dbTmp, err := s.Queries.GetChoreTemplateByID(ctx, id)
 
+	if errors.Is(err, sql.ErrNoRows) {
+		return domain.ChoreTemplate{}, fmt.Errorf("%w: chore template", domain.ErrNotFound)
+	}
+
 	if err != nil {
 		return domain.ChoreTemplate{}, err
 	}
@@ -90,7 +96,7 @@ func (s *Store) GetChoreTemplates(ctx context.Context) ([]domain.ChoreTemplate, 
 
 	dbTmps, err := s.Queries.GetAllChoreTemplates(ctx)
 	if err != nil {
-		return []domain.ChoreTemplate{}, nil
+		return []domain.ChoreTemplate{}, err
 	}
 
 	for _, tmp := range dbTmps {

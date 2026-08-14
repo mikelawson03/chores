@@ -21,7 +21,7 @@ func CreateChoreTeplateRequest(r *http.Request) (*ChoreTemplateRequest, error) {
 
 	err := d.Decode(req)
 	if err != nil {
-		return &ChoreTemplateRequest{}, err
+		return &ChoreTemplateRequest{}, domain.ErrInvalidRequest
 	}
 
 	return req, nil
@@ -41,6 +41,17 @@ func (cfg *apiCfg) handlerGetChoreTemplates(w http.ResponseWriter, r *http.Reque
 	RespondWithJSON(w, http.StatusOK, chores)
 }
 
+func (cfg *apiCfg) handlerGetChoreTemplateByID(w http.ResponseWriter, r *http.Request) {
+	id := r.PathValue("id")
+	ctx := r.Context()
+	c, err := cfg.App.GetChoreTemplateByID(ctx, id)
+	if err != nil {
+		RespondWithError(w, err)
+		return
+	}
+	RespondWithJSON(w, http.StatusOK, c)
+}
+
 func (cfg *apiCfg) handlerAddChoreTemplate(w http.ResponseWriter, r *http.Request) {
 	req, err := CreateChoreTeplateRequest(r)
 	if err != nil {
@@ -56,17 +67,6 @@ func (cfg *apiCfg) handlerAddChoreTemplate(w http.ResponseWriter, r *http.Reques
 	}
 
 	RespondWithJSON(w, http.StatusCreated, chore)
-}
-
-func (cfg *apiCfg) handlerGetChoreTemplateByID(w http.ResponseWriter, r *http.Request) {
-	id := r.PathValue("id")
-	ctx := r.Context()
-	c, err := cfg.App.GetChoreTemplateByID(ctx, id)
-	if err != nil {
-		RespondWithError(w, err)
-		return
-	}
-	RespondWithJSON(w, http.StatusOK, c)
 }
 
 func (cfg *apiCfg) handlerEditChoreTemplate(w http.ResponseWriter, r *http.Request) {

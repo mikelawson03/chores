@@ -58,7 +58,7 @@ func (a *App) validateNewUserRequest(ctx context.Context, username, role, firstN
 	}
 
 	if exists {
-		err = fmt.Errorf("%w: username already exists", domain.ErrValidation)
+		err = fmt.Errorf("%w: username already exists", domain.ErrInvalidRequest)
 	}
 
 	userRole := domain.Role(role)

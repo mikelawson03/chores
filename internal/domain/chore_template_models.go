@@ -2,14 +2,6 @@ package domain
 
 import "time"
 
-type Cadence string
-
-const (
-	CadenceDaily   Cadence = "daily"
-	CadenceWeekly  Cadence = "weekly"
-	CadenceMonthly Cadence = "monthly"
-)
-
 type ChoreTemplate struct {
 	ID           string    `json:"id"`
 	Name         string    `json:"name"`
@@ -19,13 +11,4 @@ type ChoreTemplate struct {
 	Duration     int       `json:"duration"`
 	CreatedAt    time.Time `json:"createdAt"`
 	UpdatedAt    time.Time `json:"updatedAt"`
-}
-
-func (c Cadence) IsValid() bool {
-	switch c {
-	case CadenceDaily, CadenceWeekly, CadenceMonthly:
-		return true
-	default:
-		return false
-	}
 }
