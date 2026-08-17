@@ -22,7 +22,7 @@ func RespondWithError(w http.ResponseWriter, err error) {
 
 	case errors.Is(err, domain.ErrForbidden):
 		RespondWithJSON(w, http.StatusForbidden, errorResponse{
-			Error: "Forbidden",
+			Error: err.Error(),
 		})
 
 	case errors.Is(err, domain.ErrInvalidCredentials):

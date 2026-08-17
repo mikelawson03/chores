@@ -8,6 +8,7 @@ func CanAssignToUser(user domain.User, assignedUserID string) bool {
 	if user.Role != domain.RoleAdmin && user.ID != assignedUserID {
 		return false
 	}
+
 	return true
 }
 
@@ -42,22 +43,16 @@ func CanGetUser(reqUser domain.User, userID string) bool {
 	return true
 }
 
-func CanEditUserName(reqUser domain.User, userID string) bool {
+func CanEditUser(reqUser domain.User, userID string) bool {
 	if reqUser.Role != domain.RoleAdmin && reqUser.ID != userID {
 		return false
 	}
+
 	return true
 }
 
 func CanEditRole(reqUser domain.User) bool {
 	if reqUser.Role != domain.RoleAdmin {
-		return false
-	}
-	return true
-}
-
-func CanEditFirstName(reqUser domain.User, userID string) bool {
-	if reqUser.Role != domain.RoleAdmin && reqUser.ID != userID {
 		return false
 	}
 	return true

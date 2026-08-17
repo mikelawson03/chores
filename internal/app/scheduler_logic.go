@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"time"
@@ -177,32 +176,29 @@ func (a *App) RunScheduler(ctx context.Context) error {
 		return err
 	}
 
-	// calculate current scheduling horizon
 	horizonStart, horizonEnd := a.getHorizonWindow()
 
-	// retrieve users
 	users, err := a.Store.GetAllUsers(ctx)
 	if err != nil {
 		return err
 	}
 	if len(users) == 0 {
-		return errors.New("no users available for scheduling")
+		return fmt.Errorf("%w: no users available for scheduling", domain.ErrInvalidRequest)
 	}
 
-	// retrieve current templates
 	tmps, err := a.Store.GetChoreTemplates(ctx)
 	if err != nil {
 		return err
 	}
 	if len(tmps) == 0 {
-		return errors.New("no chore templates available for scheduling")
+		return fmt.Errorf("%w: no chore templates available for scheduling", domain.ErrInvalidRequest)
 	}
 
 	// retrieve existing assignments
 	assignmentWindowEnd := schedulerAssignmentWindowEnd(horizonEnd)
 	existingAssignments, err := a.Store.GetAssignmentsByDateRange(ctx, horizonStart, assignmentWindowEnd)
 	if err != nil {
-		return fmt.Errorf("error retrieving assignments - %s", err)
+		return err
 	}
 
 	//run schedulers by cadence

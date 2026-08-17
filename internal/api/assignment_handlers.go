@@ -2,7 +2,7 @@ package api
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -28,20 +28,21 @@ type EditAssignmentRequest struct {
 
 func decodeRequest(r *http.Request, target any) error {
 	d := json.NewDecoder(r.Body)
+	err := d.Decode(target)
+	if err != nil {
+		return domain.ErrInvalidRequest
+	}
 
-	return d.Decode(target)
+	return nil
 }
 
 func (cfg *apiCfg) handlerCreateAssignment(w http.ResponseWriter, r *http.Request) {
-	// Decode request into assignment request struct (make helper for this)
 	req := AssignmentRequest{}
 	err := decodeRequest(r, &req)
 	if err != nil {
 		RespondWithError(w, err)
 		return
 	}
-	// call app layer for authorization and assignment creation
-
 	ctx := r.Context()
 
 	assignment, err := cfg.App.CreateAssignmentFromTemplate(ctx, app.CreateAsssignmentRequest{
@@ -51,7 +52,6 @@ func (cfg *apiCfg) handlerCreateAssignment(w http.ResponseWriter, r *http.Reques
 		DueDate:        req.DueDate,
 		ScheduledFor:   req.ScheduledFor,
 	})
-
 	if err != nil {
 		RespondWithError(w, err)
 		return
@@ -66,8 +66,9 @@ func (cfg *apiCfg) handlerGetAssignments(w http.ResponseWriter, r *http.Request)
 	user_id := r.URL.Query().Get("user_id")
 
 	if template_id != "" && user_id != "" {
-		err := errors.New("may only specify one assignment filter")
+		err := fmt.Errorf("%w: may only specify one assignment filter", domain.ErrInvalidRequest)
 		RespondWithError(w, err)
+		return
 	}
 
 	var (

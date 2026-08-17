@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/mikelawson03/chores/internal/domain"
@@ -158,8 +157,11 @@ func (s *Store) EditUser(ctx context.Context, req EditUserParams) (domain.User, 
 }
 
 func (s *Store) DeleteUser(ctx context.Context, id string) error {
-	res, err := s.Queries.DeleteUser(ctx, id)
-	fmt.Println("ID: ", res)
+	_, err := s.Queries.DeleteUser(ctx, id)
+	if errors.Is(err, sql.ErrNoRows) {
+		return domain.ErrNotFound
+	}
+
 	if err != nil {
 		return err
 	}
@@ -178,6 +180,9 @@ func (s *Store) GetUserCount(ctx context.Context) (int64, error) {
 
 func (s *Store) GetUserWithHashedPW(ctx context.Context, username string) (LoginUser, error) {
 	res, err := s.Queries.GetHashForUsername(ctx, username)
+	if errors.Is(err, sql.ErrNoRows) {
+		return LoginUser{}, domain.ErrNotFound
+	}
 	if err != nil {
 		return LoginUser{}, err
 	}

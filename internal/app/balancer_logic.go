@@ -2,7 +2,9 @@ package app
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"log"
 	"sort"
 
 	"github.com/mikelawson03/chores/internal/domain"
@@ -16,8 +18,7 @@ type userLoad struct {
 	monthlyLoad int
 }
 
-// retrieve slice of assignments and cadence. creates new slice for assignments that match that cadence and
-// sorts them in descending order by the duration of the task in minutes (largest first)
+// creates new slice for assignments that match specified cadence and sorts them in descending order by the duration of the task in minutes (largest first)
 func sortedAssignmentsForCadence(assignments []store.BalancerAssignment, cadence domain.Cadence) []store.BalancerAssignment {
 	var cadenceAssignments []store.BalancerAssignment
 	for _, assignment := range assignments {
@@ -32,56 +33,68 @@ func sortedAssignmentsForCadence(assignments []store.BalancerAssignment, cadence
 }
 
 // receives pointer to userLoad struct and a cadence; returns pointer to the load value for the cadence
-func getLoadForCadence(load *userLoad, cadence domain.Cadence) *int {
+func getLoadForCadence(load *userLoad, cadence domain.Cadence) (*int, error) {
 	switch cadence {
 	case domain.CadenceDaily:
-		return &load.dailyLoad
+		return &load.dailyLoad, nil
 	case domain.CadenceWeekly:
-		return &load.weeklyLoad
+		return &load.weeklyLoad, nil
 	case domain.CadenceMonthly:
-		return &load.monthlyLoad
+		return &load.monthlyLoad, nil
 	default:
-		panic(fmt.Sprintf("unknown cadence: %s", cadence))
+		return &load.dailyLoad, domain.ErrInvalidCadence
 	}
 }
 
 // receives a list of userLoads and a list of assignments. adds assignment duration to assigned user's workload
 // for the appropriate cadence
-func populateCurrentLoads(userLoads []userLoad, assignments []store.BalancerAssignment) {
+func populateCurrentLoads(userLoads []userLoad, assignments []store.BalancerAssignment) error {
 	for _, assignment := range assignments {
 		if assignment.AssignedUserID == "" {
 			continue
 		}
 		for i := range userLoads {
 			if userLoads[i].userId == assignment.AssignedUserID {
-				load := getLoadForCadence(&userLoads[i], assignment.Cadence)
+				load, err := getLoadForCadence(&userLoads[i], assignment.Cadence)
+				if err != nil {
+					return fmt.Errorf("assignment %s has invalid cadence %q", assignment.ID, assignment.Cadence)
+
+				}
 				*load += assignment.Duration
 
 			}
 		}
 	}
+	return nil
 }
 
 // receives list of userLoads and cadence; loops through them to find lowest load for specified cadence
 // and returns pointer to that userLoad struct
-func findLowestUserLoad(userLoads []userLoad, cadence domain.Cadence) *userLoad {
+func findLowestUserLoad(userLoads []userLoad, cadence domain.Cadence) (*userLoad, error) {
 	lowest := &userLoads[0]
 
 	for i := 1; i < len(userLoads); i++ {
-		currentLoad := getLoadForCadence(&userLoads[i], cadence)
-		lowestLoad := getLoadForCadence(lowest, cadence)
+		currentLoad, err := getLoadForCadence(&userLoads[i], cadence)
+		if err != nil {
+			return &userLoad{}, err
+		}
+
+		lowestLoad, err := getLoadForCadence(lowest, cadence)
+		if err != nil {
+			return &userLoad{}, err
+		}
 		if *currentLoad < *lowestLoad {
 			lowest = &userLoads[i]
 		}
 	}
 
-	return lowest
+	return lowest, nil
 }
 
 // loops through assignments, ignores previously assigned, finds lowest load for cadence, assigns current
 // assignment in loop to user with lowest load, retrieve cadence load pointer within userLoad struct, and
 // increments it. Then adds assignment to newAssignments slice and returns that to caller
-func balanceUserLoads(assignments []store.BalancerAssignment, userLoads []userLoad, cadence domain.Cadence) []store.BalancerAssignment {
+func balanceUserLoads(assignments []store.BalancerAssignment, userLoads []userLoad, cadence domain.Cadence) ([]store.BalancerAssignment, error) {
 	var newAssignments []store.BalancerAssignment
 
 	for _, assignment := range assignments {
@@ -89,16 +102,22 @@ func balanceUserLoads(assignments []store.BalancerAssignment, userLoads []userLo
 			continue
 		}
 
-		lowestLoad := findLowestUserLoad(userLoads, cadence)
+		lowestLoad, err := findLowestUserLoad(userLoads, cadence)
+		if err != nil {
+			return []store.BalancerAssignment{}, err
+		}
 
 		assignment.AssignedUserID = lowestLoad.userId
 
-		load := getLoadForCadence(lowestLoad, cadence)
+		load, err := getLoadForCadence(lowestLoad, cadence)
+		if err != nil {
+			return []store.BalancerAssignment{}, err
+		}
 		*load += assignment.Duration
 
 		newAssignments = append(newAssignments, assignment)
 	}
-	return newAssignments
+	return newAssignments, nil
 }
 
 func (a *App) RunBalancer(ctx context.Context) error {
@@ -110,10 +129,13 @@ func (a *App) RunBalancer(ctx context.Context) error {
 	// Get planning horizon window and monthly planning end
 	horizonStart, horizonEnd := a.getHorizonWindow()
 	monthlyPlanningEnd := a.getMonthlyPlanningEnd(horizonStart, horizonEnd)
-	fmt.Printf("Horizon Start: %v\nHorizonEnd: %v\nMonthly Planning End %v\n", horizonStart, horizonEnd, monthlyPlanningEnd)
+	log.Printf("Horizon Start: %v\nHorizonEnd: %v\nMonthly Planning End %v\n", horizonStart, horizonEnd, monthlyPlanningEnd)
 
 	// Get all assignments
 	assignments, err := a.Store.GetAssignmentsForBalancing(ctx, horizonStart, horizonEnd, monthlyPlanningEnd)
+	if errors.Is(err, domain.ErrNotFound) {
+		return fmt.Errorf("%w: no assignments available for balancing", domain.ErrInvalidRequest)
+	}
 	if err != nil {
 		return err
 	}
@@ -122,6 +144,9 @@ func (a *App) RunBalancer(ctx context.Context) error {
 	users, err := a.Store.GetAllUsers(ctx)
 	if err != nil {
 		return err
+	}
+	if len(users) == 0 {
+		return fmt.Errorf("%w: no users available for balancing", domain.ErrInvalidRequest)
 	}
 
 	// Create list of user workloads from retrieved users
@@ -133,25 +158,37 @@ func (a *App) RunBalancer(ctx context.Context) error {
 	}
 
 	// Calculate the workload for already assigned assignments
-	populateCurrentLoads(userLoads, assignments)
+	err = populateCurrentLoads(userLoads, assignments)
+	if err != nil {
+		return err
+	}
 
 	// Get lists of assignments, balance unassigned by cadence, and append new assignments to persistence slice
 	var allocationPlan []store.BalancerAssignment
 
 	dailyAssignments := sortedAssignmentsForCadence(assignments, domain.CadenceDaily)
-	newDailyAllocations := balanceUserLoads(dailyAssignments, userLoads, domain.CadenceDaily)
+	newDailyAllocations, err := balanceUserLoads(dailyAssignments, userLoads, domain.CadenceDaily)
+	if err != nil {
+		return err
+	}
 	for _, assignment := range newDailyAllocations {
 		allocationPlan = append(allocationPlan, assignment)
 	}
 
 	weeklyAssignments := sortedAssignmentsForCadence(assignments, domain.CadenceWeekly)
-	newWeeklyAllocations := balanceUserLoads(weeklyAssignments, userLoads, domain.CadenceWeekly)
+	newWeeklyAllocations, err := balanceUserLoads(weeklyAssignments, userLoads, domain.CadenceWeekly)
+	if err != nil {
+		return err
+	}
 	for _, assignment := range newWeeklyAllocations {
 		allocationPlan = append(allocationPlan, assignment)
 	}
 
 	monthlyAssignments := sortedAssignmentsForCadence(assignments, domain.CadenceMonthly)
-	newMonthlyAllocations := balanceUserLoads(monthlyAssignments, userLoads, domain.CadenceMonthly)
+	newMonthlyAllocations, err := balanceUserLoads(monthlyAssignments, userLoads, domain.CadenceMonthly)
+	if err != nil {
+		return err
+	}
 	for _, assignment := range newMonthlyAllocations {
 		allocationPlan = append(allocationPlan, assignment)
 	}

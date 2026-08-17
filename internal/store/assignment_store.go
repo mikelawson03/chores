@@ -3,6 +3,7 @@ package store
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
@@ -294,15 +295,16 @@ func (s *Store) AddAssignment(ctx context.Context, params CreateAssignmentParams
 
 func (s *Store) GetAssignment(ctx context.Context, id string) (domain.Assignment, error) {
 	dbAssignment, err := s.Queries.GetAssignment(ctx, id)
+	if errors.Is(err, sql.ErrNoRows) {
+		return domain.Assignment{}, fmt.Errorf("%w: assignment", domain.ErrNotFound)
+	}
 	if err != nil {
-		fmt.Println(id)
 		return domain.Assignment{}, err
 	}
 
 	assignment := mapGetAssignmentRow(dbAssignment)
 
 	return assignment, nil
-
 }
 
 func (s *Store) GetAllAssignments(ctx context.Context) ([]domain.Assignment, error) {
@@ -315,7 +317,6 @@ func (s *Store) GetAllAssignments(ctx context.Context) ([]domain.Assignment, err
 
 	for _, dbAssignment := range dbAssignments {
 		assignment := mapGetAllAssignmentsRow(dbAssignment)
-
 		assignments = append(assignments, assignment)
 	}
 
@@ -387,6 +388,11 @@ func (s *Store) GetAssignmentsForBalancing(ctx context.Context,
 			DueDate_3: horizonStart,
 			DueDate_4: monthlyPlanningEnd,
 		})
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return []BalancerAssignment{}, domain.ErrNotFound
+	}
+
 	if err != nil {
 		return []BalancerAssignment{}, err
 	}

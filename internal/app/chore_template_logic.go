@@ -32,10 +32,10 @@ func (a *App) choreNameExists(ctx context.Context, name, id string) error {
 
 func (a *App) validateChoreTemplateRequest(ctx context.Context, name, cadence, assignee, id string, duration *int) error {
 	if strings.TrimSpace(name) == "" {
-		return fmt.Errorf("%w: name is required", domain.ErrInvalidRequest)
+		return fmt.Errorf("%w: name required", domain.ErrInvalidRequest)
 	}
 	if strings.TrimSpace(cadence) == "" {
-		return fmt.Errorf("%w: cadence is required", domain.ErrInvalidRequest)
+		return fmt.Errorf("%w: cadence required", domain.ErrInvalidRequest)
 	}
 
 	dc := domain.Cadence(cadence)
@@ -44,7 +44,7 @@ func (a *App) validateChoreTemplateRequest(ctx context.Context, name, cadence, a
 	}
 
 	if duration == nil {
-		return fmt.Errorf("%w: duration is required", domain.ErrInvalidRequest)
+		return fmt.Errorf("%w: duration required", domain.ErrInvalidRequest)
 	}
 	if assignee != "" {
 		err := a.ValidateChoreTemplateAssignee(ctx, assignee)
@@ -63,7 +63,7 @@ func (a *App) validateChoreTemplateRequest(ctx context.Context, name, cadence, a
 func (a *App) ValidateChoreTemplateAssignee(ctx context.Context, assigneeID string) error {
 	_, err := a.Store.GetUserByID(ctx, assigneeID)
 	if errors.Is(err, domain.ErrNotFound) {
-		return fmt.Errorf("%w: assigned user does not exist", domain.ErrInvalidRequest)
+		return fmt.Errorf("%w: assigned user not found", domain.ErrInvalidRequest)
 	}
 
 	if err != nil {
@@ -174,8 +174,8 @@ func (a *App) DeleteChoreTemplate(ctx context.Context, id string) error {
 	}
 
 	err = a.Store.DeleteChoreTemplate(ctx, id)
-	if errors.Is(err, sql.ErrNoRows) {
-		return fmt.Errorf("%w: chore template", domain.ErrNotFound)
+	if errors.Is(err, domain.ErrNotFound) {
+		return fmt.Errorf("%w: chore template", err)
 	}
 
 	if err != nil {

@@ -77,11 +77,9 @@ func (s *Store) GetTemplateByName(ctx context.Context, name string) (domain.Chor
 
 func (s *Store) GetTemplateByID(ctx context.Context, id string) (domain.ChoreTemplate, error) {
 	dbTmp, err := s.Queries.GetChoreTemplateByID(ctx, id)
-
 	if errors.Is(err, sql.ErrNoRows) {
 		return domain.ChoreTemplate{}, fmt.Errorf("%w: chore template", domain.ErrNotFound)
 	}
-
 	if err != nil {
 		return domain.ChoreTemplate{}, err
 	}
@@ -147,7 +145,9 @@ func (s *Store) EditChoreTemplate(ctx context.Context, tmp domain.ChoreTemplate)
 
 func (s *Store) DeleteChoreTemplate(ctx context.Context, id string) error {
 	_, err := s.Queries.DeleteChoreTemplate(ctx, id)
-
+	if errors.Is(err, sql.ErrNoRows) {
+		return domain.ErrNotFound
+	}
 	if err != nil {
 		return err
 	}

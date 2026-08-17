@@ -52,13 +52,17 @@ func (a *App) UsernameExists(ctx context.Context, username string) (bool, error)
 }
 
 func (a *App) validateNewUserRequest(ctx context.Context, username, role, firstName, password string) error {
+	if username == "" {
+		return fmt.Errorf("%w: username required", domain.ErrInvalidRequest)
+	}
+
 	exists, err := a.UsernameExists(ctx, username)
 	if err != nil {
 		return err
 	}
 
 	if exists {
-		err = fmt.Errorf("%w: username already exists", domain.ErrInvalidRequest)
+		return fmt.Errorf("%w: username already exists", domain.ErrInvalidRequest)
 	}
 
 	userRole := domain.Role(role)
@@ -67,7 +71,7 @@ func (a *App) validateNewUserRequest(ctx context.Context, username, role, firstN
 	}
 
 	if firstName == "" {
-		return errors.New("must provide first name")
+		return fmt.Errorf("%w: must provide first name", domain.ErrInvalidRequest)
 	}
 
 	if err = validatePassword(password); err != nil {
@@ -77,10 +81,14 @@ func (a *App) validateNewUserRequest(ctx context.Context, username, role, firstN
 	return nil
 }
 
-func (a *App) validateEditUserRequest(ctx context.Context, newUsername, role, firstName string, user domain.User) error {
+func (a *App) validateEditUserRequest(ctx context.Context, newUsername, role, firstName string, user, existing domain.User) error {
 	userRole := domain.Role(role)
 	if !userRole.IsValid() {
 		return domain.ErrInvalidRole
+	}
+
+	if !auth.CanEditUser(user, existing.ID) {
+		return fmt.Errorf("%w: may not edit user", domain.ErrForbidden)
 	}
 
 	userWithName, err := a.Store.GetUserByUsername(ctx, newUsername)
@@ -88,12 +96,16 @@ func (a *App) validateEditUserRequest(ctx context.Context, newUsername, role, fi
 		return err
 	}
 
-	if err == nil && userWithName.ID != user.ID {
-		return errors.New("username already in use")
+	if err == nil && userWithName.ID != existing.ID {
+		return fmt.Errorf("%w: username already in use", domain.ErrInvalidRequest)
 	}
 
 	if firstName == "" {
-		return errors.New("must provide first name")
+		return fmt.Errorf("%w: must provide first name", domain.ErrInvalidRequest)
+	}
+
+	if userRole != existing.Role && !auth.CanEditRole(user) {
+		return fmt.Errorf("%w: may not edit user role", domain.ErrForbidden)
 	}
 
 	return nil
@@ -111,6 +123,9 @@ func (a *App) CreateNewUser(ctx context.Context, username, role, firstName, pass
 	}
 
 	hashedPW, err := hashPassword(password)
+	if err != nil {
+		return domain.User{}, err
+	}
 
 	user, err := a.Store.CreateUser(ctx, store.CreateUserParams{
 		ID:        uuid.NewString(),
@@ -143,7 +158,6 @@ func (a *App) GetAllUsers(ctx context.Context) ([]domain.User, error) {
 }
 
 func (a *App) GetUserByID(ctx context.Context, id string) (domain.User, error) {
-
 	reqUser, err := auth.AuthenticatedUser(ctx)
 	if err != nil {
 		return domain.User{}, err
@@ -154,6 +168,9 @@ func (a *App) GetUserByID(ctx context.Context, id string) (domain.User, error) {
 	}
 
 	user, err := a.Store.GetUserByID(ctx, id)
+	if errors.Is(err, domain.ErrNotFound) {
+		return domain.User{}, fmt.Errorf("%w: user", err)
+	}
 	if err != nil {
 		return domain.User{}, err
 	}
@@ -168,25 +185,18 @@ func (a *App) EditUser(ctx context.Context, id, newUsername, role, firstName str
 	}
 
 	existing, err := a.Store.GetUserByID(ctx, id)
+	if errors.Is(err, domain.ErrNotFound) {
+		return domain.User{}, fmt.Errorf("%w: user", err)
+	}
 	if err != nil {
 		return domain.User{}, err
 	}
 
-	err = a.validateEditUserRequest(ctx, newUsername, role, firstName, user)
-
-	if newUsername != existing.Username && !auth.CanEditUserName(user, existing.ID) {
-		return domain.User{}, domain.ErrForbidden
+	err = a.validateEditUserRequest(ctx, newUsername, role, firstName, user, existing)
+	if err != nil {
+		return domain.User{}, err
 	}
-
 	userRole := domain.Role(role)
-
-	if userRole != existing.Role && !auth.CanEditRole(user) {
-		return domain.User{}, domain.ErrForbidden
-	}
-
-	if firstName != existing.FirstName && !auth.CanEditFirstName(user, existing.ID) {
-		return domain.User{}, domain.ErrForbidden
-	}
 
 	updatedUser, err := a.Store.EditUser(ctx, store.EditUserParams{
 		ID:        id,
@@ -209,6 +219,9 @@ func (a *App) DeleteUser(ctx context.Context, id string) error {
 	}
 
 	err = a.Store.DeleteUser(ctx, id)
+	if errors.Is(err, domain.ErrNotFound) {
+		return fmt.Errorf("%w: user", err)
+	}
 	if err != nil {
 		return err
 	}
@@ -251,6 +264,9 @@ func (a *App) ChangePassword(ctx context.Context, oldPassword, newPassword strin
 	}
 
 	userWithHash, err := a.Store.GetUserWithHashedPW(ctx, user.Username)
+	if err != nil {
+		return err
+	}
 
 	match, err := argon2id.ComparePasswordAndHash(oldPassword, userWithHash.PasswordHash)
 	if err != nil {
@@ -259,6 +275,11 @@ func (a *App) ChangePassword(ctx context.Context, oldPassword, newPassword strin
 
 	if !match {
 		return domain.ErrInvalidCredentials
+	}
+
+	err = validatePassword(newPassword)
+	if err != nil {
+		return err
 	}
 
 	newPWHash, err := hashPassword(newPassword)

@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/mikelawson03/chores/internal/auth"
+	"github.com/mikelawson03/chores/internal/domain"
 )
 
 type UserRequest struct {
@@ -48,7 +49,7 @@ func CreateUserRequest(r *http.Request) (*UserRequest, error) {
 
 	err := d.Decode(req)
 	if err != nil {
-		return &UserRequest{}, err
+		return &UserRequest{}, domain.ErrInvalidRequest
 	}
 
 	return req, nil
@@ -73,7 +74,6 @@ func (cfg *apiCfg) handlerAddUser(w http.ResponseWriter, r *http.Request) {
 
 func (cfg *apiCfg) handlerGetUsers(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-
 	users, err := cfg.App.GetAllUsers(ctx)
 	if err != nil {
 		RespondWithError(w, err)
@@ -124,12 +124,6 @@ func (cfg *apiCfg) handlerDeleteUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	id := r.PathValue("id")
 	err := cfg.App.DeleteUser(ctx, id)
-
-	if errors.Is(err, sql.ErrNoRows) {
-		RespondWithError(w, err)
-		return
-	}
-
 	if err != nil {
 		RespondWithError(w, err)
 		return
@@ -186,7 +180,7 @@ func (cfg *apiCfg) handlerChangePassword(w http.ResponseWriter, r *http.Request)
 
 	err := d.Decode(pwReq)
 	if err != nil {
-		RespondWithError(w, err)
+		RespondWithError(w, domain.ErrInvalidRequest)
 		return
 	}
 
@@ -209,7 +203,7 @@ func (cfg *apiCfg) handlerResetPassword(w http.ResponseWriter, r *http.Request) 
 
 	err := d.Decode(req)
 	if err != nil {
-		RespondWithError(w, err)
+		RespondWithError(w, domain.ErrInvalidRequest)
 		return
 	}
 
