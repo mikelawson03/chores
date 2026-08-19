@@ -1,4 +1,4 @@
-import { Button, Drawer, Stack, Typography } from "@mui/material";
+import { Button, CircularProgress, Drawer, Stack, Typography } from "@mui/material";
 import DetailRowSelect from "../details/DetailRowSelect";
 import { CADENCES } from "../../constants/cadences";
 import DetailRowNumber from "../details/DetailRowNumber";
@@ -6,41 +6,21 @@ import DetailRowLargeText from "../details/DetailRowLargeText";
 import DetailRowTitle from "../details/DetailRowTitle";
 import { formatTimestamp } from "../../utils/formatters";
 import { useMutation } from "@tanstack/react-query";
-import { createChore, deleteChore, updateChore } from "../../utils/choreHelpers";
+import { deleteChore } from "../../utils/choreHelpers";
 import { queryClient } from "../../query/queryClient";
 
 
-export default function EditChore({ open, chore, closeEditChore, editChoreMode, onChoreDetailChange, users}) {
+
+export default function EditChore({ open, chore, closeEditChore, editChoreMode, onChoreDetailChange, users, errors, validateChoreField, handleSave, isSaving}) {
     const DRAWER_DETAIL_WIDTH=680
 
     const userOptions=[
-        { value: "", label: "Unassigned"},
+        { value: "unassigned", label: "Unassigned"},
         ...users.map(user => ({
-            key: user.id,
             value: user.id,
             label: user.firstName,
         })),
     ]
-
-    const newChoreMutation = useMutation({
-        mutationFn: createChore,
-        onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: ["choreTemplates"],
-            });
-            closeEditChore();
-        },
-    });
-
-    const editChoreMutation = useMutation({
-        mutationFn: updateChore,
-        onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: ["choreTemplates"],
-            });
-            closeEditChore();
-        },
-    });
 
     const deleteChoreMutation = useMutation({
         mutationFn: deleteChore,
@@ -60,21 +40,28 @@ export default function EditChore({ open, chore, closeEditChore, editChoreMode, 
             }
         }}>
             <Stack direction="column" spacing={4} sx={{ p: 5 }}>
-                <DetailRowTitle field="name" value={chore.name} placeholder="Enter chore name..." onValueChange={onChoreDetailChange} />
+                <DetailRowTitle field="name" value={chore.name} error={errors.name} placeholder="Enter chore name..." onValueChange={onChoreDetailChange} required={true} validateChoreField={validateChoreField} />
                 {/* <Stack direction="row" spacing={1} sx={{ alignItems: "center"}}>
                     <Box sx={{ width: 25, height: 25, borderRadius: "50%", backgroundColor: statusColor}} />
                     <Typography variant="h6">{statusName}</Typography>
                 </Stack> */}
                 <Stack direction="column" spacing={2}>
-                    <DetailRowSelect label="Frequency" field="cadence" value={chore.cadence} options={CADENCES} onValueChange={onChoreDetailChange}/>
-                    <DetailRowSelect label="Assigned To" field="assignee" value={chore.assignee} options={userOptions} onValueChange={onChoreDetailChange}/>
-                    <DetailRowNumber label="Duration" field="duration" value={chore.duration} onValueChange={onChoreDetailChange} units="mins" />
+                    <DetailRowSelect label="Frequency" field="cadence" value={chore.cadence} error={errors.cadence} options={CADENCES} onValueChange={onChoreDetailChange} required={true} validateChoreField={validateChoreField}/>
+                    <DetailRowSelect label="Assigned To" field="assignee" value={chore.assignee ?? "unassigned"} error={errors.assignee} options={userOptions} onValueChange={onChoreDetailChange} validateChoreField={validateChoreField} />
+                    <DetailRowNumber label="Duration" field="duration" value={chore.duration} error={errors.duration} onValueChange={onChoreDetailChange} units="mins" required={true} validateChoreField={validateChoreField} />
                 </Stack>
                 <Stack>
                     <DetailRowLargeText label="Instructions" field="instructions" value={chore.instructions} onValueChange={onChoreDetailChange} />
                 </Stack>
                 <Stack direction="column" spacing={2}>
-                    <Button variant="contained" onClick={() => {editChoreMode === "edit" ? editChoreMutation.mutate(chore) : newChoreMutation.mutate(chore); closeEditChore();}}>{editChoreMode === "edit" ? "Save" : "Create"}</Button>
+                    <Button 
+                        variant="contained" 
+                        onClick={handleSave} 
+                        disabled={isSaving}
+                        startIcon={isSaving ? <CircularProgress size={16} /> : null}
+                    >
+                        {editChoreMode === "edit" ? "Save" : "Create"}
+                    </Button>
                     {editChoreMode === "edit" && <Button variant="text" onClick={() => {deleteChoreMutation.mutate(chore.id); closeEditChore();}}>Delete</Button>}
                     {editChoreMode === "create" && <Button variant="text" onClick={() => {closeEditChore();}}>Discard</Button>}
                 </Stack>

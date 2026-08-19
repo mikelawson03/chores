@@ -1,4 +1,4 @@
-import { Stack, Typography } from "@mui/material"
+import { Stack } from "@mui/material"
 import TableHeader from "./TableHeader";
 import TableToolbar from "./TableToolbar";
 import ChoresTableRow from "./ChoresTableRow";

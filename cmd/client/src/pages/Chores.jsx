@@ -2,16 +2,21 @@ import { Box, CircularProgress, Stack } from "@mui/material";
 import ChoresTable from "../components/chores/ChoresTable";
 import PageHeader from "../components/PageHeader";
 import EditChore from "../components/chores/EditChore";
-import { EMPTY_CHORE_TEMPLATE } from "../constants/choreTemplate";
+import { EDITABLE_CHORE_FIELDS, EMPTY_CHORE_TEMPLATE } from "../constants/choreTemplate";
 import { useState } from "react";
 import { getUsers } from "../utils/userHelpers";
 import { getChores } from "../utils/choreHelpers";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { createChore, updateChore } from "../utils/choreHelpers";
+import { queryClient } from "../query/queryClient";
+
+
 
 export default function Chores() {
   const [editedChoreTemplate, setEditedChoreTemplate] = useState(null);
   const [editChoreOpen, setEditChoreOpen] = useState(false);
   const [editChoreMode, setEditChoreMode] = useState(null);
+  const [errors, setErrors] = useState({});
 
   const usersQuery = useQuery({
     queryKey: ["users"],
@@ -27,12 +32,17 @@ export default function Chores() {
   const choreTemplates = choreTemplatesQuery.data ?? [];
 
   function openEditChore(choreTemplate) {
-    setEditedChoreTemplate({...choreTemplate});
+    setEditedChoreTemplate({
+      ...choreTemplate,
+      assignee: choreTemplate.assignee ? choreTemplate.assignee : "unassigned"
+    });
     setEditChoreMode("edit");
+    setErrors({});
     setEditChoreOpen(true);
   }
 
   function closeEditChore() {
+    setErrors({});
     setEditChoreOpen(false);
   }
 
@@ -46,22 +56,107 @@ export default function Chores() {
   function editNewChore() {
     setEditedChoreTemplate({...EMPTY_CHORE_TEMPLATE});
     setEditChoreMode("create");
+    setErrors({});
     setEditChoreOpen(true);
   }
 
-   if (usersQuery.isPending || choreTemplatesQuery.isPending) {
-      return( 
-        <Box sx ={{
-          width: "100%",
-          height: "100vh",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center"
-        }}>
-          <CircularProgress />
-        </Box>
-    )
+  function validateChore(chore) {
+    const newErrors = {};
+    const choreFields = EDITABLE_CHORE_FIELDS;
+
+    choreFields.forEach(field => {
+      const error = getChoreFieldError(field, chore[field]);
+
+      if (error) {
+        newErrors[field] = error;
+      }
+    });
+
+    setErrors(newErrors)
+
+    return Object.keys(newErrors).length === 0;
+  }
+
+  function handleSave() {
+    if (!validateChore(editedChoreTemplate)) {
+      return;
     }
+
+    if (editChoreMode === "create") {
+      newChoreMutation.mutate(editedChoreTemplate);
+    }
+    else {
+      editChoreMutation.mutate(editedChoreTemplate);
+    }
+  }
+
+  const newChoreMutation = useMutation({
+        mutationFn: createChore,
+        onSuccess: () => {
+            queryClient.invalidateQueries({
+                queryKey: ["choreTemplates"],
+            });
+            closeEditChore();
+        },
+    });
+
+    const editChoreMutation = useMutation({
+        mutationFn: updateChore,
+        onSuccess: () => {
+            queryClient.invalidateQueries({
+                queryKey: ["choreTemplates"],
+            });
+            closeEditChore();
+        },
+    });
+
+  function validateChoreField(field, value) {
+    const error = getChoreFieldError(field, value);
+
+    setErrors(current => ({
+      ...current,
+      [field]: error,
+    }));
+  }
+
+  function getChoreFieldError(field, value) {
+    switch (field) {
+      case "name":
+        if (!value.trim()) {
+          return "Chore name is required.";
+        }
+        break;
+      
+        case "cadence":
+        if (!value) {
+          return "Frequency is required.";
+        }
+        break;
+      
+        case "duration":
+        if (value <= 0) {
+          return "Duration must be greater than zero.";
+        }
+        break;
+
+      default:
+        return null;
+    }
+  }
+
+  if (usersQuery.isPending || choreTemplatesQuery.isPending) {
+    return( 
+      <Box sx ={{
+        width: "100%",
+        height: "100vh",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center"
+      }}>
+        <CircularProgress />
+      </Box>
+  )
+  }
 
   return (
       <Stack spacing={4} sx={{
@@ -90,6 +185,10 @@ export default function Chores() {
               editChoreMode={editChoreMode}
               onChoreDetailChange={onChoreDetailChange} 
               users={users}
+              errors={errors}
+              validateChoreField={validateChoreField}
+              handleSave={handleSave}
+              isSaving={newChoreMutation.isPending}
             />}
       </Stack>
 )
