@@ -43,9 +43,10 @@ func (a *App) validateChoreTemplateRequest(ctx context.Context, name, cadence, a
 		return domain.ErrInvalidCadence
 	}
 
-	if duration == nil {
-		return fmt.Errorf("%w: duration required", domain.ErrInvalidRequest)
+	if duration == nil || *duration <= 0 {
+		return fmt.Errorf("%w: duration must be greater than zero", domain.ErrInvalidRequest)
 	}
+
 	if assignee != "" {
 		err := a.ValidateChoreTemplateAssignee(ctx, assignee)
 		if err != nil {

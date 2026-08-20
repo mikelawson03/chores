@@ -28,10 +28,6 @@ export default function DetailRowSelect({label, field, value, options, onValueCh
                         sx={{width: 175}} 
                         onChange={(event) => onValueChange(field, event.target.value)} 
                         onBlur={() => validateChoreField(field, value)}
-                        // renderValue={(selected) => {
-                        //     const option = options.find(option => option.value === selected);
-                        //     return option?.label ?? "";
-                        // }}
                     >
                         {options.map(option => (
                             <MenuItem key={option.value} value={option.value}>

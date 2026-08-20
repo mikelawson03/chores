@@ -5,10 +5,11 @@ import EditChore from "../components/chores/EditChore";
 import { EDITABLE_CHORE_FIELDS, EMPTY_CHORE_TEMPLATE } from "../constants/choreTemplate";
 import { useState } from "react";
 import { getUsers } from "../utils/userHelpers";
-import { getChores } from "../utils/choreHelpers";
+import { choreTemplateValidationErrors, getChores, getChoreFieldError } from "../utils/choreHelpers";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { createChore, updateChore } from "../utils/choreHelpers";
 import { queryClient } from "../query/queryClient";
+import { parseApiError } from "../utils/errorHelpers";
 
 
 
@@ -91,24 +92,72 @@ export default function Chores() {
   }
 
   const newChoreMutation = useMutation({
-        mutationFn: createChore,
-        onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: ["choreTemplates"],
-            });
-            closeEditChore();
-        },
-    });
+    mutationFn: createChore,
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["choreTemplates"],
+      });
+      closeEditChore();
+    },
+    onError: (error) => {
+      handleChoreError(error);
+    }
+  });
 
-    const editChoreMutation = useMutation({
-        mutationFn: updateChore,
-        onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: ["choreTemplates"],
-            });
-            closeEditChore();
-        },
-    });
+  const editChoreMutation = useMutation({
+    mutationFn: updateChore,
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["choreTemplates"],
+      });
+      closeEditChore();
+    },
+    onError: (error) => {
+      handleChoreError(error);
+    }
+  });
+
+  function handleChoreError(error) {
+    let parsed, validationError
+    switch (error.status) {
+      case 400:
+        parsed = parseApiError(error)
+        validationError = choreTemplateValidationErrors[parsed.message]
+        setErrors(current => ({
+          ...current,
+          [validationError.field]: validationError.message,
+        }))
+        break;
+      
+      case 403:
+        setErrors(current => ({
+          ...current,
+          "form": "You do not have permission to do this."
+        }))
+        break;
+
+      case 404:
+        setErrors(current => ({
+          ...current,
+          "form": "This resource no longer exists."
+        }))  
+
+        break;
+
+      case 409:
+        setErrors(current => ({
+          ...current,
+          "name": "Chore name already exists",
+        }));
+        break;
+      
+      default:
+        setErrors(current => ({
+          ...current,
+          "form": "An unexpected error occurred. Please try again."}))
+        break;
+    }
+  }
 
   function validateChoreField(field, value) {
     const error = getChoreFieldError(field, value);
@@ -119,30 +168,8 @@ export default function Chores() {
     }));
   }
 
-  function getChoreFieldError(field, value) {
-    switch (field) {
-      case "name":
-        if (!value.trim()) {
-          return "Chore name is required.";
-        }
-        break;
-      
-        case "cadence":
-        if (!value) {
-          return "Frequency is required.";
-        }
-        break;
-      
-        case "duration":
-        if (value <= 0) {
-          return "Duration must be greater than zero.";
-        }
-        break;
+  const isSaving = newChoreMutation.isPending || editChoreMutation.isPending
 
-      default:
-        return null;
-    }
-  }
 
   if (usersQuery.isPending || choreTemplatesQuery.isPending) {
     return( 
@@ -188,7 +215,7 @@ export default function Chores() {
               errors={errors}
               validateChoreField={validateChoreField}
               handleSave={handleSave}
-              isSaving={newChoreMutation.isPending}
+              isSaving={isSaving}
             />}
       </Stack>
 )

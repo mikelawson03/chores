@@ -54,6 +54,16 @@ export default function EditChore({ open, chore, closeEditChore, editChoreMode, 
                     <DetailRowLargeText label="Instructions" field="instructions" value={chore.instructions} onValueChange={onChoreDetailChange} />
                 </Stack>
                 <Stack direction="column" spacing={2}>
+                    <Typography
+                        variant="body2"
+                        sx={{
+                            color: "error.main",
+                            textAlign: "center",
+                            mt: 1,
+                        }}
+                    >
+                        {errors.form}
+                    </Typography>
                     <Button 
                         variant="contained" 
                         onClick={handleSave} 
@@ -62,42 +72,13 @@ export default function EditChore({ open, chore, closeEditChore, editChoreMode, 
                     >
                         {editChoreMode === "edit" ? "Save" : "Create"}
                     </Button>
-                    {editChoreMode === "edit" && <Button variant="text" onClick={() => {deleteChoreMutation.mutate(chore.id); closeEditChore();}}>Delete</Button>}
+                    {editChoreMode === "edit" && <Button variant="text" onClick={() => {deleteChoreMutation.mutate(chore.id);}}>Delete</Button>}
                     {editChoreMode === "create" && <Button variant="text" onClick={() => {closeEditChore();}}>Discard</Button>}
                 </Stack>
                 {editChoreMode === "edit" && <Stack direction="column" spacing={0.25} sx={{borderBottom: 1, borderColor: "divider", pb: 4}}>
-                    <Typography variant="body2" sx={{fontStyle: 'italic' }}>Last updated at {formatTimestamp(chore.updated_at)}</Typography>
-                    <Typography variant="body2" sx={{fontStyle: 'italic' }}>Created at {formatTimestamp(chore.created_at)}</Typography>
+                    <Typography variant="body2" sx={{fontStyle: 'italic' }}>Last updated at {formatTimestamp(chore.updatedAt)}</Typography>
+                    <Typography variant="body2" sx={{fontStyle: 'italic' }}>Created at {formatTimestamp(chore.createdAt)}</Typography>
                 </Stack >}
-                {editChoreMode === "edit" && <Stack spacing={1}>
-                    <Typography variant="h5">Upcoming Tasks:</Typography>
-                    <Stack sx={{border: 1, borderColor: "divider", minHeight: 200, width: "100%"}}>
-                        <Stack direction="row" sx={{borderBottom: 2, borderColor: "divider", p: 1}}>
-                            <Typography variant="h6" sx={{width: "50%"}}>Date</Typography>
-                            <Typography variant="h6">Assigned to</Typography>
-                        </Stack>
-                        <Stack direction="row" sx={{borderBottom: 2, borderColor: "divider", p: 1}}>
-                            <Typography sx={{width: "50%"}}>Jul 20, 2026</Typography>
-                            <Typography >Mike</Typography>
-                        </Stack>
-                        <Stack direction="row" sx={{borderBottom: 2, borderColor: "divider", p: 1}}>
-                            <Typography sx={{width: "50%"}}>Jul 20, 2026</Typography>
-                            <Typography >Mike</Typography>
-                        </Stack>
-                        <Stack direction="row" sx={{borderBottom: 2, borderColor: "divider", p: 1}}>
-                            <Typography sx={{width: "50%"}}>Jul 20, 2026</Typography>
-                            <Typography >Mike</Typography>
-                        </Stack>
-                        <Stack direction="row" sx={{borderBottom: 2, borderColor: "divider", p: 1}}>
-                            <Typography sx={{width: "50%"}}>Jul 20, 2026</Typography>
-                            <Typography >Mike</Typography>
-                        </Stack>
-                        <Stack direction="row" sx={{p: 1}}>
-                            <Typography sx={{width: "50%"}}>Jul 20, 2026</Typography>
-                            <Typography >Mike</Typography>
-                        </Stack>
-                    </Stack>
-                </Stack>}
             </Stack>
         </Drawer>
     )

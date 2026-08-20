@@ -48,12 +48,10 @@ export default function ChoresTable({ choreTemplates, editNewChore, openEditChor
         }
       })
     } else {
-      setSort(previousSort => {
-        return {
+      setSort({
           column: heading.field,
           direction: heading.defaultDirection
-        }
-      })
+        })
     }
   }
 

@@ -1,5 +1,6 @@
 import { API_HOST } from "../config/dev"
 import { getHeaders } from "./headers"
+import { ApiError } from "./apiError";
 
 export async function getChoreTemplates() {
     const response = await fetch(`${API_HOST}/chore-templates`,{
@@ -19,7 +20,8 @@ export async function createChoreTemplate(template) {
   })
 
   if (!response.ok) {
-    throw new Error("Failed to create chore template");
+    const error = await response.json();
+    throw new ApiError(response.status, error.error)
   }
 
   return await response.json();
@@ -34,8 +36,8 @@ export async function updateChoreTemplate(template) {
   })
 
   if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Server returned ${response.status}: ${error}`);
+    const error = await response.json();
+    throw new ApiError(response.status, error.error)
   }
 
   return await response.json();
