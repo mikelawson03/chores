@@ -1,4 +1,4 @@
-import { Box } from "@mui/material";
+import { Box, Dialog, DialogTitle } from "@mui/material";
 import { useMutation } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import { Route, Routes } from "react-router-dom";
@@ -17,6 +17,7 @@ import { queryClient } from "./query/queryClient";
 import { updateAssignment } from "./utils/assignmentHelpers";
 import { tasksEqual } from "./utils/taskHelpers";
 import { useTaskStore } from "./stores/taskStore";
+import CloseDetailsAlert from "./components/CloseDetailsAlert";
 
 function App() {
 
@@ -30,19 +31,22 @@ function App() {
     (state) => state.closeTaskDetails
   );
 
+  const setTaskError = useTaskStore(
+    (state) => state.setTaskError
+  );
+
   const updateTaskMutation = useMutation({
     mutationFn: updateAssignment,
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["assignments", user.id],
       });
+      closeTaskDetails();
     },
+    onError: (error) => {
+      handleTaskError(error);
+    }
   });
-
-  async function finishTaskEditing(task) {
-    await saveTask(task, selectedTask)
-    closeTaskDetails();
-  }
 
   async function saveTask(updatedTask, originalTask = null) {
     if (tasksEqual(updatedTask, originalTask)){
@@ -62,6 +66,23 @@ function App() {
     }
 
     saveTask(task);
+  }
+
+  function handleTaskError(error) {
+    console.log("Error status: ", error.status)
+    switch (error.status){
+      case 403:
+        setTaskError("form", "You do not have permission to modify this assignment.")
+        break;
+
+      case 404:
+        setTaskError("form", "This assignment no longer exists.")
+        break;
+
+      default:
+        setTaskError("form", "An unexpected error occurred. Please try again.")
+        break;
+    }
   }
 
   return (
@@ -100,10 +121,25 @@ function App() {
         {selectedTask && (
           <TaskDetails 
             task={selectedTask} 
-            finishTaskEditing={finishTaskEditing}
+            saveTask={saveTask}
           />
         )}
         </Box>
+        {selectedTask && <Dialog
+          open={true}
+          sx={{
+            zIndex: (theme) => theme.zIndex.modal + 2,
+          }}
+          slotProps={{
+            paper: {
+              sx: {
+                backgroundColor: "#fff",
+              },
+            },
+          }}
+        >
+          <DialogTitle>Test</DialogTitle>
+        </Dialog>}
     </>
 
   );

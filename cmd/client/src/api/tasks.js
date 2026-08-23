@@ -1,4 +1,5 @@
 import { API_HOST } from "../config/dev";
+import { ApiError } from "./apiError";
 import { getHeaders } from "./headers";
 
 export async function getTasks() {
@@ -8,8 +9,8 @@ export async function getTasks() {
     })
 
     if (!response.ok) {
-        const error = await response.text();
-        throw new Error(`Server returned ${response.status}: ${error}`);
+        const error = await response.json();
+        throw new ApiError(response.status, error.error);
     }
 
     return await response.json();
@@ -22,8 +23,8 @@ export async function getTasksForUser(id) {
     })
 
     if (!response.ok) {
-        const error = await response.text();
-        throw new Error(`Server returned ${response.status}: ${error}`);
+        const error = await response.json();
+        throw new ApiError(response.status, error.error);
     }
 
     return await response.json();
@@ -37,8 +38,8 @@ export async function updateTask(task) {
     })
 
     if (!response.ok) {
-        const error = await response.text();
-        throw new Error(`Server returned ${response.status}: ${error}`)
+        const error = await response.json();
+        throw new ApiError(response.status, error.error);
     }
 
     return await response.json();

@@ -17,7 +17,7 @@ export default function Chores() {
   const [editedChoreTemplate, setEditedChoreTemplate] = useState(null);
   const [editChoreOpen, setEditChoreOpen] = useState(false);
   const [editChoreMode, setEditChoreMode] = useState(null);
-  const [errors, setErrors] = useState({});
+  const [templateErrors, setTemplateErrors] = useState({});
 
   const usersQuery = useQuery({
     queryKey: ["users"],
@@ -38,12 +38,12 @@ export default function Chores() {
       assignee: choreTemplate.assignee ? choreTemplate.assignee : "unassigned"
     });
     setEditChoreMode("edit");
-    setErrors({});
+    setTemplateErrors({});
     setEditChoreOpen(true);
   }
 
   function closeEditChore() {
-    setErrors({});
+    setTemplateErrors({});
     setEditChoreOpen(false);
   }
 
@@ -57,7 +57,7 @@ export default function Chores() {
   function editNewChore() {
     setEditedChoreTemplate({...EMPTY_CHORE_TEMPLATE});
     setEditChoreMode("create");
-    setErrors({});
+    setTemplateErrors({});
     setEditChoreOpen(true);
   }
 
@@ -73,7 +73,7 @@ export default function Chores() {
       }
     });
 
-    setErrors(newErrors)
+    setTemplateErrors(newErrors)
 
     return Object.keys(newErrors).length === 0;
   }
@@ -123,21 +123,21 @@ export default function Chores() {
       case 400:
         parsed = parseApiError(error)
         validationError = choreTemplateValidationErrors[parsed.message]
-        setErrors(current => ({
+        setTemplateErrors(current => ({
           ...current,
           [validationError.field]: validationError.message,
         }))
         break;
       
       case 403:
-        setErrors(current => ({
+        setTemplateErrors(current => ({
           ...current,
           "form": "You do not have permission to do this."
         }))
         break;
 
       case 404:
-        setErrors(current => ({
+        setTemplateErrors(current => ({
           ...current,
           "form": "This resource no longer exists."
         }))  
@@ -145,14 +145,14 @@ export default function Chores() {
         break;
 
       case 409:
-        setErrors(current => ({
+        setTemplateErrors(current => ({
           ...current,
           "name": "Chore name already exists",
         }));
         break;
       
       default:
-        setErrors(current => ({
+        setTemplateErrors(current => ({
           ...current,
           "form": "An unexpected error occurred. Please try again."}))
         break;
@@ -162,7 +162,7 @@ export default function Chores() {
   function validateChoreField(field, value) {
     const error = getChoreFieldError(field, value);
 
-    setErrors(current => ({
+    setTemplateErrors(current => ({
       ...current,
       [field]: error,
     }));
@@ -212,7 +212,7 @@ export default function Chores() {
               editChoreMode={editChoreMode}
               onChoreDetailChange={onChoreDetailChange} 
               users={users}
-              errors={errors}
+              errors={templateErrors}
               validateChoreField={validateChoreField}
               handleSave={handleSave}
               isSaving={isSaving}
