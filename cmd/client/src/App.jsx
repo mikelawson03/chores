@@ -1,6 +1,5 @@
 import { Box } from "@mui/material";
 import { useMutation } from "@tanstack/react-query";
-import dayjs from "dayjs";
 import { Route, Routes } from "react-router-dom";
 import AdminRoute from "./auth/AdminRoute";
 import ProtectedRoute from "./auth/ProtectedRoute";
@@ -19,6 +18,8 @@ import { tasksEqual } from "./utils/taskHelpers";
 import { useTaskStore } from "./stores/taskStore";
 import CloseDetailsAlert from "./components/CloseDetailsAlert";
 import { useState } from "react";
+import NotificationToast from "./components/NotificationToast";
+
 
 function App() {
 
@@ -65,19 +66,9 @@ function App() {
     return savedTask;
   }
 
-  function toggleTaskComplete(task) { 
-    
-    task.completed = !task.completed;
-
-    if (!task.scheduledFor && task.completed) {
-      task.scheduledFor = dayjs().format();
-    }
-
-    saveTask(task);
-  }
+  
 
   function handleTaskError(error) {
-    console.log("Error status: ", error.status)
     switch (error.status){
       case 403:
         setTaskError("form", "You do not have permission to modify this assignment.")
@@ -92,6 +83,8 @@ function App() {
         break;
     }
   }
+
+  
 
   function onTaskClose() {
     if (tasksEqual(taskDraft, selectedTask)){
@@ -132,17 +125,11 @@ function App() {
           <Route path ="/login" element={<Login />} />
           <Route element={<ProtectedRoute />}>
             <Route element={<AppLayout />}>
-              <Route path="/" element={<Dashboard 
-                toggleTaskComplete={toggleTaskComplete}
-              />} />
+              <Route path="/" element={<Dashboard />} />
 
-              <Route path="/calendar" element={<Calendar 
-                toggleTaskComplete={toggleTaskComplete}
-              />} />
+              <Route path="/calendar" element={<Calendar />} />
 
-              <Route path="/planner" element={<WeeklyPlanner 
-                toggleTaskComplete={toggleTaskComplete}
-              />} />
+              <Route path="/planner" element={<WeeklyPlanner />} />
               <Route element={<AdminRoute />}>
                 <Route path="/chores" element={<Chores />} />
                 <Route path="/admin" element={<Settings />} />
@@ -167,6 +154,7 @@ function App() {
           onDiscard={onDiscard}
           task={selectedTask}
         />
+        <NotificationToast />
     </>
 
   );

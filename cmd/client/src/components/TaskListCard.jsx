@@ -1,8 +1,9 @@
-import { Card, Checkbox, List, ListItem, ListItemIcon, ListItemText, Typography } from "@mui/material";
+import { Card, List, ListItem, ListItemIcon, ListItemText, Typography } from "@mui/material";
 import { clickableText } from "../styles/typography";
 import { useTaskStore } from "../stores/taskStore";
+import CompletionCheckbox from "./CompletionCheckbox";
 
-export default function TaskListCard({ cardName, tasks, maxItems, footerText, toggleTaskComplete}) {
+export default function TaskListCard({ cardName, tasks, maxItems, footerText }) {
   const openTaskDetails = useTaskStore(
     (state) => state.openTaskDetails
   )
@@ -24,7 +25,10 @@ export default function TaskListCard({ cardName, tasks, maxItems, footerText, to
           .map(task => (
             <ListItem key={task.id}>
               <ListItemIcon>
-                <Checkbox checked={task.completed} onChange={() => {toggleTaskComplete(task);}}/>
+                <CompletionCheckbox
+                  checked={task.completed}
+                  taskId={task.id}
+                />
               </ListItemIcon>
               <ListItemText onClick={() => openTaskDetails(task)} primary={task.templateName} sx = {[clickableText, { color: task.completed ? "text.secondary" : "text.primary", textDecoration: task.completed ? "line-through" : "none"}]} />
             </ListItem>

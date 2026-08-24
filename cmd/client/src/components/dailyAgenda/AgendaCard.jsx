@@ -1,9 +1,10 @@
-import { Card, Checkbox, Stack, Typography } from "@mui/material";
+import { Card, Stack, Typography } from "@mui/material";
 import { clickableSurface } from "../../styles/surfaces";
 import { useTaskStore } from "../../stores/taskStore";
+import CompletionCheckbox from "../CompletionCheckbox";
 
 
-export default function AgendaCard({ task, toggleTaskComplete }) {
+export default function AgendaCard({ task }) {
     const openTaskDetails = useTaskStore(
         (state) => state.openTaskDetails
     );
@@ -21,11 +22,9 @@ export default function AgendaCard({ task, toggleTaskComplete }) {
                     <Typography variant="h6">
                         {task.title}
                     </Typography>
-                    <Checkbox 
-                        size="medium" 
-                        onChange={() => toggleTaskComplete(task) } 
-                        onClick={(event) => {event.stopPropagation();}}
-                        sx={{ pr: 2, pl: 0 }}
+                    <CompletionCheckbox 
+                        checked={task.completed}
+                        taskId={task.id}
                     />
                     
                 </Stack>

@@ -45,3 +45,16 @@ export async function updateTask(task) {
     return await response.json();
 }
 
+export async function toggleCompletion(id) {
+    const response = await fetch(`${API_HOST}/assignments/${id}/complete`, {
+        method: "POST",
+        headers: getHeaders(),
+    })
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new ApiError(response.status, error.error);
+    }
+
+    return await response.json();
+}

@@ -1,13 +1,13 @@
 import { Card, CardContent } from "@mui/material";
 import { Typography } from "@mui/material";
 import { Stack } from "@mui/material";
-import { Checkbox } from "@mui/material";
 import { clickableSurface } from "../../styles/surfaces";
 import { formatDuration } from "../../utils/formatters";
 import { useTaskStore } from "../../stores/taskStore";
+import CompletionCheckbox from "../CompletionCheckbox";
 
 
-export default function PlannerTaskCard({ task, toggleTaskComplete, width }) {
+export default function PlannerTaskCard({ task, width }) {
   let bgColor;
   let txtColor;
   let txtDecoration;
@@ -59,12 +59,9 @@ export default function PlannerTaskCard({ task, toggleTaskComplete, width }) {
           <Typography variant="body2" sx={{ color: txtColor, textDecoration: txtDecoration }}>
             {formatDuration(task.duration)}
           </Typography>
-          <Checkbox 
-            checked={task.completed} 
-            size="small" 
-            sx={{ p: 0 }} 
-            onChange={() => {toggleTaskComplete(task); }} 
-            onClick={(event) => {event.stopPropagation();}}
+          <CompletionCheckbox
+            checked={task.completed}
+            taskId={task.id}
           />
         </Stack>
       </CardContent>

@@ -1,12 +1,12 @@
 import { Card } from "@mui/material";
 import { Typography } from "@mui/material";
 import { Stack } from "@mui/material";
-import { Checkbox } from "@mui/material";
 import { clickableSurface } from "../styles/surfaces";
 import { formatDuration } from "../utils/formatters";
 import { useTaskStore } from "../stores/taskStore";
+import CompletionCheckbox from "./CompletionCheckbox";
 
-export default function TaskCard({ task, toggleTaskComplete }) {
+export default function TaskCard({ task }) {
   const openTaskDetails = useTaskStore(
     (state) => state.openTaskDetails
   )
@@ -37,11 +37,9 @@ export default function TaskCard({ task, toggleTaskComplete }) {
         <Typography variant="body2" sx={{ color: 'text.secondary', textDecoration: task.completed ? "line-through" : "none" }}>
           {formatDuration(task.duration)}
         </Typography>
-        <Checkbox 
-          checked={task.completed} 
-          sx={{ p: 0 }} 
-          onChange={() => {toggleTaskComplete(task);}}
-          onClick={(event) => {event.stopPropagation();}}
+        <CompletionCheckbox
+          checked={task.completed}
+          taskId={task.id}
         />
       </Stack>
     </Card>
