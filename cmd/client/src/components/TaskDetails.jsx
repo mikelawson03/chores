@@ -2,7 +2,6 @@ import { Box, Button, Drawer, Stack, TextField, Typography } from "@mui/material
 import DetailRow from "./details/DetailRow"
 import { formatDuration, formatTimestamp } from "../utils/formatters";
 import { useTaskStore } from "../stores/taskStore";
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from "dayjs";
 import DetailRowDate from "./details/DetailRowDate";
 
