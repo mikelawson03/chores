@@ -1,12 +1,16 @@
 import { Box, Button, Drawer, Stack, TextField, Typography } from "@mui/material";
-import { useEffect, useState } from "react";
 import DetailRow from "./details/DetailRow"
 import { formatDuration, formatTimestamp } from "../utils/formatters";
 import { useTaskStore } from "../stores/taskStore";
 
-export default function TaskDetails({task, saveTask}) {
+export default function TaskDetails({task, saveTask, onTaskClose}) {
   const TASK_DETAIL_WIDTH=680
-  const [taskDraft, setTaskDraft] = useState(() => ({...task}))
+  const taskDraft = useTaskStore(
+    (state) => state.taskDraft
+  )
+  const updateTaskDraft = useTaskStore(
+    (state) => state.updateTaskDraft
+  )
   const taskDetailsOpen = useTaskStore(
     (state) => state.taskDetailsOpen
   )
@@ -16,11 +20,6 @@ export default function TaskDetails({task, saveTask}) {
 
   let statusColor;
   let statusName;
-
-  useEffect(() => {
-    setTaskDraft({...task});
-    }, [task]
-  );
 
   if (taskDraft.canceled) {
     statusColor = "#737373";
@@ -38,7 +37,7 @@ export default function TaskDetails({task, saveTask}) {
       variant="temporary"
       anchor="right"  
       open={taskDetailsOpen} 
-      onClose={() => saveTask(taskDraft)}
+      onClose={onTaskClose}
       sx={{
         zIndex: (theme) => theme.zIndex.modal + 1,
         "& .MuiDrawer-paper": {
@@ -67,10 +66,7 @@ export default function TaskDetails({task, saveTask}) {
             rows={5} 
             value={taskDraft.notes} 
             onChange={
-              (event) => setTaskDraft(
-                {...taskDraft,
-                notes: event.target.value}
-              )
+              (event) => updateTaskDraft("notes", event.target.value)
             }
           />
         </Stack>
@@ -87,10 +83,10 @@ export default function TaskDetails({task, saveTask}) {
         >
           {taskErrors.form}
         </Typography>
-        <Button variant="contained" onClick={() => {taskDraft.completed=!taskDraft.completed; saveTask(taskDraft); }}>
+        <Button variant="contained" onClick={() => {taskDraft.completed=!taskDraft.completed; saveTask(); }}>
           {task.completed ? "Reopen Task" : "Complete Task"}
         </Button>
-        <Button variant="text" onClick={() => {taskDraft.canceled=!taskDraft.canceled; saveTask(taskDraft); }}>{taskDraft.canceled ? "Restore Task" : "Cancel Task"}</Button>
+        <Button variant="text" onClick={() => {taskDraft.canceled=!taskDraft.canceled; saveTask(); }}>{taskDraft.canceled ? "Restore Task" : "Cancel Task"}</Button>
         
       </Stack>
     </Drawer>

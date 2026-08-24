@@ -130,3 +130,16 @@ func (cfg *apiCfg) handlerEditAssignment(w http.ResponseWriter, r *http.Request)
 
 	RespondWithJSON(w, http.StatusOK, res)
 }
+
+func (cfg *apiCfg) handlerToggleAssignmentCompletion(w http.ResponseWriter, r *http.Request) {
+	assignmentID := r.PathValue("id")
+	ctx := r.Context()
+
+	res, err := cfg.App.ToggleAssignmentCompletion(ctx, assignmentID)
+	if err != nil {
+		RespondWithError(w, err)
+		return
+	}
+
+	RespondWithJSON(w, http.StatusOK, res)
+}

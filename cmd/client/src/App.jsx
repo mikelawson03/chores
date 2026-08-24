@@ -1,4 +1,4 @@
-import { Box, Dialog, DialogTitle } from "@mui/material";
+import { Box } from "@mui/material";
 import { useMutation } from "@tanstack/react-query";
 import dayjs from "dayjs";
 import { Route, Routes } from "react-router-dom";
@@ -18,6 +18,7 @@ import { updateAssignment } from "./utils/assignmentHelpers";
 import { tasksEqual } from "./utils/taskHelpers";
 import { useTaskStore } from "./stores/taskStore";
 import CloseDetailsAlert from "./components/CloseDetailsAlert";
+import { useState } from "react";
 
 function App() {
 
@@ -27,6 +28,10 @@ function App() {
     (state) => state.selectedTask
   );
 
+  const taskDraft = useTaskStore(
+    (state) => state.taskDraft
+  )
+
   const closeTaskDetails = useTaskStore(
     (state) => state.closeTaskDetails
   );
@@ -34,6 +39,8 @@ function App() {
   const setTaskError = useTaskStore(
     (state) => state.setTaskError
   );
+
+  const [dialogOpen, setDialogOpen] = useState(false)
 
   const updateTaskMutation = useMutation({
     mutationFn: updateAssignment,
@@ -48,17 +55,18 @@ function App() {
     }
   });
 
-  async function saveTask(updatedTask, originalTask = null) {
-    if (tasksEqual(updatedTask, originalTask)){
+  async function saveTask() {
+    if (tasksEqual(taskDraft, selectedTask)){
       return;
     }
 
-    const savedTask = await updateTaskMutation.mutateAsync(updatedTask);
+    const savedTask = await updateTaskMutation.mutateAsync(taskDraft);
 
     return savedTask;
   }
 
   function toggleTaskComplete(task) { 
+    
     task.completed = !task.completed;
 
     if (!task.scheduledFor && task.completed) {
@@ -83,6 +91,31 @@ function App() {
         setTaskError("form", "An unexpected error occurred. Please try again.")
         break;
     }
+  }
+
+  function onTaskClose() {
+    if (tasksEqual(taskDraft, selectedTask)){
+      closeTaskDetails();
+      return;
+    }
+
+    setDialogOpen(true);
+    console.log(dialogOpen)
+  }
+
+  function onSave(task) {
+    console.log(task);
+    setDialogOpen(false);
+    saveTask(task)
+  }
+
+  function onEdit() {
+    setDialogOpen(false);
+  }
+
+  function onDiscard() {
+    setDialogOpen(false);
+    closeTaskDetails();
   }
 
   return (
@@ -122,24 +155,18 @@ function App() {
           <TaskDetails 
             task={selectedTask} 
             saveTask={saveTask}
+            onTaskClose={onTaskClose}
           />
         )}
         </Box>
-        {selectedTask && <Dialog
-          open={true}
-          sx={{
-            zIndex: (theme) => theme.zIndex.modal + 2,
-          }}
-          slotProps={{
-            paper: {
-              sx: {
-                backgroundColor: "#fff",
-              },
-            },
-          }}
-        >
-          <DialogTitle>Test</DialogTitle>
-        </Dialog>}
+        <CloseDetailsAlert 
+          dialogOpen={dialogOpen}
+          setDialogOpen={setDialogOpen}
+          onSave={onSave}
+          onEdit={onEdit}
+          onDiscard={onDiscard}
+          task={selectedTask}
+        />
     </>
 
   );

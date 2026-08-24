@@ -99,6 +99,12 @@ OR (ct.cadence = "monthly"
     AND a.due_date < ?
     AND a.canceled = false);
 
+-- name: UpdateAssignmentCompletion :exec
+UPDATE assignments
+SET completed = ?,
+completed_at = ?
+WHERE id = ?;
+
 -- name: AllocateAssignments :exec
 UPDATE assignments
 SET assigned_user_id = ?

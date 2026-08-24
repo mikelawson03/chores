@@ -282,3 +282,35 @@ func (a *App) GetAssignmentsByUserID(ctx context.Context, id string) ([]domain.A
 
 	return assignments, nil
 }
+
+func (a *App) ToggleAssignmentCompletion(ctx context.Context, id string) (domain.Assignment, error) {
+	user, err := auth.AuthenticatedUser(ctx)
+	if err != nil {
+		return domain.Assignment{}, err
+	}
+
+	existing, err := a.Store.GetAssignment(ctx, id)
+	if err != nil {
+		return domain.Assignment{}, err
+	}
+
+	if !auth.CanEditAssignment(user, existing) {
+		return domain.Assignment{}, domain.ErrForbidden
+	}
+
+	completion := !existing.Completed
+	var completedAt *time.Time
+	if !existing.Completed {
+		t := time.Now()
+		completedAt = &t
+	} else {
+		completedAt = nil
+	}
+
+	assignment, err := a.Store.ToggleAssignmentCompletion(ctx, completion, completedAt, id)
+	if err != nil {
+		return domain.Assignment{}, err
+	}
+
+	return assignment, nil
+}

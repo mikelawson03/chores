@@ -509,3 +509,21 @@ func (q *Queries) GetAssignmentsWithMetadataForDateRange(ctx context.Context, ar
 	}
 	return items, nil
 }
+
+const updateAssignmentCompletion = `-- name: UpdateAssignmentCompletion :exec
+UPDATE assignments
+SET completed = ?,
+completed_at = ?
+WHERE id = ?
+`
+
+type UpdateAssignmentCompletionParams struct {
+	Completed   bool
+	CompletedAt sql.NullTime
+	ID          string
+}
+
+func (q *Queries) UpdateAssignmentCompletion(ctx context.Context, arg UpdateAssignmentCompletionParams) error {
+	_, err := q.db.ExecContext(ctx, updateAssignmentCompletion, arg.Completed, arg.CompletedAt, arg.ID)
+	return err
+}

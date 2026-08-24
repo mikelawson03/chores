@@ -17,6 +17,7 @@ func (cfg *apiCfg) RegisterRoutes(mux *http.ServeMux) {
 	mux.Handle("GET /assignments", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerGetAssignments)))
 	mux.Handle("GET /assignments/{id}", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerGetAssignmentByID)))
 	mux.Handle("PUT /assignments/{id}", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerEditAssignment)))
+	mux.Handle("POST /assignments/{id}/complete", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerToggleAssignmentCompletion)))
 
 	// users
 	mux.Handle("POST /users", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerAddUser)))
