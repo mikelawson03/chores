@@ -314,3 +314,30 @@ func (a *App) ToggleAssignmentCompletion(ctx context.Context, id string) (domain
 
 	return assignment, nil
 }
+
+func (a *App) RescheduleAssignment(ctx context.Context, assignmentID string, scheduledFor *time.Time) (domain.Assignment, error) {
+	user, err := auth.AuthenticatedUser(ctx)
+	if err != nil {
+		return domain.Assignment{}, err
+	}
+
+	existing, err := a.Store.GetAssignment(ctx, assignmentID)
+	if err != nil {
+		return domain.Assignment{}, err
+	}
+
+	if existing.DueDate.Before(*scheduledFor) {
+		return domain.Assignment{}, fmt.Errorf("%w: cannot schedule assignment after due date", domain.ErrInvalidRequest)
+	}
+
+	if !auth.CanEditAssignment(user, existing) {
+		return domain.Assignment{}, domain.ErrForbidden
+	}
+
+	assignment, err := a.Store.RescheduleAssignment(ctx, assignmentID, scheduledFor)
+	if err != nil {
+		return domain.Assignment{}, err
+	}
+
+	return assignment, nil
+}

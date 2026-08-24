@@ -465,3 +465,23 @@ func (s *Store) ToggleAssignmentCompletion(ctx context.Context, completion bool,
 
 	return assignment, nil
 }
+
+func (s *Store) RescheduleAssignment(ctx context.Context, assignmentID string, scheduledFor *time.Time) (domain.Assignment, error) {
+	err := s.Queries.RescheduleAssignment(ctx, db.RescheduleAssignmentParams{
+		ScheduledFor: pointerTimeToNullTime(scheduledFor),
+		ID:           assignmentID,
+	})
+	if errors.Is(err, sql.ErrNoRows) {
+		return domain.Assignment{}, fmt.Errorf("%w: assignment", domain.ErrNotFound)
+	}
+	if err != nil {
+		return domain.Assignment{}, err
+	}
+
+	assignment, err := s.GetAssignment(ctx, assignmentID)
+	if err != nil {
+		return domain.Assignment{}, err
+	}
+
+	return assignment, nil
+}

@@ -510,6 +510,22 @@ func (q *Queries) GetAssignmentsWithMetadataForDateRange(ctx context.Context, ar
 	return items, nil
 }
 
+const rescheduleAssignment = `-- name: RescheduleAssignment :exec
+UPDATE assignments
+SET scheduled_for = ?
+WHERE id = ?
+`
+
+type RescheduleAssignmentParams struct {
+	ScheduledFor sql.NullTime
+	ID           string
+}
+
+func (q *Queries) RescheduleAssignment(ctx context.Context, arg RescheduleAssignmentParams) error {
+	_, err := q.db.ExecContext(ctx, rescheduleAssignment, arg.ScheduledFor, arg.ID)
+	return err
+}
+
 const updateAssignmentCompletion = `-- name: UpdateAssignmentCompletion :exec
 UPDATE assignments
 SET completed = ?,

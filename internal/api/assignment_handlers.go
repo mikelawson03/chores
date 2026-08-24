@@ -36,6 +36,10 @@ func decodeRequest(r *http.Request, target any) error {
 	return nil
 }
 
+type RescheduleAssignmentRequest struct {
+	ScheduledFor *time.Time `json:"scheduledFor"`
+}
+
 func (cfg *apiCfg) handlerCreateAssignment(w http.ResponseWriter, r *http.Request) {
 	req := AssignmentRequest{}
 	err := decodeRequest(r, &req)
@@ -136,6 +140,25 @@ func (cfg *apiCfg) handlerToggleAssignmentCompletion(w http.ResponseWriter, r *h
 	ctx := r.Context()
 
 	res, err := cfg.App.ToggleAssignmentCompletion(ctx, assignmentID)
+	if err != nil {
+		RespondWithError(w, err)
+		return
+	}
+
+	RespondWithJSON(w, http.StatusOK, res)
+}
+
+func (cfg *apiCfg) handlerRescheduleAssignment(w http.ResponseWriter, r *http.Request) {
+	assignmentID := r.PathValue("id")
+	req := RescheduleAssignmentRequest{}
+	err := decodeRequest(r, &req)
+	if err != nil {
+		RespondWithError(w, err)
+		return
+	}
+
+	ctx := r.Context()
+	res, err := cfg.App.RescheduleAssignment(ctx, assignmentID, req.ScheduledFor)
 	if err != nil {
 		RespondWithError(w, err)
 		return

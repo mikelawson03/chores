@@ -105,6 +105,11 @@ SET completed = ?,
 completed_at = ?
 WHERE id = ?;
 
+-- name: RescheduleAssignment :exec
+UPDATE assignments
+SET scheduled_for = ?
+WHERE id = ?;
+
 -- name: AllocateAssignments :exec
 UPDATE assignments
 SET assigned_user_id = ?
