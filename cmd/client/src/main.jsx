@@ -7,6 +7,8 @@ import { CssBaseline } from '@mui/material';
 import App from './App.jsx';
 import AuthProvider from './auth/AuthProvider';
 import { queryClient } from './query/queryClient.js';
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 
 
 
@@ -16,7 +18,9 @@ createRoot(document.getElementById('root')).render(
       <BrowserRouter>
         <CssBaseline />
         <AuthProvider>
-          <App />
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <App />
+            </LocalizationProvider>
         </AuthProvider>
       </BrowserRouter>
     </QueryClientProvider>

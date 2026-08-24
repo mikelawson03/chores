@@ -2,6 +2,9 @@ import { Box, Button, Drawer, Stack, TextField, Typography } from "@mui/material
 import DetailRow from "./details/DetailRow"
 import { formatDuration, formatTimestamp } from "../utils/formatters";
 import { useTaskStore } from "../stores/taskStore";
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import dayjs from "dayjs";
+import DetailRowDate from "./details/DetailRowDate";
 
 export default function TaskDetails({task, saveTask, onTaskClose}) {
   const TASK_DETAIL_WIDTH=680
@@ -56,6 +59,14 @@ export default function TaskDetails({task, saveTask, onTaskClose}) {
           <DetailRow label="Instructions" value={taskDraft.instructions} />
           <DetailRow label="Assigned To" value={taskDraft.userFirstName ? task.userFirstName : "Unassigned"} />
           <DetailRow label="Duration" value={formatDuration(taskDraft.duration)} />
+          <DetailRowDate  
+            label="Scheduled For"
+            field="scheduledFor"
+            value={taskDraft.scheduledFor ? dayjs(taskDraft.scheduledFor) : null}
+            maxDate={taskDraft.dueDate}
+            onValueChange={updateTaskDraft}
+            // validateField={}
+          />
         </Stack>
         <Stack>
           <Typography variant="body1">Notes</Typography>

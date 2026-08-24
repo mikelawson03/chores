@@ -2,7 +2,7 @@ import { Box, Container, Stack } from "@mui/material";
 import Sidebar from "../components/Sidebar";
 import { Outlet } from "react-router-dom";
 
-export default function AppLayout({ children, maxWidth }) {
+export default function AppLayout() {
     return (
         <Container 
             maxWidth={false}

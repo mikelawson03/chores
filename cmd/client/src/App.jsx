@@ -93,11 +93,9 @@ function App() {
     }
 
     setDialogOpen(true);
-    console.log(dialogOpen)
   }
 
   function onSave(task) {
-    console.log(task);
     setDialogOpen(false);
     saveTask(task)
   }
