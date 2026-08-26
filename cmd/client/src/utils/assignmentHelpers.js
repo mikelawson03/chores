@@ -1,4 +1,4 @@
-import { getTasks, getTasksForUser, updateTask } from "../api/tasks";
+import { getTasks, getTasksForUser, rescheduleAssignment, updateTask } from "../api/tasks";
 import { toggleCompletion } from "../api/tasks";
 
 export async function getAssignments(user) {
@@ -15,4 +15,8 @@ export async function updateAssignment(assignment) {
 
 export async function toggleTaskCompletion(id) {
     return await toggleCompletion(id);
+}
+
+export async function rescheduleTask(id, scheduledFor) {
+    return await rescheduleAssignment(id, scheduledFor);
 }

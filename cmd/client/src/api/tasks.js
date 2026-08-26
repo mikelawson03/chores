@@ -58,3 +58,18 @@ export async function toggleCompletion(id) {
 
     return await response.json();
 }
+
+export async function rescheduleAssignment(props) {
+    const response = await fetch(`${API_HOST}/assignments/${props.id}/reschedule`, {
+        method: "POST",
+        headers: getHeaders(),
+        body: JSON.stringify({"scheduledFor": props.scheduledFor})
+    })
+
+    if (!response.ok) {
+        const error = await response.json();
+        throw new ApiError(response.status, error.error);
+    }
+
+    return await response.json();
+}

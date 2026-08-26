@@ -35,7 +35,7 @@ export default function PlannerTaskCard({ task, width }) {
   );
 
   return (
-    <Card onClick={() => openTaskDetails(task)}
+    <Card onClick={() => {openTaskDetails(task); console.log(task)}}
     sx= {[clickableSurface, { 
       width: width,
       borderRadius: 1,

@@ -1,5 +1,6 @@
 import { Box, Stack, Typography } from "@mui/material";
 import PlannerTaskCard from "./PlannerTaskCard";
+import DraggableTask from "../dragAndDrop/DraggableTask";
 
 export default function DayColumn({ day, tasks, toggleTaskComplete, isLast}) {
 
@@ -41,12 +42,13 @@ export default function DayColumn({ day, tasks, toggleTaskComplete, isLast}) {
       }}
     >
       {tasks.map( task => (
-        <PlannerTaskCard 
-          key={task.id} 
-          task={task}
-          toggleTaskComplete={toggleTaskComplete}
-          width="100%"
-          />
+        <DraggableTask task={task} key={task.id}>
+          <PlannerTaskCard   
+            task={task}
+            toggleTaskComplete={toggleTaskComplete}
+            width="100%"
+            />
+        </DraggableTask>
       ) )}
     </Box>
     </Stack>

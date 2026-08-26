@@ -1,5 +1,6 @@
-import { Box, Stack } from "@mui/material"
+import { Stack } from "@mui/material"
 import DayColumn from "./DayColumn"
+import DroppableDay from "../dragAndDrop/DroppableDay";
 
 export default function WeeklyGrid({plannerDays, toggleTaskComplete }) {
   return (    
@@ -11,21 +12,15 @@ export default function WeeklyGrid({plannerDays, toggleTaskComplete }) {
         minHeight: 600
       }}>
       {plannerDays.map(({ day, tasks }, index) => (
-        <Box
-          key={day.format("YYYY-MM-DD")}
-          sx={{ 
-            flex: 1,
-            
-          }}
-          
-        >
+        <DroppableDay  key={day.format("YYYY-MM-DD")} day={day}>
           <DayColumn 
             day={day}
             tasks={tasks}
             toggleTaskComplete={toggleTaskComplete}
             isLast={index === plannerDays.length - 1}    
           />
-        </Box>
+        </DroppableDay>
+        
       ))}
     </Stack>
   );

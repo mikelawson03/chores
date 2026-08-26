@@ -6,9 +6,11 @@ import isoWeek from "dayjs/plugin/isoWeek";
 import { Box, CircularProgress, Stack } from "@mui/material";
 import StagingArea from "../components/planner/StagingArea";
 import { useAuth } from "../auth/useAuth";
-import { getAssignments } from "../utils/assignmentHelpers";
-import { useQuery } from "@tanstack/react-query";
-
+import { getAssignments, rescheduleTask } from "../utils/assignmentHelpers";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { DragDropProvider } from "@dnd-kit/react";
+import { useNotificationStore } from "../stores/notificationStore";
+import { queryClient } from "../query/queryClient";
 
 export default function WeeklyPlanner({ toggleTaskComplete }) {
   dayjs.extend(isoWeek);
@@ -16,13 +18,15 @@ export default function WeeklyPlanner({ toggleTaskComplete }) {
   const { 
     data: tasks = [],
     isPending,
-    isError,
-    error,
   } = useQuery({
     queryKey: ["assignments", user?.id],
     queryFn: () => getAssignments(user),
     enabled: !!user,
   });
+
+  const showErrorNotification = useNotificationStore(
+          (state) => state.showNotification
+  )
 
   const [currentWeek, setCurrentWeek] = useState(dayjs());
   
@@ -58,6 +62,50 @@ export default function WeeklyPlanner({ toggleTaskComplete }) {
     setCurrentWeek(currentWeek.add(1, "week"))
   };
 
+  const rescheduleMutation = useMutation({
+    mutationFn: rescheduleTask,
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["assignments", user.id],
+      });
+    },
+
+    onError: (error) => {
+      console.log(error);
+    }
+  })
+
+  function handleTaskDrop(event) {
+    const taskId = event.operation.source?.id;
+    const newScheduledFor = event.operation.target?.id;
+
+    if (!taskId || !newScheduledFor) {
+      return;
+    }
+
+    const task = tasks.find(task => task.id === taskId);
+
+    if (!task) {
+      return;
+    }
+
+    const newDate = dayjs(newScheduledFor);
+    const dueDate = dayjs(task.dueDate);
+
+    console.log(newDate.isAfter(dueDate));
+    
+    if (newDate.isAfter(dueDate)) {
+      showErrorNotification("Cannot schedule after due date.")
+      return;
+    }
+
+    rescheduleMutation.mutate({
+      id: taskId,
+      scheduledFor: newDate.endOf("day").toISOString(),
+    });
+  }
+
    if (isPending){
     return (
       <Box sx ={{
@@ -73,26 +121,34 @@ export default function WeeklyPlanner({ toggleTaskComplete }) {
   }
 
   return (
-    <Stack spacing={4} direction="column" sx={{height: "100%"}}>
-      <PlannerToolbar 
-        weekStart={weekStart} 
-        weekEnd={weekEnd}
-        onPreviousWeek={handlePreviousWeek}
-        onNextWeek={handleNextWeek}
-      />
-      <WeeklyGrid
-        plannerDays = {plannerDays}
-        toggleTaskComplete={toggleTaskComplete}
-        sx = {{
-          flex: 1,
-          minHeight:600
-        }}
-      />
-      <StagingArea 
-        weeklyTasks = {weeklyBacklog}
-        monthlyTasks = {monthlyBacklog}
-        toggleTaskComplete={toggleTaskComplete}
+    <DragDropProvider
+      onDragEnd={(event) => {
+        if (event.canceled) return;
+
+        handleTaskDrop(event)
+      }}
+    >
+      <Stack spacing={4} direction="column" sx={{height: "100%"}}>
+        <PlannerToolbar 
+          weekStart={weekStart} 
+          weekEnd={weekEnd}
+          onPreviousWeek={handlePreviousWeek}
+          onNextWeek={handleNextWeek}
         />
-    </Stack>
+        <WeeklyGrid
+          plannerDays = {plannerDays}
+          toggleTaskComplete={toggleTaskComplete}
+          sx = {{
+            flex: 1,
+            minHeight:600
+          }}
+        />
+        <StagingArea 
+          weeklyTasks = {weeklyBacklog}
+          monthlyTasks = {monthlyBacklog}
+          toggleTaskComplete={toggleTaskComplete}
+          />
+      </Stack>
+    </DragDropProvider>
   )
 }
