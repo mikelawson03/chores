@@ -4,7 +4,7 @@ import CalendarToolbar from "../components/calendar/CalendarToolbar";
 import CalendarContent from "../components/calendar/CalendarContent";
 import DailyAgenda from "../components/dailyAgenda/DailyAgenda";
 import { useState } from "react";
-import { Box, CircularProgress, Stack, Typography } from "@mui/material";
+import { Box, CircularProgress, Stack } from "@mui/material";
 import { getActiveTasks, getMonthlyTasks, getUnscheduledTasks, getTasksDueInMonth, getWeeklyTasks } from "../utils/taskHelpers";
 import { useAuth } from "../auth/useAuth";
 import { useMutation, useQuery } from "@tanstack/react-query";
