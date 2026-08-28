@@ -28,7 +28,7 @@ export default function DetailRowDate({label, field, value, maxDate, onValueChan
                         value={dayjs(value) ?? null} 
                         size="small" 
                         sx={{width: 175}} 
-                        onChange={(newValue) => onValueChange(field, newValue ? newValue.startOf("day").toISOString() : null)} 
+                        onChange={(newValue) => onValueChange(field, newValue ? dayjs(newValue).startOf("day").format() : null)} 
                         onBlur={() => validateChoreField(field, value)}
                         maxDate={dayjs(maxDate)}
                         slotProps={{

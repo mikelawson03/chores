@@ -2,11 +2,14 @@ import { getTasks, getTasksForUser, rescheduleAssignment, updateTask } from "../
 import { toggleCompletion } from "../api/tasks";
 
 export async function getAssignments(user) {
+    
     if (user.role === "admin"){
         return await getTasks();
     }
 
-    return await getTasksForUser(user.id);
+    const tasks = await getTasksForUser(user.id);
+    console.log(tasks);
+    return tasks
 }
 
 export async function updateAssignment(assignment) {

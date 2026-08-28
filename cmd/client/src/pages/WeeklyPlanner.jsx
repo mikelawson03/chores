@@ -8,9 +8,11 @@ import StagingArea from "../components/planner/StagingArea";
 import { useAuth } from "../auth/useAuth";
 import { getAssignments, rescheduleTask } from "../utils/assignmentHelpers";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { DragDropProvider } from "@dnd-kit/react";
+import { DragDropProvider, DragOverlay } from "@dnd-kit/react";
 import { useNotificationStore } from "../stores/notificationStore";
 import { queryClient } from "../query/queryClient";
+import { parseApiError } from "../utils/errorHelpers";
+import PlannerTaskCard from "../components/planner/PlannerTaskCard";
 
 export default function WeeklyPlanner({ toggleTaskComplete }) {
   dayjs.extend(isoWeek);
@@ -29,15 +31,19 @@ export default function WeeklyPlanner({ toggleTaskComplete }) {
   )
 
   const [currentWeek, setCurrentWeek] = useState(dayjs());
+  const [dragTask, setDragTask] = useState(null);
   
   const weekStart = currentWeek.startOf("isoWeek");
   const weekEnd = currentWeek.endOf("isoWeek");
+  const monthRange = {
+    lower: weekStart.startOf("month").subtract(1,"day").endOf("day"),
+    upper: weekEnd.endOf("month").add(1, "day").startOf("day")
+  }
 
   const days = Array.from(
      { length: 7 },
      (_, i) => weekStart.add(i, "day")
   );
-
   
   const plannerDays = days.map(day => ({
     day,
@@ -47,11 +53,19 @@ export default function WeeklyPlanner({ toggleTaskComplete }) {
   }));
 
   const weeklyBacklog = tasks.filter(
-    task => task.cadence === "weekly" && !task.scheduledFor && !task.completed
+    task => task.cadence === "weekly" 
+      && !task.scheduledFor 
+      && !task.completed
+      && dayjs(task.dueDate).isAfter(weekEnd.subtract(1, "week"))
+      && dayjs(task.dueDate).isBefore(weekStart.add(1, "week"))
   );
 
   const monthlyBacklog = tasks.filter(
-    task => task.cadence === "monthly" && !task.scheduledFor && !task.completed
+    task => task.cadence === "monthly" 
+    && !task.scheduledFor 
+    && !task.completed
+    && dayjs(task.dueDate).isAfter(monthRange.lower)
+    && dayjs(task.dueDate).isBefore(monthRange.upper)
   );
 
   const handlePreviousWeek = () => {
@@ -72,37 +86,48 @@ export default function WeeklyPlanner({ toggleTaskComplete }) {
     },
 
     onError: (error) => {
-      console.log(error);
+      handleRescheduleError(error)
     }
   })
 
+  function handleRescheduleError(error) {
+    let parsed, message
+    switch (error.status) {
+      case 400:
+        parsed = parseApiError(error)
+        message = parsed.message[0].toUpperCase() + parsed.message.slice(1)
+        showErrorNotification(message)
+    }
+  }
+
   function handleTaskDrop(event) {
-    const taskId = event.operation.source?.id;
     const newScheduledFor = event.operation.target?.id;
+    const newScheduledDate = dayjs(newScheduledFor);
+    const oldScheduledDate = dayjs(dragTask.scheduledFor);
 
-    if (!taskId || !newScheduledFor) {
+    if (!dragTask.id || !newScheduledFor) {
       return;
     }
 
-    const task = tasks.find(task => task.id === taskId);
-
-    if (!task) {
+    if (oldScheduledDate.isSame(newScheduledDate, "day")) {
       return;
     }
-
-    const newDate = dayjs(newScheduledFor);
-    const dueDate = dayjs(task.dueDate);
-
-    console.log(newDate.isAfter(dueDate));
     
-    if (newDate.isAfter(dueDate)) {
+    const dueDate = dayjs(dragTask.dueDate);
+    
+    if (dragTask.cadence === "daily") {
+      showErrorNotification("Daily tasks cannot be rescheduled.")
+      return;
+    }
+
+    if (newScheduledDate.isAfter(dueDate, "day")) {
       showErrorNotification("Cannot schedule after due date.")
       return;
     }
 
     rescheduleMutation.mutate({
-      id: taskId,
-      scheduledFor: newDate.endOf("day").toISOString(),
+      id: dragTask.id,
+      scheduledFor: newScheduledDate.startOf("day").format(),
     });
   }
 
@@ -122,10 +147,19 @@ export default function WeeklyPlanner({ toggleTaskComplete }) {
 
   return (
     <DragDropProvider
+      onDragStart = {(event) => {
+        const taskId = event.operation.source?.id;
+        const task = tasks.find(task => task.id === taskId);
+
+        setDragTask(task ?? null);
+      }}
+
       onDragEnd={(event) => {
+
         if (event.canceled) return;
 
         handleTaskDrop(event)
+        setDragTask(null);
       }}
     >
       <Stack spacing={4} direction="column" sx={{height: "100%"}}>
@@ -149,6 +183,15 @@ export default function WeeklyPlanner({ toggleTaskComplete }) {
           toggleTaskComplete={toggleTaskComplete}
           />
       </Stack>
+      <DragOverlay dropAnimation={null}>
+        {dragTask && (
+          <PlannerTaskCard 
+            task={dragTask}
+            toggleTaskComplete={toggleTaskComplete}
+            width="100%"
+          />
+        )}
+      </DragOverlay>
     </DragDropProvider>
   )
 }

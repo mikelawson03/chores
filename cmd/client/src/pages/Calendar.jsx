@@ -4,11 +4,16 @@ import CalendarToolbar from "../components/calendar/CalendarToolbar";
 import CalendarContent from "../components/calendar/CalendarContent";
 import DailyAgenda from "../components/dailyAgenda/DailyAgenda";
 import { useState } from "react";
-import { Box, CircularProgress, Stack } from "@mui/material";
-import { getActiveTasks, getMonthlyTasks, getUnscheduledTasks, getTasksDueInMonth, getWeeklyTasks, removeCompletedTasks } from "../utils/taskHelpers";
+import { Box, CircularProgress, Stack, Typography } from "@mui/material";
+import { getActiveTasks, getMonthlyTasks, getUnscheduledTasks, getTasksDueInMonth, getWeeklyTasks } from "../utils/taskHelpers";
 import { useAuth } from "../auth/useAuth";
-import { useQuery } from "@tanstack/react-query";
-import { getAssignments } from "../utils/assignmentHelpers";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { getAssignments, rescheduleTask } from "../utils/assignmentHelpers";
+import { DragDropProvider, DragOverlay } from "@dnd-kit/react";
+import { useNotificationStore } from "../stores/notificationStore";
+import { queryClient } from "../query/queryClient";
+import { parseApiError } from "../utils/errorHelpers";
+import CalendarTask from "../components/calendar/CalendarTask";
 
 export default function Calendar({ toggleTaskComplete }) {
   dayjs.extend(isoWeek);
@@ -16,18 +21,21 @@ export default function Calendar({ toggleTaskComplete }) {
   const { 
     data: tasks = [],
     isPending,
-    isError,
-    error,
   } = useQuery({
     queryKey: ["assignments", user?.id],
     queryFn: () => getAssignments(user),
     enabled: !!user,
   });
 
+  const showErrorNotification = useNotificationStore(
+    (state) => state.showNotification
+  )
+
   const MAX_CALENDAR_DAY_ITEMS = 4;
   const [currentDate, setCurrentDate] = useState(dayjs());
   const [agendaDate, setAgendaDate] = useState(dayjs())
   const [dailyAgendaOpen, setDailyAgendaOpen] = useState(false)
+  const [dragTask, setDragTask] = useState(null)
 
   const monthDisplayStart = currentDate.date(1).startOf("isoWeek")
   
@@ -76,6 +84,65 @@ export default function Calendar({ toggleTaskComplete }) {
     setDailyAgendaOpen(true);
   }
 
+  const rescheduleMutation = useMutation({
+    mutationFn: rescheduleTask,
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["assignments", user.id],
+      });
+      setDragTask(null);
+    },
+
+    onError: (error) => {
+      handleRescheduleError(error);
+      setDragTask(null);
+    }
+  })
+
+  function handleRescheduleError(error) {
+    let parsed, message
+    switch (error.status) {
+      case 400:
+        parsed = parseApiError(error)
+        message = parsed.message[0].toUpperCase() + parsed.message.slice(1)
+        showErrorNotification(message)
+    }
+  }
+
+  function handleTaskDrop(event) {
+    const newScheduledFor = event.operation.target?.id;
+    const newScheduledDate = dayjs(newScheduledFor);
+    const oldScheduledDate = dayjs(dragTask.scheduledFor);
+    const dueDate = dayjs(dragTask.dueDate);
+
+    if (!dragTask.id || !newScheduledFor) {
+      return;
+    }
+
+    if (!dragTask) {
+      return;
+    }
+
+    if (oldScheduledDate.isSame(newScheduledDate, "day")) {
+      return;
+    }
+
+    if (dragTask.cadence === "daily") {
+      showErrorNotification("Daily tasks cannot be rescheduled.")
+      return;
+    }
+
+    if (newScheduledDate.isAfter(dueDate, "day")) {
+      showErrorNotification("Cannot schedule after due date.")
+      return;
+    }
+
+    rescheduleMutation.mutate({
+      id: dragTask.id,
+      scheduledFor: newScheduledDate.startOf("day").format()
+    });
+  }
+
   if (isPending){
     return (
       <Box sx ={{
@@ -91,29 +158,53 @@ export default function Calendar({ toggleTaskComplete }) {
   }
 
   return (
-    <Stack spacing={0} direction="column" sx ={{ flex: 1, minHeight: 0}}>
-      <CalendarToolbar 
-        currentDate={currentDate}
-        onPreviousMonth={handlePreviousMonth}
-        onNextMonth={handleNextMonth}
-      />
-      <CalendarContent 
-        currentDate={currentDate} 
-        days={calendarDays} 
-        maxDayItems={MAX_CALENDAR_DAY_ITEMS}
-        weeklyTasks={weeklyTasks}
-        monthlyTasks={monthlyTasks}
-        onOverflowClick={handleDailyAgendaOpen}
-      />
-      <DailyAgenda 
-        agendaDate={agendaDate}
-        activeTasks={getActiveTasks(tasks)}
-        dailyAgendaOpen={dailyAgendaOpen}
-        toggleTaskComplete={toggleTaskComplete}
-        onDailyAgendaClose={handleDailyAgendaClose}
-        onPreviousAgendaDay={handlePreviousAgendaDay}
-        onNextAgendaDay={handleNextAgendaDay}
-      />
-    </Stack>
+    <DragDropProvider
+      onDragStart = {(event) => {
+        const taskId = event.operation.source?.id;
+        const task = tasks.find(task => task.id === taskId)
+
+        setDragTask(task)
+      }}
+
+      onDragEnd={(event) => {
+        if (event.canceled) return;
+
+        handleTaskDrop(event);
+        
+      }}
+    >
+      <Stack spacing={0} direction="column" sx ={{ flex: 1, minHeight: 0}}>
+        <CalendarToolbar 
+          currentDate={currentDate}
+          onPreviousMonth={handlePreviousMonth}
+          onNextMonth={handleNextMonth}
+        />
+        <CalendarContent 
+          currentDate={currentDate} 
+          days={calendarDays} 
+          maxDayItems={MAX_CALENDAR_DAY_ITEMS}
+          weeklyTasks={weeklyTasks}
+          monthlyTasks={monthlyTasks}
+          onOverflowClick={handleDailyAgendaOpen}
+        />
+        <DailyAgenda 
+          agendaDate={agendaDate}
+          activeTasks={getActiveTasks(tasks)}
+          dailyAgendaOpen={dailyAgendaOpen}
+          toggleTaskComplete={toggleTaskComplete}
+          onDailyAgendaClose={handleDailyAgendaClose}
+          onPreviousAgendaDay={handlePreviousAgendaDay}
+          onNextAgendaDay={handleNextAgendaDay}
+        />
+      </Stack>
+      <DragOverlay dropAnimation={null}>
+        {dragTask && ( 
+          <CalendarTask
+            task={dragTask}
+            width="100%"
+          />
+        )}
+      </DragOverlay>
+    </DragDropProvider>
   );
 }

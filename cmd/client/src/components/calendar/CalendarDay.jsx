@@ -1,13 +1,11 @@
 import { Box, Stack, Typography } from "@mui/material";
-import { clickableSurface } from "../../styles/surfaces";
 import { clickableText } from "../../styles/typography";
-import { useTaskStore } from "../../stores/taskStore";
+import CalendarTask from "./CalendarTask";
+import DraggableTask from "../dragAndDrop/DraggableTask";
 
 export default function CalendarDay({day, tasks, maxDayItems, onOverflowClick, isLastColumn, isLastRow, isCurrentMonth, isCurrentDate}) {
     const overflowTaskCount = tasks.length - maxDayItems
-    const openTaskDetails = useTaskStore(
-        (state) => state.openTaskDetails
-    );
+    
     return (
         <Box 
             onClick={() => onOverflowClick(day)}
@@ -18,6 +16,7 @@ export default function CalendarDay({day, tasks, maxDayItems, onOverflowClick, i
                 p: 1,
                 backgroundColor: isCurrentMonth ? "background.paper" : "grey.200",
                 minWidth: 0,
+                height: "100%",
                 "&:hover": {
                     border: 1,
                     borderColor: "grey.400",
@@ -44,28 +43,9 @@ export default function CalendarDay({day, tasks, maxDayItems, onOverflowClick, i
                     {tasks
                         .slice(0, maxDayItems)
                         .map(task =>
-                            <Box 
-                                key={task.id} 
-                                onClick = {(e) => {e.stopPropagation(); openTaskDetails(task)}} 
-                                
-                                sx={ 
-                                    [clickableSurface,
-                                    {justifyContent: "center", 
-                                        
-                                    }]
-                                }
-                            >
-                                <Typography 
-                                    variant="body2" 
-                                    noWrap={true}
-                                    sx={{
-                                        textOverflow: "ellipsis",
-                                        overflow: "hidden",
-                                    }}
-                                >
-                                        {task.templateName}
-                                </Typography>
-                            </Box>
+                            <DraggableTask task={task} key={task.id}>
+                                <CalendarTask task={task} />
+                            </DraggableTask>
                         )
                     }
                     {overflowTaskCount > 0 && <Typography variant="body2" onClick={(e) => {e.stopPropagation(); onOverflowClick(day)}} sx={clickableText}>+{overflowTaskCount} more...</Typography>}

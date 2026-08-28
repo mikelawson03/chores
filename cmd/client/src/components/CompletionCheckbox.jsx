@@ -5,7 +5,7 @@ import { useAuth } from "../auth/useAuth";
 import { Checkbox } from "@mui/material";
 import { useNotificationStore } from "../stores/notificationStore";
 
-export default function CompletionCheckbox({ checked, taskId }) {
+export default function CompletionCheckbox({ checked, taskId, visible = true, size = "medium" }) {
     const { user } = useAuth();
 
     const showErrorNotification = useNotificationStore(
@@ -37,14 +37,14 @@ export default function CompletionCheckbox({ checked, taskId }) {
                 break;
         }
     }
-
+    if (visible) {
     return(
         <Checkbox 
             checked={checked}
-            size="medium" 
+            size={size} 
             onChange={() => toggleTaskCompletionMutation.mutate(taskId) } 
             onClick={(event) => {event.stopPropagation();}}
-            sx={{ pr: 2, pl: 0 }}
+            sx={{ p: 0 }}
         />
-    )
+    )}
 }

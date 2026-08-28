@@ -27,7 +27,7 @@ export default function PlannerTaskCard({ task, width }) {
     bgColor = "background.paper";
     txtColor = "text.primary";
     txtDecoration = "none";
-    checkboxVisible = false
+    checkboxVisible = true
   }
 
   const openTaskDetails = useTaskStore(
@@ -35,7 +35,7 @@ export default function PlannerTaskCard({ task, width }) {
   );
 
   return (
-    <Card onClick={() => {openTaskDetails(task); console.log(task)}}
+    <Card onClick={() => openTaskDetails(task)}
     sx= {[clickableSurface, { 
       width: width,
       borderRadius: 1,
@@ -62,6 +62,8 @@ export default function PlannerTaskCard({ task, width }) {
           <CompletionCheckbox
             checked={task.completed}
             taskId={task.id}
+            visible={checkboxVisible}
+            size="small"
           />
         </Stack>
       </CardContent>
