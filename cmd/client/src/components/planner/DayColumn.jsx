@@ -1,9 +1,10 @@
 import { Box, Stack, Typography } from "@mui/material";
 import PlannerTaskCard from "./PlannerTaskCard";
 import DraggableTask from "../dragAndDrop/DraggableTask";
+import dayjs from "dayjs";
 
 export default function DayColumn({ day, tasks, toggleTaskComplete, isLast}) {
-
+  const isCurrentDate = day.isSame(dayjs(), "day");
   return (
 
     <Stack 
@@ -12,7 +13,8 @@ export default function DayColumn({ day, tasks, toggleTaskComplete, isLast}) {
         flex: 1,
         height: "100%",
         borderRight: isLast ? 0 : 1,
-        borderColor: "divider"
+        borderColor: "divider",
+        minWidth: 0,
       }}
     >
       <Box
@@ -25,12 +27,24 @@ export default function DayColumn({ day, tasks, toggleTaskComplete, isLast}) {
           flexDirection: "column"
         }}
       >
-        <Typography variant="h6">
+        <Typography variant="body2">
           {day.format("ddd")}
         </Typography>
-        <Typography variant="body2" color="text.secondary">
-          {day.format("MMM D")}
-        </Typography>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: 35,
+            height: 35,
+            borderRadius: "50%",
+            backgroundColor: isCurrentDate ? "#99daff" : "transparent",
+          }}
+        >
+          <Typography variant="h6" color="text.secondary">
+              {day.format("D")}
+          </Typography>
+        </Box>
       </Box>
     <Box
       sx={{
@@ -39,6 +53,7 @@ export default function DayColumn({ day, tasks, toggleTaskComplete, isLast}) {
         display: "flex",
         flexDirection: "column",
         gap: 0.75,
+        minWidth: 0
       }}
     >
       {tasks.map( task => (

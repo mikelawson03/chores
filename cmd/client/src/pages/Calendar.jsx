@@ -75,6 +75,10 @@ export default function Calendar({ toggleTaskComplete }) {
     setAgendaDate(agendaDate.subtract(1, "day"))
   }
 
+  const handleResetDate = () => {
+    setCurrentDate(dayjs());
+  }
+
   const handleDailyAgendaClose = () => {
     setDailyAgendaOpen(false);
   }
@@ -173,11 +177,12 @@ export default function Calendar({ toggleTaskComplete }) {
         
       }}
     >
-      <Stack spacing={0} direction="column" sx ={{ flex: 1, minHeight: 0}}>
+      <Stack spacing={2} direction="column" sx ={{ flex: 1, minHeight: 0}}>
         <CalendarToolbar 
           currentDate={currentDate}
           onPreviousMonth={handlePreviousMonth}
           onNextMonth={handleNextMonth}
+          onResetDate={handleResetDate}
         />
         <CalendarContent 
           currentDate={currentDate} 

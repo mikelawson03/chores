@@ -30,6 +30,10 @@ export const choreTemplateValidationErrors = {
         field: "name",
         message: "Chore name is required."
     },
+    "name must be 50 characters or fewer":{
+        field: "name",
+        message: "Name must be 50 characters or fewer."
+    },
     "cadence required": {
         field: "cadence",
         message: "Cadence is required."
@@ -49,6 +53,10 @@ export function getChoreFieldError(field, value) {
       case "name":
         if (!value.trim()) {
           return "Chore name is required.";
+        }
+
+        if (value.length > 50) {
+            return "Name must be 50 characters or fewer.";
         }
         break;
       

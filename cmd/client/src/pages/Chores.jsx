@@ -166,6 +166,7 @@ export default function Chores() {
       ...current,
       [field]: error,
     }));
+    return;
   }
 
   const isSaving = newChoreMutation.isPending || editChoreMutation.isPending

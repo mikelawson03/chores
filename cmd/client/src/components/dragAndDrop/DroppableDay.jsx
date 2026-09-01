@@ -11,6 +11,7 @@ export default function DroppableDay({ day, children }) {
             ref={ref}
             sx={{
                 flex: 1,
+                minWidth: 0,
                 border: isDropTarget? 1 : 0,
                 borderColor: "primary.main",
                 transition: "border-color 0.15s ease",

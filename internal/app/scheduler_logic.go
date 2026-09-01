@@ -72,12 +72,20 @@ func (a *App) dailyScheduler(ctx context.Context, horizonStart, horizonEnd time.
 		currentDay := horizonStart
 		for currentDay.Before(horizonEnd) {
 			if !assignmentExistsForTemplateAndDate(template.ID, currentDay, existingAssignments) {
+				dueDate := time.Date(
+					currentDay.Year(),
+					currentDay.Month(),
+					currentDay.Day(),
+					23, 59, 59, 0,
+					currentDay.Location(),
+				)
+
 				err := a.Store.AddAssignment(ctx, store.CreateAssignmentParams{
 					ID:             uuid.NewString(),
 					TemplateID:     template.ID,
 					AssignedUserID: template.Assignee,
 					Instructions:   template.Instructions,
-					DueDate:        currentDay,
+					DueDate:        dueDate,
 					ScheduledFor:   &currentDay,
 					CreatedAt:      time.Now(),
 					UpdatedAt:      time.Now(),
@@ -110,12 +118,19 @@ func (a *App) weeklyScheduler(ctx context.Context, horizonStart, horizonEnd time
 			weekEnd := weekStart.AddDate(0, 0, 7)
 			if !assignmentExistsForTemplateAndDateWindow(template.ID, weekStart, weekEnd, existingAssignments) {
 				assignmentDate := weekEnd.AddDate(0, 0, -1)
+				dueDate := time.Date(
+					assignmentDate.Year(),
+					assignmentDate.Month(),
+					assignmentDate.Day(),
+					23, 59, 59, 0,
+					assignmentDate.Location(),
+				)
 				err := a.Store.AddAssignment(ctx, store.CreateAssignmentParams{
 					ID:             uuid.NewString(),
 					TemplateID:     template.ID,
 					AssignedUserID: template.Assignee,
 					Instructions:   template.Instructions,
-					DueDate:        assignmentDate,
+					DueDate:        dueDate,
 					ScheduledFor:   nil,
 					CreatedAt:      time.Now(),
 					UpdatedAt:      time.Now(),
@@ -145,12 +160,19 @@ func (a *App) monthlyScheduler(ctx context.Context, horizonStart, horizonEnd tim
 			nextMonthStart := thisMonthStart.AddDate(0, 1, 0)
 			thisMonthEnd := nextMonthStart.AddDate(0, 0, -1)
 			if !assignmentExistsForTemplateAndDateWindow(template.ID, thisMonthStart, nextMonthStart, existingAssignments) {
+				dueDate := time.Date(
+					thisMonthEnd.Year(),
+					thisMonthEnd.Month(),
+					thisMonthEnd.Day(),
+					23, 59, 59, 0,
+					thisMonthEnd.Location(),
+				)
 				err := a.Store.AddAssignment(ctx, store.CreateAssignmentParams{
 					ID:             uuid.NewString(),
 					TemplateID:     template.ID,
 					AssignedUserID: template.Assignee,
 					Instructions:   template.Instructions,
-					DueDate:        thisMonthEnd,
+					DueDate:        dueDate,
 					ScheduledFor:   nil,
 					CreatedAt:      time.Now(),
 					UpdatedAt:      time.Now(),

@@ -30,11 +30,11 @@ export default function WeeklyPlanner({ toggleTaskComplete }) {
           (state) => state.showNotification
   )
 
-  const [currentWeek, setCurrentWeek] = useState(dayjs());
+  const [currentDay, setCurrentDay] = useState(dayjs());
   const [dragTask, setDragTask] = useState(null);
   
-  const weekStart = currentWeek.startOf("isoWeek");
-  const weekEnd = currentWeek.endOf("isoWeek");
+  const weekStart = currentDay.startOf("isoWeek");
+  const weekEnd = currentDay.endOf("isoWeek");
   const monthRange = {
     lower: weekStart.startOf("month").subtract(1,"day").endOf("day"),
     upper: weekEnd.endOf("month").add(1, "day").startOf("day")
@@ -69,12 +69,16 @@ export default function WeeklyPlanner({ toggleTaskComplete }) {
   );
 
   const handlePreviousWeek = () => {
-    setCurrentWeek(currentWeek.subtract(1, "week"))
+    setCurrentDay(currentDay.subtract(1, "week"))
   };
 
   const handleNextWeek = () => {
-    setCurrentWeek(currentWeek.add(1, "week"))
+    setCurrentDay(currentDay.add(1, "week"))
   };
+
+  const handleResetWeek = () => {
+    setCurrentDay(dayjs())
+  }
 
   const rescheduleMutation = useMutation({
     mutationFn: rescheduleTask,
@@ -86,17 +90,17 @@ export default function WeeklyPlanner({ toggleTaskComplete }) {
     },
 
     onError: (error) => {
-      handleRescheduleError(error)
+      handleRescheduleError(error);
     }
   })
 
   function handleRescheduleError(error) {
-    let parsed, message
+    let parsed, message;
     switch (error.status) {
       case 400:
-        parsed = parseApiError(error)
-        message = parsed.message[0].toUpperCase() + parsed.message.slice(1)
-        showErrorNotification(message)
+        parsed = parseApiError(error);
+        message = parsed.message[0].toUpperCase() + parsed.message.slice(1);
+        showErrorNotification(message);
     }
   }
 
@@ -162,12 +166,14 @@ export default function WeeklyPlanner({ toggleTaskComplete }) {
         setDragTask(null);
       }}
     >
-      <Stack spacing={4} direction="column" sx={{height: "100%"}}>
+      <Stack spacing={2} direction="column" sx={{height: "100%"}}>
         <PlannerToolbar 
           weekStart={weekStart} 
           weekEnd={weekEnd}
           onPreviousWeek={handlePreviousWeek}
           onNextWeek={handleNextWeek}
+          onResetWeek={handleResetWeek}
+          currentDay={currentDay}
         />
         <WeeklyGrid
           plannerDays = {plannerDays}

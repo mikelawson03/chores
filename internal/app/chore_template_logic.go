@@ -34,6 +34,11 @@ func (a *App) validateChoreTemplateRequest(ctx context.Context, name, cadence, a
 	if strings.TrimSpace(name) == "" {
 		return fmt.Errorf("%w: name required", domain.ErrInvalidRequest)
 	}
+
+	if len(name) > 50 {
+		return fmt.Errorf("%w: name must be 50 characters or fewer", domain.ErrInvalidRequest)
+	}
+
 	if strings.TrimSpace(cadence) == "" {
 		return fmt.Errorf("%w: cadence required", domain.ErrInvalidRequest)
 	}
