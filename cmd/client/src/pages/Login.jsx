@@ -1,11 +1,10 @@
 import { Box, Button, Stack, TextField, Typography } from "@mui/material"
-import { getMe, login } from "../api/users"
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/useAuth";
 
 
-export default function Login({ setUser }) {
+export default function Login() {
 
     const navigate = useNavigate();
     const { loginUser } = useAuth();

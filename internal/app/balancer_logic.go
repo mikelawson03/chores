@@ -121,7 +121,7 @@ func balanceUserLoads(assignments []store.BalancerAssignment, userLoads []userLo
 }
 
 func (a *App) RunBalancer(ctx context.Context) error {
-	_, err := CheckAdmin(ctx)
+	hhUser, err := CheckAdmin(ctx)
 	if err != nil {
 		return err
 	}
@@ -141,19 +141,19 @@ func (a *App) RunBalancer(ctx context.Context) error {
 	}
 
 	// Get all users
-	users, err := a.Store.GetAllUsers(ctx)
+	householdUsers, err := a.Store.GetHouseholdUsers(ctx, hhUser.HouseholdID)
 	if err != nil {
 		return err
 	}
-	if len(users) == 0 {
+	if len(householdUsers) == 0 {
 		return fmt.Errorf("%w: no users available for balancing", domain.ErrInvalidRequest)
 	}
 
 	// Create list of user workloads from retrieved users
 	var userLoads []userLoad
-	for _, user := range users {
+	for _, householdUser := range householdUsers {
 		userLoads = append(userLoads, userLoad{
-			userId: user.ID,
+			userId: householdUser.User.ID,
 		})
 	}
 

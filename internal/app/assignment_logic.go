@@ -43,7 +43,7 @@ func (a *App) validateTemplateID(ctx context.Context, templateID string) error {
 	return nil
 }
 
-func (a *App) validateAssignedUserID(ctx context.Context, user domain.User, assignedUserID string) error {
+func (a *App) validateAssignedUserID(ctx context.Context, user domain.HouseholdUser, assignedUserID string) error {
 
 	_, err := a.Store.GetUserByID(ctx, assignedUserID)
 	if errors.Is(err, domain.ErrNotFound) {
@@ -71,7 +71,7 @@ func validateDueDate(dueDate *time.Time) error {
 	return nil
 }
 
-func (a *App) validateCreateAssignment(ctx context.Context, user domain.User, req CreateAsssignmentRequest) error {
+func (a *App) validateCreateAssignment(ctx context.Context, user domain.HouseholdUser, req CreateAsssignmentRequest) error {
 	err := a.validateTemplateID(ctx, req.TemplateID)
 	if err != nil {
 		return err
@@ -94,7 +94,7 @@ func (a *App) validateCreateAssignment(ctx context.Context, user domain.User, re
 	return nil
 }
 
-func (a *App) validateEditAssignmentRequest(ctx context.Context, user domain.User, req EditAssignmentRequest, existing domain.Assignment) error {
+func (a *App) validateEditAssignmentRequest(ctx context.Context, user domain.HouseholdUser, req EditAssignmentRequest, existing domain.Assignment) error {
 	if !auth.CanEditAssignment(user, existing) {
 		return domain.ErrForbidden
 	}
@@ -270,7 +270,7 @@ func (a *App) GetAssignmentsByUserID(ctx context.Context, id string) ([]domain.A
 		return []domain.Assignment{}, fmt.Errorf("%w: may only retrieve own assignments", domain.ErrForbidden)
 	}
 
-	_, err = a.Store.GetUserByID(ctx, id)
+	_, err = a.Store.GetHouseholdUserByID(ctx, id, user.HouseholdID)
 	if err != nil {
 		return []domain.Assignment{}, err
 	}

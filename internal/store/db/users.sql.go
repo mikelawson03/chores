@@ -7,21 +7,48 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"time"
 )
 
-const createUser = `-- name: CreateUser :one
-
-INSERT INTO users (id, username, password_hash, role, first_name, created_at, updated_at)
+const addUserToHousehold = `-- name: AddUserToHousehold :exec
+INSERT INTO household_users (household_id, user_id, role, display_name, color_option, joined_at, is_active)
 VALUES (?, ?, ?, ?, ?, ?, ?)
-RETURNING id, username, first_name, password_hash, role, created_at, updated_at
+`
+
+type AddUserToHouseholdParams struct {
+	HouseholdID string
+	UserID      string
+	Role        string
+	DisplayName sql.NullString
+	ColorOption int64
+	JoinedAt    time.Time
+	IsActive    bool
+}
+
+func (q *Queries) AddUserToHousehold(ctx context.Context, arg AddUserToHouseholdParams) error {
+	_, err := q.db.ExecContext(ctx, addUserToHousehold,
+		arg.HouseholdID,
+		arg.UserID,
+		arg.Role,
+		arg.DisplayName,
+		arg.ColorOption,
+		arg.JoinedAt,
+		arg.IsActive,
+	)
+	return err
+}
+
+const createUser = `-- name: CreateUser :one
+INSERT INTO users (id, username, password_hash, first_name, created_at, updated_at)
+VALUES (?, ?, ?, ?, ?, ?)
+RETURNING id, username, first_name, password_hash, created_at, updated_at
 `
 
 type CreateUserParams struct {
 	ID           string
 	Username     string
 	PasswordHash string
-	Role         string
 	FirstName    string
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
@@ -32,7 +59,6 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		arg.ID,
 		arg.Username,
 		arg.PasswordHash,
-		arg.Role,
 		arg.FirstName,
 		arg.CreatedAt,
 		arg.UpdatedAt,
@@ -43,7 +69,6 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.Username,
 		&i.FirstName,
 		&i.PasswordHash,
-		&i.Role,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -63,20 +88,60 @@ func (q *Queries) DeleteUser(ctx context.Context, id string) (string, error) {
 	return id_2, err
 }
 
+const editHouseholdUser = `-- name: EditHouseholdUser :one
+UPDATE household_users
+SET role = ?,
+display_name = ?,
+color_option = ?,
+is_active = ?
+WHERE user_id = ?
+AND household_id = ?
+RETURNING household_id, user_id, role, display_name, color_option, joined_at, is_active
+`
+
+type EditHouseholdUserParams struct {
+	Role        string
+	DisplayName sql.NullString
+	ColorOption int64
+	IsActive    bool
+	UserID      string
+	HouseholdID string
+}
+
+func (q *Queries) EditHouseholdUser(ctx context.Context, arg EditHouseholdUserParams) (HouseholdUser, error) {
+	row := q.db.QueryRowContext(ctx, editHouseholdUser,
+		arg.Role,
+		arg.DisplayName,
+		arg.ColorOption,
+		arg.IsActive,
+		arg.UserID,
+		arg.HouseholdID,
+	)
+	var i HouseholdUser
+	err := row.Scan(
+		&i.HouseholdID,
+		&i.UserID,
+		&i.Role,
+		&i.DisplayName,
+		&i.ColorOption,
+		&i.JoinedAt,
+		&i.IsActive,
+	)
+	return i, err
+}
+
 const editUser = `-- name: EditUser :one
 UPDATE users
 SET username = ?,
 first_name =?,
-role = ?,
 updated_at = ?
 WHERE id = ?
-RETURNING id, username, first_name, password_hash, role, created_at, updated_at
+RETURNING id, username, first_name, password_hash, created_at, updated_at
 `
 
 type EditUserParams struct {
 	Username  string
 	FirstName string
-	Role      string
 	UpdatedAt time.Time
 	ID        string
 }
@@ -85,7 +150,6 @@ func (q *Queries) EditUser(ctx context.Context, arg EditUserParams) (User, error
 	row := q.db.QueryRowContext(ctx, editUser,
 		arg.Username,
 		arg.FirstName,
-		arg.Role,
 		arg.UpdatedAt,
 		arg.ID,
 	)
@@ -95,45 +159,140 @@ func (q *Queries) EditUser(ctx context.Context, arg EditUserParams) (User, error
 		&i.Username,
 		&i.FirstName,
 		&i.PasswordHash,
-		&i.Role,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
 	return i, err
 }
 
-const getAllUsers = `-- name: GetAllUsers :many
-SELECT id,
-    username,
-    role,
-    first_name,
-    created_at,
-    updated_at
+const getHashForUsername = `-- name: GetHashForUsername :one
+SELECT id, username, first_name, password_hash, created_at, updated_at
 FROM users
+WHERE username = ?
 `
 
-type GetAllUsersRow struct {
-	ID        string
-	Username  string
-	Role      string
-	FirstName string
-	CreatedAt time.Time
-	UpdatedAt time.Time
+func (q *Queries) GetHashForUsername(ctx context.Context, username string) (User, error) {
+	row := q.db.QueryRowContext(ctx, getHashForUsername, username)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.FirstName,
+		&i.PasswordHash,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
-func (q *Queries) GetAllUsers(ctx context.Context) ([]GetAllUsersRow, error) {
-	rows, err := q.db.QueryContext(ctx, getAllUsers)
+const getHouseholdUserByID = `-- name: GetHouseholdUserByID :one
+SELECT
+    hu.household_id,
+    hu.role,
+    hu.display_name,
+    hu.color_option,
+    hu.joined_at,
+    hu.is_active,
+    u.id,
+    u.username,
+    u.first_name,
+    u.created_at,
+    u.updated_at
+FROM household_users hu
+JOIN users u ON u.id = hu.user_id
+WHERE hu.household_id = ?
+AND hu.user_id = ?
+`
+
+type GetHouseholdUserByIDParams struct {
+	HouseholdID string
+	UserID      string
+}
+
+type GetHouseholdUserByIDRow struct {
+	HouseholdID string
+	Role        string
+	DisplayName sql.NullString
+	ColorOption int64
+	JoinedAt    time.Time
+	IsActive    bool
+	ID          string
+	Username    string
+	FirstName   string
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+}
+
+func (q *Queries) GetHouseholdUserByID(ctx context.Context, arg GetHouseholdUserByIDParams) (GetHouseholdUserByIDRow, error) {
+	row := q.db.QueryRowContext(ctx, getHouseholdUserByID, arg.HouseholdID, arg.UserID)
+	var i GetHouseholdUserByIDRow
+	err := row.Scan(
+		&i.HouseholdID,
+		&i.Role,
+		&i.DisplayName,
+		&i.ColorOption,
+		&i.JoinedAt,
+		&i.IsActive,
+		&i.ID,
+		&i.Username,
+		&i.FirstName,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getHouseholdUsers = `-- name: GetHouseholdUsers :many
+SELECT 
+    hu.household_id,
+    hu.role,
+    hu.display_name,
+    hu.color_option,
+    hu.joined_at,
+    hu.is_active,
+    u.id,
+    u.username,
+    u.first_name,
+    u.created_at,
+    u.updated_at
+FROM household_users hu
+JOIN users u ON u.id = hu.user_id
+WHERE hu.household_id = ?
+ORDER BY hu.joined_at, u.id
+`
+
+type GetHouseholdUsersRow struct {
+	HouseholdID string
+	Role        string
+	DisplayName sql.NullString
+	ColorOption int64
+	JoinedAt    time.Time
+	IsActive    bool
+	ID          string
+	Username    string
+	FirstName   string
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+}
+
+func (q *Queries) GetHouseholdUsers(ctx context.Context, householdID string) ([]GetHouseholdUsersRow, error) {
+	rows, err := q.db.QueryContext(ctx, getHouseholdUsers, householdID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []GetAllUsersRow
+	var items []GetHouseholdUsersRow
 	for rows.Next() {
-		var i GetAllUsersRow
+		var i GetHouseholdUsersRow
 		if err := rows.Scan(
+			&i.HouseholdID,
+			&i.Role,
+			&i.DisplayName,
+			&i.ColorOption,
+			&i.JoinedAt,
+			&i.IsActive,
 			&i.ID,
 			&i.Username,
-			&i.Role,
 			&i.FirstName,
 			&i.CreatedAt,
 			&i.UpdatedAt,
@@ -151,31 +310,9 @@ func (q *Queries) GetAllUsers(ctx context.Context) ([]GetAllUsersRow, error) {
 	return items, nil
 }
 
-const getHashForUsername = `-- name: GetHashForUsername :one
-SELECT id, username, first_name, password_hash, role, created_at, updated_at
-FROM users
-WHERE username = ?
-`
-
-func (q *Queries) GetHashForUsername(ctx context.Context, username string) (User, error) {
-	row := q.db.QueryRowContext(ctx, getHashForUsername, username)
-	var i User
-	err := row.Scan(
-		&i.ID,
-		&i.Username,
-		&i.FirstName,
-		&i.PasswordHash,
-		&i.Role,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
-}
-
 const getUserByID = `-- name: GetUserByID :one
 SELECT id,
     username,
-    role,
     first_name,
     created_at,
     updated_at
@@ -186,7 +323,6 @@ WHERE id = ?
 type GetUserByIDRow struct {
 	ID        string
 	Username  string
-	Role      string
 	FirstName string
 	CreatedAt time.Time
 	UpdatedAt time.Time
@@ -198,7 +334,6 @@ func (q *Queries) GetUserByID(ctx context.Context, id string) (GetUserByIDRow, e
 	err := row.Scan(
 		&i.ID,
 		&i.Username,
-		&i.Role,
 		&i.FirstName,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -209,7 +344,6 @@ func (q *Queries) GetUserByID(ctx context.Context, id string) (GetUserByIDRow, e
 const getUserByUsername = `-- name: GetUserByUsername :one
 SELECT id,
     username,
-    role,
     first_name,
     created_at,
     updated_at
@@ -220,7 +354,6 @@ WHERE username = ?
 type GetUserByUsernameRow struct {
 	ID        string
 	Username  string
-	Role      string
 	FirstName string
 	CreatedAt time.Time
 	UpdatedAt time.Time
@@ -232,7 +365,6 @@ func (q *Queries) GetUserByUsername(ctx context.Context, username string) (GetUs
 	err := row.Scan(
 		&i.ID,
 		&i.Username,
-		&i.Role,
 		&i.FirstName,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -246,6 +378,41 @@ SELECT COUNT(*) FROM users
 
 func (q *Queries) GetUserCount(ctx context.Context) (int64, error) {
 	row := q.db.QueryRowContext(ctx, getUserCount)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const householdColorOptionInUse = `-- name: HouseholdColorOptionInUse :one
+SELECT EXISTS (
+    SELECT 1
+    FROM household_users
+    WHERE household_id = ?
+    AND color_option = ?
+    AnD user_id != ?
+)
+`
+
+type HouseholdColorOptionInUseParams struct {
+	HouseholdID string
+	ColorOption int64
+	UserID      string
+}
+
+func (q *Queries) HouseholdColorOptionInUse(ctx context.Context, arg HouseholdColorOptionInUseParams) (bool, error) {
+	row := q.db.QueryRowContext(ctx, householdColorOptionInUse, arg.HouseholdID, arg.ColorOption, arg.UserID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
+const householdUsersCount = `-- name: HouseholdUsersCount :one
+SELECT COUNT(*)
+FROM household_users
+`
+
+func (q *Queries) HouseholdUsersCount(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, householdUsersCount)
 	var count int64
 	err := row.Scan(&count)
 	return count, err

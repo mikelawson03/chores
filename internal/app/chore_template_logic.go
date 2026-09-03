@@ -30,7 +30,7 @@ func (a *App) choreNameExists(ctx context.Context, name, id string) error {
 	return fmt.Errorf("%w: chore template name already exists", domain.ErrConflict)
 }
 
-func (a *App) validateChoreTemplateRequest(ctx context.Context, name, cadence, assignee, id string, duration *int) error {
+func (a *App) validateChoreTemplateRequest(ctx context.Context, name, cadence, assignee, id, householdId string, duration *int) error {
 	if strings.TrimSpace(name) == "" {
 		return fmt.Errorf("%w: name required", domain.ErrInvalidRequest)
 	}
@@ -53,7 +53,7 @@ func (a *App) validateChoreTemplateRequest(ctx context.Context, name, cadence, a
 	}
 
 	if assignee != "" {
-		err := a.ValidateChoreTemplateAssignee(ctx, assignee)
+		err := a.ValidateChoreTemplateAssignee(ctx, assignee, householdId)
 		if err != nil {
 			return err
 		}
@@ -66,8 +66,8 @@ func (a *App) validateChoreTemplateRequest(ctx context.Context, name, cadence, a
 	return nil
 }
 
-func (a *App) ValidateChoreTemplateAssignee(ctx context.Context, assigneeID string) error {
-	_, err := a.Store.GetUserByID(ctx, assigneeID)
+func (a *App) ValidateChoreTemplateAssignee(ctx context.Context, assigneeID, householdId string) error {
+	_, err := a.Store.GetHouseholdUserByID(ctx, assigneeID, householdId)
 	if errors.Is(err, domain.ErrNotFound) {
 		return fmt.Errorf("%w: assigned user not found", domain.ErrInvalidRequest)
 	}
@@ -107,12 +107,12 @@ func (a *App) GetChoreTemplateByID(ctx context.Context, id string) (domain.Chore
 }
 
 func (a *App) CreateChoreTemplate(ctx context.Context, name, cadence, assignee, instructions string, duration *int) (domain.ChoreTemplate, error) {
-	_, err := CheckAdmin(ctx)
+	hhUser, err := CheckAdmin(ctx)
 	if err != nil {
 		return domain.ChoreTemplate{}, err
 	}
 
-	err = a.validateChoreTemplateRequest(ctx, name, cadence, assignee, "", duration)
+	err = a.validateChoreTemplateRequest(ctx, name, cadence, assignee, "", hhUser.HouseholdID, duration)
 	if err != nil {
 		return domain.ChoreTemplate{}, err
 	}
@@ -139,7 +139,7 @@ func (a *App) CreateChoreTemplate(ctx context.Context, name, cadence, assignee, 
 }
 
 func (a *App) EditChoreTemplate(ctx context.Context, id, name, cadence, assignee, instructions string, duration *int) (domain.ChoreTemplate, error) {
-	_, err := CheckAdmin(ctx)
+	hhUser, err := CheckAdmin(ctx)
 	if err != nil {
 		return domain.ChoreTemplate{}, err
 	}
@@ -149,7 +149,7 @@ func (a *App) EditChoreTemplate(ctx context.Context, id, name, cadence, assignee
 		return domain.ChoreTemplate{}, fmt.Errorf("%w: chore template", domain.ErrNotFound)
 	}
 
-	err = a.validateChoreTemplateRequest(ctx, name, cadence, assignee, id, duration)
+	err = a.validateChoreTemplateRequest(ctx, name, cadence, assignee, id, hhUser.HouseholdID, duration)
 	if err != nil {
 		return domain.ChoreTemplate{}, err
 	}

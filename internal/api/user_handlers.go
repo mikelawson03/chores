@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/mikelawson03/chores/internal/app"
 	"github.com/mikelawson03/chores/internal/auth"
 	"github.com/mikelawson03/chores/internal/domain"
 )
@@ -13,7 +14,6 @@ import (
 type UserRequest struct {
 	Username  string `json:"username"`
 	Password  string `json:"password"`
-	Role      string `json:"role"`
 	FirstName string `json:"firstName"`
 }
 
@@ -29,9 +29,16 @@ type UserResponse struct {
 	Role      string `json:"role"`
 }
 
+type EditHouseholdUserRequest struct {
+	Role        string `json:"role"`
+	DisplayName string `json:"displayName"`
+	ColorOption int    `json:"colorOption"`
+	IsActive    bool   `json:"isActive"`
+	HouseholdId string `json:"householdId"`
+}
+
 type LoginResponse struct {
-	User  UserResponse `json:"user"`
-	Token string       `json:"token"`
+	Token string `json:"token"`
 }
 
 type ChangePasswordRequest struct {
@@ -55,7 +62,7 @@ func CreateUserRequest(r *http.Request) (*UserRequest, error) {
 	return req, nil
 }
 
-func (cfg *apiCfg) handlerAddUser(w http.ResponseWriter, r *http.Request) {
+func (cfg *apiCfg) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	userReq, err := CreateUserRequest(r)
 	if err != nil {
@@ -63,7 +70,7 @@ func (cfg *apiCfg) handlerAddUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := cfg.App.CreateNewUser(ctx, userReq.Username, userReq.Role, userReq.FirstName, userReq.Password)
+	user, err := cfg.App.CreateNewUser(ctx, userReq.Username, userReq.FirstName, userReq.Password)
 	if err != nil {
 		RespondWithError(w, err)
 		return
@@ -72,9 +79,9 @@ func (cfg *apiCfg) handlerAddUser(w http.ResponseWriter, r *http.Request) {
 	RespondWithJSON(w, http.StatusCreated, user)
 }
 
-func (cfg *apiCfg) handlerGetUsers(w http.ResponseWriter, r *http.Request) {
+func (cfg *apiCfg) handlerGetHouseholdUsers(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	users, err := cfg.App.GetAllUsers(ctx)
+	users, err := cfg.App.GetHouseholdUsers(ctx)
 	if err != nil {
 		RespondWithError(w, err)
 		return
@@ -110,7 +117,7 @@ func (cfg *apiCfg) handlerEditUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := cfg.App.EditUser(ctx, id, updateUser.Username, updateUser.Role, updateUser.FirstName)
+	user, err := cfg.App.EditUser(ctx, id, updateUser.Username, updateUser.FirstName)
 
 	if err != nil {
 		RespondWithError(w, err)
@@ -118,6 +125,38 @@ func (cfg *apiCfg) handlerEditUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	RespondWithJSON(w, http.StatusOK, user)
+}
+
+func (cfg *apiCfg) handlerEditHouseholdUser(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	householdId := r.PathValue("hhid")
+	userId := r.PathValue("uid")
+
+	d := json.NewDecoder(r.Body)
+	req := &EditHouseholdUserRequest{}
+
+	err := d.Decode(req)
+	if err != nil {
+		RespondWithError(w, domain.ErrInvalidRequest)
+		return
+	}
+
+	user, err := cfg.App.EditHouseholdUser(ctx, app.HouseholdUserRequest{
+		Role:        req.Role,
+		DisplayName: req.DisplayName,
+		ColorOption: req.ColorOption,
+		IsActive:    req.IsActive,
+		UserId:      userId,
+		HouseholdId: householdId,
+	})
+
+	if err != nil {
+		RespondWithError(w, err)
+		return
+	}
+
+	RespondWithJSON(w, http.StatusOK, user)
+
 }
 
 func (cfg *apiCfg) handlerDeleteUser(w http.ResponseWriter, r *http.Request) {
@@ -150,12 +189,6 @@ func (cfg *apiCfg) handlerLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	resp := LoginResponse{
-		User: UserResponse{
-			ID:        result.User.ID,
-			Username:  result.User.Username,
-			FirstName: result.User.FirstName,
-			Role:      string(result.User.Role),
-		},
 		Token: result.Token,
 	}
 

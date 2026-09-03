@@ -193,18 +193,18 @@ func (a *App) monthlyScheduler(ctx context.Context, horizonStart, horizonEnd tim
 }
 
 func (a *App) RunScheduler(ctx context.Context) error {
-	_, err := CheckAdmin(ctx)
+	hhUser, err := CheckAdmin(ctx)
 	if err != nil {
 		return err
 	}
 
 	horizonStart, horizonEnd := a.getHorizonWindow()
 
-	users, err := a.Store.GetAllUsers(ctx)
+	householdUsers, err := a.Store.GetHouseholdUsers(ctx, hhUser.HouseholdID)
 	if err != nil {
 		return err
 	}
-	if len(users) == 0 {
+	if len(householdUsers) == 0 {
 		return fmt.Errorf("%w: no users available for scheduling", domain.ErrInvalidRequest)
 	}
 

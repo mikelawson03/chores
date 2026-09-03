@@ -63,14 +63,14 @@ func (a *App) getMonthlyPlanningEnd(horizonStart, horizonEnd time.Time) time.Tim
 	return nextMonthStart.AddDate(0, 1, 0)
 }
 
-func CheckAdmin(ctx context.Context) (domain.User, error) {
+func CheckAdmin(ctx context.Context) (domain.HouseholdUser, error) {
 	user, err := auth.AuthenticatedUser(ctx)
 	if err != nil {
-		return domain.User{}, err
+		return domain.HouseholdUser{}, err
 	}
 
 	if user.Role != domain.RoleAdmin {
-		return domain.User{}, domain.ErrForbidden
+		return domain.HouseholdUser{}, domain.ErrForbidden
 	}
 
 	return user, nil
@@ -98,7 +98,6 @@ func (a *App) Bootstrap(ctx context.Context, username, firstName, password strin
 	user, err := a.Store.CreateUser(ctx, store.CreateUserParams{
 		ID:        uuid.NewString(),
 		Username:  username,
-		Role:      domain.RoleAdmin,
 		HashedPW:  hashedPW,
 		FirstName: firstName,
 		CreatedAt: time.Now(),

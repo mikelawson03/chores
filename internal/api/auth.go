@@ -26,7 +26,7 @@ func (cfg *apiCfg) middlewareAuth(next http.Handler) http.Handler {
 			return
 		}
 
-		user, err := cfg.App.Store.GetUserByID(ctx, uid)
+		user, err := cfg.App.Store.GetHouseholdUserByID(ctx, domain.DefaultHouseholdID, uid)
 		if errors.Is(err, domain.ErrNotFound) {
 			err = fmt.Errorf("%w: user not found", domain.ErrUnauthorized)
 			RespondWithError(w, err)

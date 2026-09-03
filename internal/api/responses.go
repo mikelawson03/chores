@@ -39,12 +39,15 @@ func RespondWithError(w http.ResponseWriter, err error) {
 		errors.Is(err, domain.ErrInvalidCadence),
 		errors.Is(err, domain.ErrPasswordRequired),
 		errors.Is(err, domain.ErrPasswordTooShort),
+		errors.Is(err, domain.ErrInvalidColorOption),
+		errors.Is(err, domain.ErrInvalidDisplayName),
 		errors.Is(err, domain.ErrInvalidRequest):
 		RespondWithJSON(w, http.StatusBadRequest, errorResponse{
 			Error: err.Error(),
 		})
 
-	case errors.Is(err, domain.ErrConflict):
+	case errors.Is(err, domain.ErrConflict),
+		errors.Is(err, domain.ErrHouseholdFull):
 		RespondWithJSON(w, http.StatusConflict, errorResponse{
 			Error: err.Error(),
 		})

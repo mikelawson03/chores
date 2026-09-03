@@ -13,7 +13,6 @@ import (
 type CreateUserParams struct {
 	ID        string
 	Username  string
-	Role      domain.Role
 	HashedPW  string
 	FirstName string
 	CreatedAt time.Time
@@ -23,7 +22,6 @@ type CreateUserParams struct {
 type EditUserParams struct {
 	ID        string
 	Username  string
-	Role      domain.Role
 	FirstName string
 	UpdatedAt time.Time
 }
@@ -33,15 +31,90 @@ type LoginUser struct {
 	PasswordHash string
 }
 
+type EditHouseholdUserParams struct {
+	Role        domain.Role
+	DisplayName string
+	ColorOption int
+	IsActive    bool
+	UserId      string
+	HouseholdId string
+}
+
+type AddUserToHouseholdParams struct {
+	HouseholdId string
+	UserId      string
+	Role        string
+	DisplayName string
+	ColorOption int
+	JoinedAt    time.Time
+	IsActive    bool
+}
+
 func dbUserToDomainUser(user db.User) domain.User {
 	return domain.User{
 		ID:        user.ID,
 		Username:  user.Username,
 		FirstName: user.FirstName,
-		Role:      domain.Role(user.Role),
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
 	}
+}
+
+func mapGetHouseholdUsersRow(user db.GetHouseholdUsersRow) (domain.HouseholdUser, error) {
+
+	role := domain.Role(user.Role)
+	if !role.IsValid() {
+		return domain.HouseholdUser{}, domain.ErrInvalidRole
+	}
+
+	displayName := user.FirstName
+	if user.DisplayName.Valid {
+		displayName = user.DisplayName.String
+	}
+
+	return domain.HouseholdUser{
+		HouseholdID: user.HouseholdID,
+		Role:        role,
+		DisplayName: displayName,
+		ColorOption: int(user.ColorOption),
+		JoinedAt:    user.JoinedAt,
+		IsActive:    user.IsActive,
+		User: domain.User{
+			ID:        user.ID,
+			Username:  user.Username,
+			FirstName: user.FirstName,
+			CreatedAt: user.CreatedAt,
+			UpdatedAt: user.UpdatedAt,
+		},
+	}, nil
+}
+
+func mapGetHouseholdUserByIdRow(user db.GetHouseholdUserByIDRow) (domain.HouseholdUser, error) {
+	role := domain.Role(user.Role)
+	if !role.IsValid() {
+		return domain.HouseholdUser{}, domain.ErrInvalidRole
+	}
+
+	displayName := user.FirstName
+	if user.DisplayName.Valid {
+		displayName = user.DisplayName.String
+	}
+
+	return domain.HouseholdUser{
+		HouseholdID: user.HouseholdID,
+		Role:        role,
+		DisplayName: displayName,
+		ColorOption: int(user.ColorOption),
+		JoinedAt:    user.JoinedAt,
+		IsActive:    user.IsActive,
+		User: domain.User{
+			ID:        user.ID,
+			Username:  user.Username,
+			FirstName: user.FirstName,
+			CreatedAt: user.CreatedAt,
+			UpdatedAt: user.UpdatedAt,
+		},
+	}, nil
 }
 
 func (s *Store) CreateUser(ctx context.Context, req CreateUserParams) (domain.User, error) {
@@ -49,7 +122,6 @@ func (s *Store) CreateUser(ctx context.Context, req CreateUserParams) (domain.Us
 		ID:           req.ID,
 		Username:     req.Username,
 		PasswordHash: req.HashedPW,
-		Role:         string(req.Role),
 		FirstName:    req.FirstName,
 		CreatedAt:    req.CreatedAt,
 		UpdatedAt:    req.UpdatedAt,
@@ -70,16 +142,10 @@ func (s *Store) GetUserByUsername(ctx context.Context, username string) (domain.
 		return domain.User{}, err
 	}
 
-	role := domain.Role(res.Role)
-	if !role.IsValid() {
-		return domain.User{}, domain.ErrInvalidRole
-	}
-
 	return domain.User{
 		ID:        res.ID,
 		Username:  res.Username,
 		FirstName: res.FirstName,
-		Role:      domain.Role(res.Role),
 		CreatedAt: res.CreatedAt,
 		UpdatedAt: res.UpdatedAt,
 	}, nil
@@ -96,53 +162,63 @@ func (s *Store) GetUserByID(ctx context.Context, id string) (domain.User, error)
 		return domain.User{}, err
 	}
 
-	role := domain.Role(res.Role)
-	if !role.IsValid() {
-		return domain.User{}, domain.ErrInvalidRole
-	}
-
 	return domain.User{
 		ID:        res.ID,
 		Username:  res.Username,
 		FirstName: res.FirstName,
-		Role:      domain.Role(res.Role),
 		CreatedAt: res.CreatedAt,
 		UpdatedAt: res.UpdatedAt,
 	}, nil
 }
 
-func (s *Store) GetAllUsers(ctx context.Context) ([]domain.User, error) {
-	var users []domain.User
+func (s *Store) GetHouseholdUsers(ctx context.Context, householdId string) ([]domain.HouseholdUser, error) {
+	var householdUsers []domain.HouseholdUser
 
-	res, err := s.Queries.GetAllUsers(ctx)
+	res, err := s.Queries.GetHouseholdUsers(ctx, householdId)
 
 	if err != nil {
-		return []domain.User{}, err
+		return []domain.HouseholdUser{}, err
 	}
 
 	for _, user := range res {
-		role := domain.Role(user.Role)
-		if !role.IsValid() {
-			return []domain.User{}, domain.ErrInvalidRole
+
+		hhUser, err := mapGetHouseholdUsersRow(user)
+		if err != nil {
+			return []domain.HouseholdUser{}, err
 		}
-		users = append(users, domain.User{
-			ID:        user.ID,
-			Username:  user.Username,
-			FirstName: user.FirstName,
-			Role:      role,
-			CreatedAt: user.CreatedAt,
-			UpdatedAt: user.UpdatedAt,
-		})
+
+		householdUsers = append(householdUsers, hhUser)
 	}
 
-	return users, nil
+	return householdUsers, nil
+}
+
+func (s *Store) GetHouseholdUserByID(ctx context.Context, householdId, userId string) (domain.HouseholdUser, error) {
+	res, err := s.Queries.GetHouseholdUserByID(ctx, db.GetHouseholdUserByIDParams{
+		HouseholdID: householdId,
+		UserID:      userId,
+	})
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return domain.HouseholdUser{}, domain.ErrNotFound
+	}
+
+	if err != nil {
+		return domain.HouseholdUser{}, err
+	}
+
+	hhUser, err := mapGetHouseholdUserByIdRow(res)
+	if err != nil {
+		return domain.HouseholdUser{}, err
+	}
+
+	return hhUser, nil
 }
 
 func (s *Store) EditUser(ctx context.Context, req EditUserParams) (domain.User, error) {
 	res, err := s.Queries.EditUser(ctx, db.EditUserParams{
 		Username:  req.Username,
 		FirstName: req.FirstName,
-		Role:      string(req.Role),
 		UpdatedAt: req.UpdatedAt,
 		ID:        req.ID,
 	})
@@ -154,6 +230,55 @@ func (s *Store) EditUser(ctx context.Context, req EditUserParams) (domain.User, 
 	user := dbUserToDomainUser(res)
 
 	return user, nil
+}
+
+func (s *Store) AddUserToHousehold(ctx context.Context, req AddUserToHouseholdParams) (domain.HouseholdUser, error) {
+	err := s.Queries.AddUserToHousehold(ctx, db.AddUserToHouseholdParams{
+		HouseholdID: req.HouseholdId,
+		UserID:      req.UserId,
+		Role:        string(req.Role),
+		DisplayName: stringToNullString(req.DisplayName),
+		ColorOption: int64(req.ColorOption),
+		JoinedAt:    req.JoinedAt,
+		IsActive:    req.IsActive,
+	})
+
+	if err != nil {
+		return domain.HouseholdUser{}, err
+	}
+
+	hhUser, err := s.GetHouseholdUserByID(ctx, req.HouseholdId, req.UserId)
+	if err != nil {
+		return domain.HouseholdUser{}, err
+	}
+
+	return hhUser, nil
+}
+
+func (s *Store) EditHouseholdUser(ctx context.Context, req EditHouseholdUserParams) (domain.HouseholdUser, error) {
+	_, err := s.Queries.EditHouseholdUser(ctx, db.EditHouseholdUserParams{
+		Role:        string(req.Role),
+		DisplayName: stringToNullString(req.DisplayName),
+		ColorOption: int64(req.ColorOption),
+		IsActive:    req.IsActive,
+		UserID:      req.UserId,
+		HouseholdID: req.HouseholdId,
+	})
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return domain.HouseholdUser{}, domain.ErrNotFound
+	}
+
+	if err != nil {
+		return domain.HouseholdUser{}, err
+	}
+
+	hhUser, err := s.GetHouseholdUserByID(ctx, req.HouseholdId, req.UserId)
+	if err != nil {
+		return domain.HouseholdUser{}, err
+	}
+
+	return hhUser, nil
 }
 
 func (s *Store) DeleteUser(ctx context.Context, id string) error {
@@ -187,18 +312,12 @@ func (s *Store) GetUserWithHashedPW(ctx context.Context, username string) (Login
 		return LoginUser{}, err
 	}
 
-	role := domain.Role(res.Role)
-	if !role.IsValid() {
-		return LoginUser{}, domain.ErrInvalidRole
-	}
-
 	user := LoginUser{
 		PasswordHash: res.PasswordHash,
 		User: domain.User{
 			ID:        res.ID,
 			Username:  res.Username,
 			FirstName: res.FirstName,
-			Role:      role,
 			CreatedAt: res.CreatedAt,
 			UpdatedAt: res.UpdatedAt,
 		},
@@ -218,4 +337,16 @@ func (s *Store) ChangePassword(ctx context.Context, id, newPWHash string) error 
 	}
 
 	return nil
+}
+
+func (s *Store) HouseholdColorOptionInUse(ctx context.Context, householdId, userId string, colorOption int) (bool, error) {
+	return s.Queries.HouseholdColorOptionInUse(ctx, db.HouseholdColorOptionInUseParams{
+		HouseholdID: householdId,
+		ColorOption: int64(colorOption),
+		UserID:      userId,
+	})
+}
+
+func (s *Store) HouseholdUsersCount(ctx context.Context) (int64, error) {
+	return s.Queries.HouseholdUsersCount(ctx)
 }

@@ -10,20 +10,20 @@ type contextKey string
 
 const userContextKey contextKey = "user"
 
-func WithUser(ctx context.Context, user domain.User) context.Context {
+func WithUser(ctx context.Context, user domain.HouseholdUser) context.Context {
 
 	return context.WithValue(ctx, userContextKey, user)
 }
 
-func UserFromContext(ctx context.Context) (domain.User, bool) {
-	user, ok := ctx.Value(userContextKey).(domain.User)
+func UserFromContext(ctx context.Context) (domain.HouseholdUser, bool) {
+	user, ok := ctx.Value(userContextKey).(domain.HouseholdUser)
 	return user, ok
 }
 
-func AuthenticatedUser(ctx context.Context) (domain.User, error) {
+func AuthenticatedUser(ctx context.Context) (domain.HouseholdUser, error) {
 	user, ok := UserFromContext(ctx)
 	if !ok {
-		return domain.User{}, domain.ErrUnauthorized
+		return domain.HouseholdUser{}, domain.ErrUnauthorized
 	}
 
 	return user, nil

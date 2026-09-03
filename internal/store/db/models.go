@@ -36,12 +36,26 @@ type ChoreTemplate struct {
 	UpdatedAt    time.Time
 }
 
+type Household struct {
+	ID   string
+	Name sql.NullString
+}
+
+type HouseholdUser struct {
+	HouseholdID string
+	UserID      string
+	Role        string
+	DisplayName sql.NullString
+	ColorOption int64
+	JoinedAt    time.Time
+	IsActive    bool
+}
+
 type User struct {
 	ID           string
 	Username     string
 	FirstName    string
 	PasswordHash string
-	Role         string
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
 }

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/alexedwards/argon2id"
 	"github.com/google/uuid"
@@ -16,8 +17,16 @@ import (
 )
 
 type LoginResult struct {
-	User  domain.User
 	Token string
+}
+
+type HouseholdUserRequest struct {
+	Role        string
+	DisplayName string
+	ColorOption int
+	IsActive    bool
+	UserId      string
+	HouseholdId string
 }
 
 func hashPassword(password string) (string, error) {
@@ -51,7 +60,7 @@ func (a *App) UsernameExists(ctx context.Context, username string) (bool, error)
 
 }
 
-func (a *App) validateNewUserRequest(ctx context.Context, username, role, firstName, password string) error {
+func (a *App) validateNewUserRequest(ctx context.Context, username, firstName, password string) error {
 	if username == "" {
 		return fmt.Errorf("%w: username required", domain.ErrInvalidRequest)
 	}
@@ -65,11 +74,6 @@ func (a *App) validateNewUserRequest(ctx context.Context, username, role, firstN
 		return fmt.Errorf("%w: username already exists", domain.ErrInvalidRequest)
 	}
 
-	userRole := domain.Role(role)
-	if !userRole.IsValid() {
-		return domain.ErrInvalidRole
-	}
-
 	if firstName == "" {
 		return fmt.Errorf("%w: must provide first name", domain.ErrInvalidRequest)
 	}
@@ -81,12 +85,7 @@ func (a *App) validateNewUserRequest(ctx context.Context, username, role, firstN
 	return nil
 }
 
-func (a *App) validateEditUserRequest(ctx context.Context, newUsername, role, firstName string, user, existing domain.User) error {
-	userRole := domain.Role(role)
-	if !userRole.IsValid() {
-		return domain.ErrInvalidRole
-	}
-
+func (a *App) validateEditUserRequest(ctx context.Context, newUsername, firstName string, user, existing domain.User) error {
 	if !auth.CanEditUser(user, existing.ID) {
 		return fmt.Errorf("%w: may not edit user", domain.ErrForbidden)
 	}
@@ -104,20 +103,58 @@ func (a *App) validateEditUserRequest(ctx context.Context, newUsername, role, fi
 		return fmt.Errorf("%w: must provide first name", domain.ErrInvalidRequest)
 	}
 
-	if userRole != existing.Role && !auth.CanEditRole(user) {
-		return fmt.Errorf("%w: may not edit user role", domain.ErrForbidden)
+	return nil
+}
+
+func (a *App) validateHouseholdUserFields(ctx context.Context, req HouseholdUserRequest) error {
+	role := domain.Role(req.Role)
+	if !role.IsValid() {
+		return domain.ErrInvalidRole
+	}
+
+	if req.ColorOption < 0 || req.ColorOption >= domain.MaxHouseholdMembers {
+		return domain.ErrInvalidColorOption
+	}
+
+	if utf8.RuneCountInString(req.DisplayName) > 16 {
+		return domain.ErrInvalidDisplayName
+	}
+
+	exists, err := a.Store.HouseholdColorOptionInUse(ctx, req.HouseholdId, req.UserId, req.ColorOption)
+	if err != nil {
+		return err
+	}
+
+	if exists {
+		return fmt.Errorf("%w: color already taken", domain.ErrConflict)
 	}
 
 	return nil
 }
 
-func (a *App) CreateNewUser(ctx context.Context, username, role, firstName, password string) (domain.User, error) {
+func validateEditHouseholdUserRequest(req HouseholdUserRequest, existing, user domain.HouseholdUser) error {
+	if !auth.CanEditHouseholdUser(user, existing.User.ID) {
+		return fmt.Errorf("%w: may not edit this household user", domain.ErrForbidden)
+	}
+
+	if domain.Role(req.Role) != existing.Role && !auth.CanEditRole(user) {
+		return fmt.Errorf("%w: may not edit role", domain.ErrForbidden)
+	}
+
+	if req.IsActive != existing.IsActive && !auth.CanEditIsActive(user) {
+		return fmt.Errorf("%w: may not edit active state", domain.ErrForbidden)
+	}
+
+	return nil
+}
+
+func (a *App) CreateNewUser(ctx context.Context, username, firstName, password string) (domain.User, error) {
 	_, err := CheckAdmin(ctx)
 	if err != nil {
 		return domain.User{}, err
 	}
 
-	err = a.validateNewUserRequest(ctx, username, role, firstName, password)
+	err = a.validateNewUserRequest(ctx, username, firstName, password)
 	if err != nil {
 		return domain.User{}, err
 	}
@@ -130,7 +167,6 @@ func (a *App) CreateNewUser(ctx context.Context, username, role, firstName, pass
 	user, err := a.Store.CreateUser(ctx, store.CreateUserParams{
 		ID:        uuid.NewString(),
 		Username:  username,
-		Role:      domain.Role(role),
 		HashedPW:  hashedPW,
 		FirstName: firstName,
 		CreatedAt: time.Now(),
@@ -143,15 +179,52 @@ func (a *App) CreateNewUser(ctx context.Context, username, role, firstName, pass
 	return user, nil
 }
 
-func (a *App) GetAllUsers(ctx context.Context) ([]domain.User, error) {
+func (a *App) AddUserToHousehold(ctx context.Context, req HouseholdUserRequest) (domain.HouseholdUser, error) {
 	_, err := CheckAdmin(ctx)
 	if err != nil {
-		return []domain.User{}, err
+		return domain.HouseholdUser{}, err
 	}
 
-	users, err := a.Store.GetAllUsers(ctx)
+	err = a.validateHouseholdUserFields(ctx, req)
 	if err != nil {
-		return []domain.User{}, err
+		return domain.HouseholdUser{}, err
+	}
+
+	hhCount, err := a.Store.HouseholdUsersCount(ctx)
+	if err != nil {
+		return domain.HouseholdUser{}, err
+	}
+
+	if hhCount >= domain.MaxHouseholdMembers {
+		return domain.HouseholdUser{}, domain.ErrHouseholdFull
+	}
+
+	hhUser, err := a.Store.AddUserToHousehold(ctx, store.AddUserToHouseholdParams{
+		HouseholdId: req.HouseholdId,
+		UserId:      req.UserId,
+		Role:        req.Role,
+		DisplayName: req.DisplayName,
+		ColorOption: req.ColorOption,
+		JoinedAt:    time.Now(),
+		IsActive:    req.IsActive,
+	})
+
+	if err != nil {
+		return domain.HouseholdUser{}, err
+	}
+
+	return hhUser, nil
+}
+
+func (a *App) GetHouseholdUsers(ctx context.Context) ([]domain.HouseholdUser, error) {
+	hhUser, err := CheckAdmin(ctx)
+	if err != nil {
+		return []domain.HouseholdUser{}, err
+	}
+
+	users, err := a.Store.GetHouseholdUsers(ctx, hhUser.HouseholdID)
+	if err != nil {
+		return []domain.HouseholdUser{}, err
 	}
 
 	return users, nil
@@ -178,7 +251,7 @@ func (a *App) GetUserByID(ctx context.Context, id string) (domain.User, error) {
 	return user, nil
 }
 
-func (a *App) EditUser(ctx context.Context, id, newUsername, role, firstName string) (domain.User, error) {
+func (a *App) EditUser(ctx context.Context, id, newUsername, firstName string) (domain.User, error) {
 	user, err := auth.AuthenticatedUser(ctx)
 	if err != nil {
 		return domain.User{}, err
@@ -192,16 +265,14 @@ func (a *App) EditUser(ctx context.Context, id, newUsername, role, firstName str
 		return domain.User{}, err
 	}
 
-	err = a.validateEditUserRequest(ctx, newUsername, role, firstName, user, existing)
+	err = a.validateEditUserRequest(ctx, newUsername, firstName, user.User, existing)
 	if err != nil {
 		return domain.User{}, err
 	}
-	userRole := domain.Role(role)
 
 	updatedUser, err := a.Store.EditUser(ctx, store.EditUserParams{
 		ID:        id,
 		Username:  newUsername,
-		Role:      userRole,
 		FirstName: firstName,
 		UpdatedAt: time.Now(),
 	})
@@ -210,6 +281,48 @@ func (a *App) EditUser(ctx context.Context, id, newUsername, role, firstName str
 	}
 
 	return updatedUser, nil
+}
+
+func (a *App) EditHouseholdUser(ctx context.Context, req HouseholdUserRequest) (domain.HouseholdUser, error) {
+	user, err := auth.AuthenticatedUser(ctx)
+	if err != nil {
+		return domain.HouseholdUser{}, err
+	}
+
+	existing, err := a.Store.GetHouseholdUserByID(ctx, req.HouseholdId, req.UserId)
+	if err != nil {
+		return domain.HouseholdUser{}, err
+	}
+
+	err = a.validateHouseholdUserFields(ctx, req)
+	if err != nil {
+		return domain.HouseholdUser{}, err
+	}
+
+	err = validateEditHouseholdUserRequest(req, existing, user)
+	if err != nil {
+		return domain.HouseholdUser{}, err
+	}
+
+	role := domain.Role(req.Role)
+	if !role.IsValid() {
+		return domain.HouseholdUser{}, domain.ErrInvalidRole
+	}
+
+	updatedHouseholdUser, err := a.Store.EditHouseholdUser(ctx, store.EditHouseholdUserParams{
+		Role:        role,
+		DisplayName: req.DisplayName,
+		ColorOption: req.ColorOption,
+		IsActive:    req.IsActive,
+		UserId:      req.UserId,
+		HouseholdId: req.HouseholdId,
+	})
+
+	if err != nil {
+		return domain.HouseholdUser{}, err
+	}
+
+	return updatedHouseholdUser, nil
 }
 
 func (a *App) DeleteUser(ctx context.Context, id string) error {
@@ -251,7 +364,6 @@ func (a *App) LoginUser(ctx context.Context, username, password string) (LoginRe
 	}
 
 	return LoginResult{
-		User:  user.User,
 		Token: token,
 	}, err
 
@@ -263,7 +375,7 @@ func (a *App) ChangePassword(ctx context.Context, oldPassword, newPassword strin
 		return err
 	}
 
-	userWithHash, err := a.Store.GetUserWithHashedPW(ctx, user.Username)
+	userWithHash, err := a.Store.GetUserWithHashedPW(ctx, user.User.Username)
 	if err != nil {
 		return err
 	}
@@ -287,7 +399,7 @@ func (a *App) ChangePassword(ctx context.Context, oldPassword, newPassword strin
 		return err
 	}
 
-	err = a.Store.ChangePassword(ctx, user.ID, newPWHash)
+	err = a.Store.ChangePassword(ctx, user.User.ID, newPWHash)
 	if err != nil {
 		return err
 	}

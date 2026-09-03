@@ -21,10 +21,12 @@ func (cfg *apiCfg) RegisterRoutes(mux *http.ServeMux) {
 	mux.Handle("POST /assignments/{id}/reschedule", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerRescheduleAssignment)))
 
 	// users
-	mux.Handle("POST /users", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerAddUser)))
-	mux.Handle("GET /users", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerGetUsers)))
+	mux.Handle("POST /users", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerCreateUser)))
 	mux.Handle("GET /users/{id}", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerGetUserByID)))
 	mux.Handle("PUT /users/{id}", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerEditUser)))
+	mux.Handle("GET /users", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerGetHouseholdUsers)))
+	mux.Handle("GET /households/{hhid}/users", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerGetHouseholdUsers)))
+	mux.Handle("PUT /households/{hhid}/users/{uid}", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerEditHouseholdUser)))
 	mux.Handle("DELETE /users/{id}", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerDeleteUser)))
 	mux.Handle("GET /me", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerGetMe)))
 	mux.Handle("PUT /me/password", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerChangePassword)))
