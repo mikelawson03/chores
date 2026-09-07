@@ -14,10 +14,12 @@ import { useNotificationStore } from "../stores/notificationStore";
 import { queryClient } from "../query/queryClient";
 import { parseApiError } from "../utils/errorHelpers";
 import CalendarTask from "../components/calendar/CalendarTask";
+import { getHouseholdUsers } from "../api/users";
 
 export default function Calendar({ toggleTaskComplete }) {
   dayjs.extend(isoWeek);
   const { user } = useAuth();
+
   const { 
     data: tasks = [],
     isPending,
@@ -25,6 +27,35 @@ export default function Calendar({ toggleTaskComplete }) {
     queryKey: ["assignments", user?.id],
     queryFn: () => getAssignments(user),
     enabled: !!user,
+  });
+
+  const {
+    data: householdUsers = [],
+  } = useQuery({
+    queryKey: ["householdUsers", user?.householdId],
+    queryFn: () => getHouseholdUsers(user.householdId),
+    enabled: !!user?.householdId && user?.role === "admin",
+  });
+
+  const calendarUsers = user?.role === "admin"
+    ? householdUsers
+    : [user];
+
+  const householdUsersById = new Map(
+    calendarUsers.map(hhUser => [
+      hhUser.user.id,
+      hhUser,
+    ])
+  );
+
+  const calendarTasks = tasks.map(task => {
+    const hhUser = householdUsersById.get(task.userId);
+
+    return {
+      ...task,
+      userDisplayName: hhUser?.displayName ?? task.userFirstName,
+      userColorOption: hhUser?.colorOption ?? null,
+    };
   });
 
   const showErrorNotification = useNotificationStore(
@@ -46,13 +77,13 @@ export default function Calendar({ toggleTaskComplete }) {
 
   const calendarDays = days.map(day => ({
     day,
-    tasks: tasks.filter(
+    tasks: calendarTasks.filter(
       task => dayjs(task.scheduledFor).isSame(day, "day") && !task.completed && !task.canceled
     )
   }));
 
   
-  let filterTasks = getActiveTasks(tasks);
+  let filterTasks = getActiveTasks(calendarTasks);
   filterTasks = getUnscheduledTasks(filterTasks);
   filterTasks = getTasksDueInMonth(currentDate, filterTasks);
 
@@ -194,7 +225,7 @@ export default function Calendar({ toggleTaskComplete }) {
         />
         <DailyAgenda 
           agendaDate={agendaDate}
-          activeTasks={getActiveTasks(tasks)}
+          activeTasks={getActiveTasks(calendarTasks)}
           dailyAgendaOpen={dailyAgendaOpen}
           toggleTaskComplete={toggleTaskComplete}
           onDailyAgendaClose={handleDailyAgendaClose}

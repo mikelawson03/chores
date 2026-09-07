@@ -13,10 +13,67 @@ import { useNotificationStore } from "../stores/notificationStore";
 import { queryClient } from "../query/queryClient";
 import { parseApiError } from "../utils/errorHelpers";
 import PlannerTaskCard from "../components/planner/PlannerTaskCard";
+import { getUsers } from "../utils/userHelpers";
+import { CADENCES } from "../constants/cadences";
 
 export default function WeeklyPlanner({ toggleTaskComplete }) {
   dayjs.extend(isoWeek);
   const { user } = useAuth();
+
+  const [hiddenUserIds, setHiddenUserIds] = useState(() => new Set());
+  const [hiddenCadences, setHiddenCadences] = useState(() => new Set());
+  const [currentDay, setCurrentDay] = useState(dayjs());
+  const [dragTask, setDragTask] = useState(null);
+
+  const toggleUser = (userId) => {
+    setHiddenUserIds(current => {
+      const next = new Set(current);
+
+      if (next.has(userId)) {
+        next.delete(userId);
+      } else {
+        next.add(userId);
+      }
+
+      return next;
+    });
+  };
+
+
+  function hideAllUsers() {
+    setHiddenUserIds(
+      new Set(plannerUsers.map(user => user.user.id))
+    );
+  };
+
+  function showAllUsers(){
+    setHiddenUserIds(new Set());
+  };
+
+  function hideAllCadences() {
+    setHiddenCadences(
+      new Set(Object.keys(CADENCES))
+    );
+  };
+
+  function showAllCadences(){
+    setHiddenCadences(new Set());
+  };
+
+  const toggleCadence = (cadence) => {
+    setHiddenCadences(current => {
+      const next = new Set(current);
+
+      if (next.has(cadence)) {
+        next.delete(cadence);
+      } else {
+        next.add(cadence);
+      }
+
+      return next;
+    });
+  };
+
   const { 
     data: tasks = [],
     isPending,
@@ -26,12 +83,38 @@ export default function WeeklyPlanner({ toggleTaskComplete }) {
     enabled: !!user,
   });
 
-  const showErrorNotification = useNotificationStore(
-          (state) => state.showNotification
-  )
+  const {
+    data: householdUsers = [],
+  } = useQuery({
+    queryKey: ["householdUsers", user?.householdId],
+    queryFn: () => getUsers(user.householdId),
+    enabled: !!user?.householdId && user?.role === "admin",
+  });
 
-  const [currentDay, setCurrentDay] = useState(dayjs());
-  const [dragTask, setDragTask] = useState(null);
+  const plannerUsers = user.role === "admin"
+    ? householdUsers
+    : [user];
+
+  const householdUsersById = new Map(
+    plannerUsers.map(hhUser => [
+      hhUser.user.id,
+      hhUser,
+    ])
+  );
+
+  const plannerTasks = tasks.map(task => {
+    const hhUser = householdUsersById.get(task.userId);
+
+    return {
+      ...task,
+      userDisplayName: hhUser?.displayName ?? task.userFirstName,
+      userColorOption: hhUser?.colorOption ?? null,
+    };
+  })
+
+  let filteredTasks = plannerTasks
+  filteredTasks = filteredTasks.filter(task => !hiddenUserIds.has(task.userId));
+  filteredTasks = filteredTasks.filter(task => !hiddenCadences.has(task.cadence));
   
   const weekStart = currentDay.startOf("isoWeek");
   const weekEnd = currentDay.endOf("isoWeek");
@@ -47,20 +130,20 @@ export default function WeeklyPlanner({ toggleTaskComplete }) {
   
   const plannerDays = days.map(day => ({
     day,
-    tasks: tasks.filter(
+    tasks: filteredTasks.filter(
       task => dayjs(task.scheduledFor).isSame(day, "day")
     ),
   }));
 
-  const weeklyBacklog = tasks.filter(
-    task => task.cadence === "weekly" 
-      && !task.scheduledFor 
-      && !task.completed
-      && dayjs(task.dueDate).isAfter(weekEnd.subtract(1, "week"))
-      && dayjs(task.dueDate).isBefore(weekStart.add(1, "week"))
+  const weeklyBacklog = filteredTasks.filter(
+  task => task.cadence === "weekly" 
+    && !task.scheduledFor 
+    && !task.completed
+    && dayjs(task.dueDate).isAfter(weekEnd.subtract(1, "week"))
+    && dayjs(task.dueDate).isBefore(weekStart.add(1, "week"))
   );
 
-  const monthlyBacklog = tasks.filter(
+  const monthlyBacklog = filteredTasks.filter(
     task => task.cadence === "monthly" 
     && !task.scheduledFor 
     && !task.completed
@@ -93,6 +176,11 @@ export default function WeeklyPlanner({ toggleTaskComplete }) {
       handleRescheduleError(error);
     }
   })
+
+  const showErrorNotification = useNotificationStore(
+    (state) => state.showNotification
+  )
+  
 
   function handleRescheduleError(error) {
     let parsed, message;
@@ -174,6 +262,15 @@ export default function WeeklyPlanner({ toggleTaskComplete }) {
           onNextWeek={handleNextWeek}
           onResetWeek={handleResetWeek}
           currentDay={currentDay}
+          toggleCadence={toggleCadence}
+          hiddenCadences={hiddenCadences}
+          toggleUser={toggleUser}
+          hiddenUserIds={hiddenUserIds}
+          hideAllUsers={hideAllUsers}
+          showAllUsers={showAllUsers}
+          hideAllCadences={hideAllCadences}
+          showAllCadences={showAllCadences}
+          users={plannerUsers}
         />
         <WeeklyGrid
           plannerDays = {plannerDays}

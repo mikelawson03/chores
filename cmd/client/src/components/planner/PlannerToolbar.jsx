@@ -1,13 +1,42 @@
 import { Button, IconButton, Stack, Typography } from "@mui/material";
+import FilterListIcon from '@mui/icons-material/FilterList';
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import { queryClient } from "../../query/queryClient";
-import { useAuth } from "../../auth/useAuth";
 import dayjs from "dayjs";
+import { useState } from "react";
+import FilterMenu from "../FilterMenu";
 
-export default function PlannerToolbar({ weekStart, weekEnd, onPreviousWeek, onNextWeek, onResetWeek, currentDay }) {
-  const { user } = useAuth();
+export default function PlannerToolbar({ 
+  weekStart, 
+  weekEnd, 
+  onPreviousWeek, 
+  onNextWeek, 
+  onResetWeek, 
+  currentDay,
+  toggleCadence,
+  hiddenCadences,
+  toggleUser,
+  hiddenUserIds,
+  hideAllUsers,
+  showAllUsers,
+  hideAllCadences,
+  showAllCadences,
+  users }) {
   const isThisWeek = currentDay.isSame(dayjs(), "day")
+
+  const [plannerFiltersOpen, setPlannerFiltersOpen] = useState(false);
+  const [anchorEl, setAnchorEl] = useState(null);
+  
+  const handleClick = (event) => {
+    setPlannerFiltersOpen(true);
+    setAnchorEl(event.currentTarget)
+  }
+
+  const handleClose = () => {
+    setAnchorEl(null);
+    setPlannerFiltersOpen(false);
+  }
+
   return (
     <Stack>
       <Stack direction="row" sx={{justifyContent: "center", alignItems: "center"}}  spacing={2} >
@@ -20,17 +49,32 @@ export default function PlannerToolbar({ weekStart, weekEnd, onPreviousWeek, onN
         <IconButton onClick={onNextWeek}>
           <ChevronRightIcon fontSize="large" />
         </IconButton>
-        {/* <Button 
-          onClick={() => {
-            queryClient.invalidateQueries({
-              queryKey: ["assignments", user.id],
-            });
-          }}
-        >
-          Refresh Task Data
-        </Button> */}
       </Stack>
-      <Stack sx={{ alignItems: "center"}}>
+      <Stack sx={{ alignItems: "center", position: "relative"}}>
+        <IconButton 
+          onClick={handleClick}
+          sx={{
+            position: "absolute", 
+            left: 0
+          }} 
+        >
+          <FilterListIcon/>
+        </IconButton>      
+        <FilterMenu 
+          users={users} 
+          hiddenUserIds={hiddenUserIds}
+          toggleUser={toggleUser}
+          hiddenCadences={hiddenCadences}
+          toggleCadence={toggleCadence}
+          open={plannerFiltersOpen}
+          handleClose={handleClose}
+          anchorEl={anchorEl}
+          hideAllUsers={hideAllUsers}
+          showAllUsers={showAllUsers}
+          hideAllCadences={hideAllCadences}
+          showAllCadences={showAllCadences}
+        />
+           
         <Button 
           disabled={isThisWeek}
           onClick={onResetWeek}

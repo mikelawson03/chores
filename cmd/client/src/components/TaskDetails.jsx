@@ -56,7 +56,7 @@ export default function TaskDetails({task, saveTask, onTaskClose}) {
         <Stack direction="column" spacing={2}>
           <DetailRow label="Due Date" value={formatTimestamp(taskDraft.dueDate)} />
           <DetailRow label="Instructions" value={taskDraft.instructions} />
-          <DetailRow label="Assigned To" value={taskDraft.userFirstName ? task.userFirstName : "Unassigned"} />
+          <DetailRow label="Assigned To" value={taskDraft.userDisplayName ? task.userDisplayName : "Unassigned"} />
           <DetailRow label="Duration" value={formatDuration(taskDraft.duration)} />
           <DetailRowDate  
             label="Scheduled For"

@@ -5,7 +5,8 @@ import { clickableSurface } from "../../styles/surfaces";
 import { formatDuration } from "../../utils/formatters";
 import { useTaskStore } from "../../stores/taskStore";
 import CompletionCheckbox from "../CompletionCheckbox";
-import { deepPurple, deepOrange, cyan } from "@mui/material/colors";
+import { HOUSEHOLD_USER_COLORS } from "../../constants/colorPalette";
+import { CADENCES } from "../../constants/cadences";
 
 
 export default function PlannerTaskCard({ task, width }) {
@@ -13,7 +14,6 @@ export default function PlannerTaskCard({ task, width }) {
   let txtColor;
   let txtDecoration;
   let checkboxVisible;
-  let cadenceBadge;
 
   if (task.canceled) {
     bgColor = "grey.100";
@@ -32,52 +32,37 @@ export default function PlannerTaskCard({ task, width }) {
     checkboxVisible = true
   }
 
-  switch (task.cadence){
-    case "daily":
-      cadenceBadge = "D";
-      break;
-    case "weekly":
-      cadenceBadge = "W";
-      break;
-    case "monthly":
-      cadenceBadge = "M";
-      break;
-  }
-
-  const cadenceColors = {
-    daily: {
-      backgroundColor: cyan[50],
-      color: cyan[800],
-    },
-    weekly: {
-      backgroundColor: deepOrange[50],
-      color: deepOrange[800],
-    },
-    monthly: {
-      backgroundColor: deepPurple[50],
-      color: deepPurple[800],
-    },
-  }
-
   const openTaskDetails = useTaskStore(
     (state) => state.openTaskDetails
   );
 
-
-  
-
+  const ownerColor = HOUSEHOLD_USER_COLORS[task.userColorOption].bgColor
 
   return (
     <Card onClick={() => openTaskDetails(task)}
     sx= {[clickableSurface, { 
+      position: "relative",
+      overflow: "hidden",
       width: width,
       borderRadius: 1,
       backgroundColor: bgColor,
       maxWidth: "100%",
       minWidth: 0,
+
+      "&::before": {
+        content: '""',
+        position: "absolute",
+        left: 0,
+        top: 6,
+        bottom: 6,
+        width: 4,
+        borderRadius: "0 4px 4px 0",
+        backgroundColor: ownerColor,
+      }
       }]}>
       <CardContent sx={{ 
-        p: 0.5, 
+        py: 1, 
+        px: 2,
         "&:last-child": 
           { pb: 0.5 }, 
         lineHeight: 1, 
@@ -97,16 +82,17 @@ export default function PlannerTaskCard({ task, width }) {
               {task.templateName}
           </Typography>
           <Chip 
-            label={cadenceBadge}
+            label={CADENCES[task.cadence].cadenceBadge}
             size="small"
             sx={{ 
               flexShrink: 0 , 
-              ...cadenceColors[task.cadence]
+              bgcolor: CADENCES[task.cadence].backgroundColor,
+              color: CADENCES[task.cadence].color,
             }}
           />
         </Stack>
         <Typography variant="body2" sx = {{ color: txtColor, textDecoration: txtDecoration, mb: 0.25, lineHeight: 1.15}}>
-          {task.userFirstName ? task.userFirstName : "Unassigned"}
+          {task.userDisplayName ? task.userDisplayName : "Unassigned"}
         </Typography>
         <Stack 
           direction="row" 

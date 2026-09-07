@@ -2,7 +2,7 @@ import PageHeader from "../components/PageHeader";
 import TaskCard from "../components/TaskCard";
 import TaskListCard from "../components/TaskListCard";
 import { Box, CircularProgress, Container, Grid, Stack, Typography } from "@mui/material"
-import { getActiveTasks, getScheduledTasksForDay, getUnscheduledTasks, getWeeklyTasks, getMonthlyTasks, removeCompletedTasks, getCompletedTasks } from "../utils/taskHelpers";
+import { getActiveTasks, getScheduledTasksForDay, getUnscheduledTasks, getWeeklyTasks, getMonthlyTasks, getCompletedTasks } from "../utils/taskHelpers";
 import dayjs from "dayjs";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../auth/useAuth";
@@ -13,8 +13,6 @@ export default function Dashboard({ toggleTaskComplete }) {
   const { 
     data: tasks = [],
     isPending,
-    isError,
-    error,
   } = useQuery({
     queryKey: ["assignments", user?.id],
     queryFn: () => getAssignments(user),

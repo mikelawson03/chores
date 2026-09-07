@@ -16,9 +16,9 @@ export default function EditChore({ open, chore, closeEditChore, editChoreMode, 
 
     const userOptions=[
         { value: "unassigned", label: "Unassigned"},
-        ...users.map(user => ({
-            value: user.id,
-            label: user.firstName,
+        ...users.map(hhUser => ({
+            value: hhUser.user.id,
+            label: hhUser.user.firstName,
         })),
     ]
 

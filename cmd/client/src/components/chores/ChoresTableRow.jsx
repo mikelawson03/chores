@@ -6,8 +6,8 @@ import { formatCadence, formatDuration, formatTimestamp } from "../../utils/form
 
 export default function ChoresTableRow({ choreTemplate, openEditChore, users }) {
   const getUserName = (userId) => {
-        const user = users.find((user) => user.id === userId);
-        return user?.firstName ?? "—";
+        const user = users.find((hhUser) => hhUser.user.id === userId);
+        return user?.user.firstName ?? "—";
     }
 
   return (

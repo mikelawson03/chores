@@ -33,8 +33,8 @@ export async function getMe() {
     return response.json();
 }
 
-export async function getAllUsers() {
-    const response = await fetch(`${API_HOST}/users`, {
+export async function getHouseholdUsers(hhid) {
+    const response = await fetch(`${API_HOST}/households/${hhid}/users`, {
         method: "GET",
         headers: getHeaders(),
     })
