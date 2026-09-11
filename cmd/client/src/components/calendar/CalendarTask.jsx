@@ -2,13 +2,15 @@ import { Box, Typography } from "@mui/material";
 import { clickableSurface } from "../../styles/surfaces";
 import { useTaskStore } from "../../stores/taskStore";
 import { HOUSEHOLD_USER_COLORS } from "../../constants/colorPalette";
+import { CADENCES } from "../../constants/cadences"
 
 export default function CalendarTask( {task} ) {
     const openTaskDetails = useTaskStore(
         (state) => state.openTaskDetails
     );
 
-    const ownerColor = HOUSEHOLD_USER_COLORS[task.userColorOption]
+    const ownerColor = HOUSEHOLD_USER_COLORS[task.userColorOption].bgColor
+    const cadenceColor = CADENCES[task.cadence].outlineColor
 
     return(
         <Box 
@@ -20,6 +22,10 @@ export default function CalendarTask( {task} ) {
                     justifyContent: "center", 
                     position: "relative",
                     overflow: "hidden",
+                    border: 1,
+                    borderColor: cadenceColor,
+                    borderRadius: 1,
+                    
 
                     "&::before": {
                         content: '""',

@@ -4,7 +4,17 @@ import AgendaList from "./AgendaList";
 import { getScheduledTasksForDay } from "../../utils/taskHelpers";
 
 
-export default function DailyAgenda({ activeTasks, dailyAgendaOpen, onDailyAgendaClose, agendaDate, onNextAgendaDay, onPreviousAgendaDay, toggleTaskComplete }) {
+export default function DailyAgenda({ 
+    activeTasks, 
+    dailyAgendaOpen, 
+    onDailyAgendaClose, 
+    agendaDate, 
+    onNextAgendaDay, 
+    onPreviousAgendaDay, 
+    toggleTaskComplete,
+    users,
+    filterConfig
+ }) {
     return(
         <Dialog
             maxWidth="sm"
@@ -38,6 +48,8 @@ export default function DailyAgenda({ activeTasks, dailyAgendaOpen, onDailyAgend
                     agendaDate={agendaDate}
                     onNextAgendaDay={onNextAgendaDay}
                     onPreviousAgendaDay={onPreviousAgendaDay}
+                    users={users}
+                    filterConfig={filterConfig}
                  />                
             </DialogTitle>
             <DialogContent>

@@ -4,6 +4,7 @@ import { useTaskStore } from "../../stores/taskStore";
 import DraggableTask from "../dragAndDrop/DraggableTask";
 import { HOUSEHOLD_USER_COLORS } from "../../constants/colorPalette";
 import { clickableSurface } from "../../styles/surfaces";
+import { CADENCES } from "../../constants/cadences";
 
 export default function TaskShelfPanel({ tasks }) {
     const openTaskDetails = useTaskStore(
@@ -11,7 +12,7 @@ export default function TaskShelfPanel({ tasks }) {
     );
 
     return(
-        <Stack spacing={2} 
+        <Stack spacing={1} 
             sx={{pt: 2}}
         >
             {tasks.map( task => 
@@ -24,6 +25,9 @@ export default function TaskShelfPanel({ tasks }) {
                             position: "relative",
                             overflow: "hidden",
                             p: 1,
+                            border: 1,
+                            borderColor: CADENCES[task.cadence].outlineColor,
+                            borderRadius: 1,
                             "&::before": {
                                 content: '""',
                                 position: "absolute",

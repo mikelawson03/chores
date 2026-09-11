@@ -4,7 +4,7 @@ import AgendaCard from "./AgendaCard";
 
 export default function AgendaList({ tasks, toggleTaskComplete }) {
     return (
-        <Stack spacing= {2} sx={{flex: 1}}>
+        <Stack spacing= {2} sx={{flex: 1, pt:0.25}}>
                 {tasks.length === 0 && <Typography sx={{fontStyle: "italic"}}>No tasks scheduled for this date...</Typography>}
                 {tasks.map( task => (
                     <AgendaCard 

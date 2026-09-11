@@ -1,7 +1,7 @@
 import dayjs from "dayjs";
 import PlannerToolbar from "../components/planner/PlannerToolbar";
 import WeeklyGrid from "../components/planner/WeeklyGrid";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import isoWeek from "dayjs/plugin/isoWeek";
 import { Box, CircularProgress, Stack } from "@mui/material";
 import StagingArea from "../components/planner/StagingArea";
@@ -14,65 +14,36 @@ import { queryClient } from "../query/queryClient";
 import { parseApiError } from "../utils/errorHelpers";
 import PlannerTaskCard from "../components/planner/PlannerTaskCard";
 import { getUsers } from "../utils/userHelpers";
-import { CADENCES } from "../constants/cadences";
+import { useFilterStore } from "../stores/filterStore";
+import { PLANNER_FILTER_CONFIG } from "../config/filterConfigs";
 
 export default function WeeklyPlanner({ toggleTaskComplete }) {
   dayjs.extend(isoWeek);
   const { user } = useAuth();
+  const initializeFilters = useFilterStore(
+    (state) => state.initializeFilters
+  );
 
-  const [hiddenUserIds, setHiddenUserIds] = useState(() => new Set());
-  const [hiddenCadences, setHiddenCadences] = useState(() => new Set());
   const [currentDay, setCurrentDay] = useState(dayjs());
   const [dragTask, setDragTask] = useState(null);
 
-  const toggleUser = (userId) => {
-    setHiddenUserIds(current => {
-      const next = new Set(current);
+  const filterConfig = PLANNER_FILTER_CONFIG
 
-      if (next.has(userId)) {
-        next.delete(userId);
-      } else {
-        next.add(userId);
-      }
+  useEffect(() => {
+    initializeFilters(filterConfig);
+  }, [initializeFilters])
 
-      return next;
-    });
-  };
+  const hiddenUserIds = useFilterStore(
+    (state) => state.hiddenUserIds
+  );
 
+  const hiddenCadences = useFilterStore(
+    (state) => state.hiddenCadences
+  );
 
-  function hideAllUsers() {
-    setHiddenUserIds(
-      new Set(plannerUsers.map(user => user.user.id))
-    );
-  };
-
-  function showAllUsers(){
-    setHiddenUserIds(new Set());
-  };
-
-  function hideAllCadences() {
-    setHiddenCadences(
-      new Set(Object.keys(CADENCES))
-    );
-  };
-
-  function showAllCadences(){
-    setHiddenCadences(new Set());
-  };
-
-  const toggleCadence = (cadence) => {
-    setHiddenCadences(current => {
-      const next = new Set(current);
-
-      if (next.has(cadence)) {
-        next.delete(cadence);
-      } else {
-        next.add(cadence);
-      }
-
-      return next;
-    });
-  };
+  const hiddenStatuses = useFilterStore(
+    (state) => state.hiddenStatuses
+  );
 
   const { 
     data: tasks = [],
@@ -115,6 +86,21 @@ export default function WeeklyPlanner({ toggleTaskComplete }) {
   let filteredTasks = plannerTasks
   filteredTasks = filteredTasks.filter(task => !hiddenUserIds.has(task.userId));
   filteredTasks = filteredTasks.filter(task => !hiddenCadences.has(task.cadence));
+  filteredTasks = filteredTasks.filter(task => {
+    if (hiddenStatuses.has("completed") && task.completed) {
+      return false;
+    }
+
+    if (hiddenStatuses.has("canceled") && task.canceled) {
+      return false;
+    }
+
+    if (hiddenStatuses.has("incomplete") && !task.completed && !task.canceled) {
+      return false;
+    }
+
+    return true;
+  })
   
   const weekStart = currentDay.startOf("isoWeek");
   const weekEnd = currentDay.endOf("isoWeek");
@@ -241,7 +227,7 @@ export default function WeeklyPlanner({ toggleTaskComplete }) {
     <DragDropProvider
       onDragStart = {(event) => {
         const taskId = event.operation.source?.id;
-        const task = tasks.find(task => task.id === taskId);
+        const task = plannerTasks.find(task => task.id === taskId);
 
         setDragTask(task ?? null);
       }}
@@ -262,15 +248,8 @@ export default function WeeklyPlanner({ toggleTaskComplete }) {
           onNextWeek={handleNextWeek}
           onResetWeek={handleResetWeek}
           currentDay={currentDay}
-          toggleCadence={toggleCadence}
-          hiddenCadences={hiddenCadences}
-          toggleUser={toggleUser}
-          hiddenUserIds={hiddenUserIds}
-          hideAllUsers={hideAllUsers}
-          showAllUsers={showAllUsers}
-          hideAllCadences={hideAllCadences}
-          showAllCadences={showAllCadences}
           users={plannerUsers}
+          filterConfig={filterConfig}
         />
         <WeeklyGrid
           plannerDays = {plannerDays}

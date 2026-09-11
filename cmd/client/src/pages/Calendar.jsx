@@ -3,7 +3,7 @@ import isoWeek from "dayjs/plugin/isoWeek";
 import CalendarToolbar from "../components/calendar/CalendarToolbar";
 import CalendarContent from "../components/calendar/CalendarContent";
 import DailyAgenda from "../components/dailyAgenda/DailyAgenda";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Box, CircularProgress, Stack } from "@mui/material";
 import { getActiveTasks, getMonthlyTasks, getUnscheduledTasks, getTasksDueInMonth, getWeeklyTasks } from "../utils/taskHelpers";
 import { useAuth } from "../auth/useAuth";
@@ -15,10 +15,32 @@ import { queryClient } from "../query/queryClient";
 import { parseApiError } from "../utils/errorHelpers";
 import CalendarTask from "../components/calendar/CalendarTask";
 import { getHouseholdUsers } from "../api/users";
+import { useFilterStore } from "../stores/filterStore";
+import { CALENDAR_FILTER_CONFIG } from "../config/filterConfigs";
 
 export default function Calendar({ toggleTaskComplete }) {
   dayjs.extend(isoWeek);
   const { user } = useAuth();
+  const initializeFilters = useFilterStore(
+    (state) => state.initializeFilters
+  );
+
+  const filterConfig = CALENDAR_FILTER_CONFIG
+  useEffect(() => {
+    initializeFilters(filterConfig)
+  }, [initializeFilters])
+
+  const hiddenUserIds = useFilterStore(
+    (state) => state.hiddenUserIds
+  );
+
+  const hiddenCadences = useFilterStore(
+    (state) => state.hiddenCadences
+  );
+
+  const hiddenStatuses = useFilterStore(
+    (state) => state.hiddenStatuses
+  );
 
   const { 
     data: tasks = [],
@@ -58,6 +80,25 @@ export default function Calendar({ toggleTaskComplete }) {
     };
   });
 
+  let filteredTasks = calendarTasks
+  filteredTasks = filteredTasks.filter(task => !hiddenUserIds.has(task.userId));
+  filteredTasks = filteredTasks.filter(task => !hiddenCadences.has(task.cadence));
+  filteredTasks = filteredTasks.filter(task => {
+    if (hiddenStatuses.has("completed") && task.completed) {
+      return false;
+    }
+
+    if (hiddenStatuses.has("canceled") && task.canceled) {
+      return false;
+    }
+
+    if (hiddenStatuses.has("incomplete") && !task.completed && !task.canceled) {
+      return false;
+    }
+
+    return true;
+  })
+
   const showErrorNotification = useNotificationStore(
     (state) => state.showNotification
   )
@@ -77,8 +118,8 @@ export default function Calendar({ toggleTaskComplete }) {
 
   const calendarDays = days.map(day => ({
     day,
-    tasks: calendarTasks.filter(
-      task => dayjs(task.scheduledFor).isSame(day, "day") && !task.completed && !task.canceled
+    tasks: filteredTasks.filter(
+      task => dayjs(task.scheduledFor).isSame(day, "day") 
     )
   }));
 
@@ -196,7 +237,7 @@ export default function Calendar({ toggleTaskComplete }) {
     <DragDropProvider
       onDragStart = {(event) => {
         const taskId = event.operation.source?.id;
-        const task = tasks.find(task => task.id === taskId)
+        const task = calendarTasks.find(task => task.id === taskId)
 
         setDragTask(task)
       }}
@@ -214,6 +255,8 @@ export default function Calendar({ toggleTaskComplete }) {
           onPreviousMonth={handlePreviousMonth}
           onNextMonth={handleNextMonth}
           onResetDate={handleResetDate}
+          users={calendarUsers}
+          filterConfig={filterConfig}
         />
         <CalendarContent 
           currentDate={currentDate} 
@@ -225,12 +268,14 @@ export default function Calendar({ toggleTaskComplete }) {
         />
         <DailyAgenda 
           agendaDate={agendaDate}
-          activeTasks={getActiveTasks(calendarTasks)}
+          activeTasks={filteredTasks}
           dailyAgendaOpen={dailyAgendaOpen}
           toggleTaskComplete={toggleTaskComplete}
           onDailyAgendaClose={handleDailyAgendaClose}
           onPreviousAgendaDay={handlePreviousAgendaDay}
           onNextAgendaDay={handleNextAgendaDay}
+          users={calendarUsers}
+          filterConfig={filterConfig}
         />
       </Stack>
       <DragOverlay dropAnimation={null}>

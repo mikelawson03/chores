@@ -13,15 +13,9 @@ export default function PlannerToolbar({
   onNextWeek, 
   onResetWeek, 
   currentDay,
-  toggleCadence,
-  hiddenCadences,
-  toggleUser,
-  hiddenUserIds,
-  hideAllUsers,
-  showAllUsers,
-  hideAllCadences,
-  showAllCadences,
-  users }) {
+  users,
+  filterConfig
+}) {
   const isThisWeek = currentDay.isSame(dayjs(), "day")
 
   const [plannerFiltersOpen, setPlannerFiltersOpen] = useState(false);
@@ -62,17 +56,10 @@ export default function PlannerToolbar({
         </IconButton>      
         <FilterMenu 
           users={users} 
-          hiddenUserIds={hiddenUserIds}
-          toggleUser={toggleUser}
-          hiddenCadences={hiddenCadences}
-          toggleCadence={toggleCadence}
           open={plannerFiltersOpen}
           handleClose={handleClose}
           anchorEl={anchorEl}
-          hideAllUsers={hideAllUsers}
-          showAllUsers={showAllUsers}
-          hideAllCadences={hideAllCadences}
-          showAllCadences={showAllCadences}
+          filterConfig={filterConfig}
         />
            
         <Button 
