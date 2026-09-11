@@ -3,6 +3,7 @@ import { HOUSEHOLD_USER_COLORS } from "../constants/colorPalette";
 import { CADENCES } from "../constants/cadences";
 import { TASK_STATUSES } from "../constants/taskStatuses";
 import { useFilterStore } from "../stores/filterStore";
+import { useAuth } from "../auth/useAuth";
 
 export default function FilterMenu({ 
     users, 
@@ -11,6 +12,7 @@ export default function FilterMenu({
     anchorEl,
     filterConfig
 }){
+    const { user } = useAuth();
     const userIds = users.map(user => user.user.id);
     const cadences = Object.keys(CADENCES)
     const statuses = Object.keys(TASK_STATUSES)
@@ -201,11 +203,16 @@ export default function FilterMenu({
                         ))}
                     </List>
                 </Box>
-                <Box>
+                <Stack direction ="row" spacing={4}>
                     <Button 
                         onClick={() => resetFilters(filterConfig)}
-                    >Reset All</Button>
-                </Box>
+                    >
+                        Reset All
+                    </Button>
+                    <Button>
+                        Show My Tasks
+                    </Button>
+                </Stack>
             </Stack>
         </Popover>
     )
