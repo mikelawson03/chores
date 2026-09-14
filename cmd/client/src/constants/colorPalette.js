@@ -41,4 +41,5 @@ export const HOUSEHOLD_USER_COLORS = [
         bgColor: deepOrange[500],
         textColor: "#fff",
     },
+    
 ]

@@ -7,7 +7,10 @@ export default function ChoreCell({ item }) {
         flex: 1, 
         borderBottom: 1, 
         borderColor: "divider", 
-        p: 2
+        p: 2,
+        overflow: "hidden",
+        textOverflow: "ellipsis",
+        whiteSpace: "nowrap"
       }}>
         {item}
     </Typography>

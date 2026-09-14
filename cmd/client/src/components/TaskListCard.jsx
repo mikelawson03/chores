@@ -2,8 +2,9 @@ import { Card, List, ListItem, ListItemIcon, ListItemText, Typography } from "@m
 import { clickableText } from "../styles/typography";
 import { useTaskStore } from "../stores/taskStore";
 import CompletionCheckbox from "./CompletionCheckbox";
+import { NavLink } from "react-router-dom";
 
-export default function TaskListCard({ cardName, tasks, maxItems, footerText }) {
+export default function TaskListCard({ cardTitle, tasks, maxItems, footerText, route, subHead=" " }) {
   const openTaskDetails = useTaskStore(
     (state) => state.openTaskDetails
   )
@@ -13,12 +14,20 @@ export default function TaskListCard({ cardName, tasks, maxItems, footerText }) 
         width: "100%",
         borderRadius: 2,
         p: 2,
-      }}>
+      }}
+    >
       <Typography 
-      variant="h6" 
-      gutterBottom>
-        {cardName}
+        variant="h6" 
+      >
+          {cardTitle.toUpperCase()}
       </Typography>
+        <Typography
+          sx ={{
+            color: "text.secondary"
+          }}
+        >
+          {subHead}
+        </Typography>
       <List>
         {tasks
           .slice(0, maxItems)
@@ -36,7 +45,7 @@ export default function TaskListCard({ cardName, tasks, maxItems, footerText }) 
         }
       </List>
       {tasks.length > maxItems && (
-      <Typography sx={clickableText}>
+      <Typography component={NavLink} to={route} sx={clickableText}>
         {footerText}
       </Typography>
       )}

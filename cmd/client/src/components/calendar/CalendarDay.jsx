@@ -44,7 +44,10 @@ export default function CalendarDay({day, tasks, maxDayItems, onOverflowClick, i
                         .slice(0, maxDayItems)
                         .map(task =>
                             <DraggableTask task={task} key={task.id}>
-                                <CalendarTask task={task} />
+                                {(isDragging) => (<CalendarTask 
+                                    isDragging={isDragging}
+                                    task={task} 
+                                />)}
                             </DraggableTask>
                         )
                     }

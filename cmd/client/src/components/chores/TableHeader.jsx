@@ -1,9 +1,8 @@
-import { Box, Stack, Typography } from "@mui/material";
-import SwapVertIcon from '@mui/icons-material/SwapVert';
+import { Stack, Typography } from "@mui/material";
 import { clickableText } from "../../styles/typography";
 import SortIndicator from "../SortIndicator";
 
-export default function TableHeader({ sort, chores, headings, onSortClick }) {
+export default function TableHeader({ sort, headings, onSortClick }) {
   return(
     <Stack direction="row" sx={{width:"100%", border: 1, borderColor: "divider", }}>
       {headings.map(heading  => (

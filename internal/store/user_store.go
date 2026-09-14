@@ -193,7 +193,7 @@ func (s *Store) GetHouseholdUsers(ctx context.Context, householdId string) ([]do
 	return householdUsers, nil
 }
 
-func (s *Store) GetHouseholdUserByID(ctx context.Context, householdId, userId string) (domain.HouseholdUser, error) {
+func (s *Store) GetHouseholdUserByID(ctx context.Context, userId, householdId string) (domain.HouseholdUser, error) {
 	res, err := s.Queries.GetHouseholdUserByID(ctx, db.GetHouseholdUserByIDParams{
 		HouseholdID: householdId,
 		UserID:      userId,

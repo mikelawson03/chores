@@ -1,11 +1,10 @@
 import { Stack } from "@mui/material"
 import TableHeader from "./TableHeader";
-import TableToolbar from "./TableToolbar";
 import ChoresTableRow from "./ChoresTableRow";
 import { useState } from "react";
 import dayjs from "dayjs";
 
-export default function ChoresTable({ choreTemplates, editNewChore, openEditChore, users }) {
+export default function ChoresTable({ choreTemplates, openEditChore, users }) {
   const [sort, setSort] = useState(
       {
         column: "updated_at",
@@ -91,7 +90,7 @@ export default function ChoresTable({ choreTemplates, editNewChore, openEditChor
         width: "95%"
       }
     }>
-      <TableToolbar editNewChore={editNewChore}/>
+      {/* <TableToolbar editNewChore={editNewChore}/> */}
       <TableHeader 
         sort={sort} 
         chores={displayedChores} 

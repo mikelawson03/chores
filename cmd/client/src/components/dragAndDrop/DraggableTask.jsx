@@ -1,13 +1,13 @@
 import {useDraggable} from '@dnd-kit/react';
 
 export default function DraggableTask({ task, children }) {
-    const { ref } = useDraggable({
+    const { ref, isDragging } = useDraggable({
         id: task.id
     });
 
     return (
         <div ref={ref}>
-            {children}
+            {children(isDragging)}
         </div>
     )
 }

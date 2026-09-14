@@ -61,6 +61,7 @@ func (cfg *apiCfg) handlerAddChoreTemplate(w http.ResponseWriter, r *http.Reques
 
 	ctx := r.Context()
 	chore, err := cfg.App.CreateChoreTemplate(ctx, req.Name, req.Cadence, req.Assignee, req.Instructions, req.Duration)
+
 	if err != nil {
 		RespondWithError(w, err)
 		return

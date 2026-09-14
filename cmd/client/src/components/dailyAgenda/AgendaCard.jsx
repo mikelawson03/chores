@@ -29,7 +29,7 @@ export default function AgendaCard({ task }) {
                 backgroundColor: ownerColor,
             }
         }]} onClick={() => openTaskDetails(task)}> 
-            <Stack spacing={2} sx={{ p: 2 }}>
+            <Stack sx={{ p: 2 }}>
                 <Stack 
                     direction="row"
                     sx={{ 
@@ -59,20 +59,45 @@ export default function AgendaCard({ task }) {
                     />
                     
                 </Stack>
-                {task.instructions != "" && <Typography variant="body1">
-                    {task.instructions}
-                </Typography>}
-                <Typography variant="body1">Duration: {task.duration}</Typography>
+                <Typography 
+                    variant="body1" 
+                    sx={{
+                        color: "text.secondary"
+                        }}
+                >
+                    Assigned to: {task.userDisplayName}
+                </Typography>
                 <Stack 
                     direction="row"
-                    sx={{ width: "100%", justifyContent: "space-between"}}
+                    sx={{ width: "100%", justifyContent: "space-between", color: "text.secondary"}}
                 >
-                    <Typography variant="body1">Assignee: {task.userDisplayName}</Typography>
+                <Typography 
+                    variant="body1"
+                >
+                    Duration: {task.duration}
+                </Typography>
+                {task.instructions === "" && <CompletionCheckbox
+                    checked={task.completed}
+                    taskId={task.id}
+                />}
+                </Stack>
+                {task.instructions != "" && <Stack 
+                    direction="row"
+                    sx={{ width: "100%", justifyContent: "space-between", alignContent:"end", color: "text.secondary"}}
+                >
+                     <Stack sx={{pt: 1}}>
+                        <Typography variant="body1">
+                            Instructions: 
+                        </Typography>
+                        <Typography variant="body1">
+                            {task.instructions}
+                        </Typography>
+                    </Stack>
                     <CompletionCheckbox 
                         checked={task.completed}
                         taskId={task.id}
                     />
-                </Stack>
+                </Stack>}
             </Stack>
         </Card>
     )

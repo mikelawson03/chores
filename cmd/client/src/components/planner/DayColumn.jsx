@@ -58,11 +58,12 @@ export default function DayColumn({ day, tasks, toggleTaskComplete, isLast}) {
     >
       {tasks.map( task => (
         <DraggableTask task={task} key={task.id}>
-          <PlannerTaskCard   
+          {(isDragging) => (<PlannerTaskCard   
             task={task}
+            isDragging={isDragging}
             toggleTaskComplete={toggleTaskComplete}
             width="100%"
-            />
+            />)}
         </DraggableTask>
       ) )}
     </Box>

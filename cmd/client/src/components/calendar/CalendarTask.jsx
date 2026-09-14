@@ -4,7 +4,7 @@ import { useTaskStore } from "../../stores/taskStore";
 import { HOUSEHOLD_USER_COLORS } from "../../constants/colorPalette";
 import { CADENCES } from "../../constants/cadences"
 
-export default function CalendarTask( {task} ) {
+export default function CalendarTask( {task, isDragging} ) {
     const openTaskDetails = useTaskStore(
         (state) => state.openTaskDetails
     );
@@ -25,6 +25,7 @@ export default function CalendarTask( {task} ) {
                     border: 1,
                     borderColor: cadenceColor,
                     borderRadius: 1,
+                    opacity: isDragging ? 0.5 : 1,
                     
 
                     "&::before": {

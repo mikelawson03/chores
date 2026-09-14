@@ -18,9 +18,16 @@ export default function EditChore({ open, chore, closeEditChore, editChoreMode, 
         { value: "unassigned", label: "Unassigned"},
         ...users.map(hhUser => ({
             value: hhUser.user.id,
-            label: hhUser.user.firstName,
+            label: hhUser.displayName,
         })),
     ]
+
+    const cadenceOptions=
+        Object.entries(CADENCES).map(([cadence, cadenceConfig]) => ({
+            value: cadence,
+            label: cadenceConfig.label,
+        }))
+    
 
     const deleteChoreMutation = useMutation({
         mutationFn: deleteChore,
@@ -46,7 +53,7 @@ export default function EditChore({ open, chore, closeEditChore, editChoreMode, 
                     <Typography variant="h6">{statusName}</Typography>
                 </Stack> */}
                 <Stack direction="column" spacing={2}>
-                    <DetailRowSelect label="Frequency" field="cadence" value={chore.cadence} error={errors.cadence} options={CADENCES} onValueChange={onChoreDetailChange} required={true} validateChoreField={validateChoreField}/>
+                    <DetailRowSelect label="Frequency" field="cadence" value={chore.cadence} error={errors.cadence} options={cadenceOptions} onValueChange={onChoreDetailChange} required={true} validateChoreField={validateChoreField}/>
                     <DetailRowSelect label="Assigned To" field="assignee" value={chore.assignee ?? "unassigned"} error={errors.assignee} options={userOptions} onValueChange={onChoreDetailChange} validateChoreField={validateChoreField} />
                     <DetailRowNumber label="Duration" field="duration" value={chore.duration} error={errors.duration} onValueChange={onChoreDetailChange} units="mins" required={true} validateChoreField={validateChoreField} />
                 </Stack>

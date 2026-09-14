@@ -13,6 +13,7 @@ export async function getChoreTemplates() {
 };
 
 export async function createChoreTemplate(template) {
+  console.log(template);
   const response = await fetch(`${API_HOST}/chore-templates`,{
     method: "POST",
     body: JSON.stringify(template),

@@ -39,10 +39,16 @@ export const useFilterStore = create((set) => ({
     },
 
     initializeFilters: (config) => {
-        set(() => ({
+        set({
             hiddenUserIds: new Set(config.hiddenUserIds),
             hiddenCadences: new Set(config.hiddenCadences),
             hiddenStatuses: new Set(config.hiddenStatuses)
-        }))
-    }
+        });
+    },
+
+    setHiddenUserIds: (ids) => {
+        set({
+            hiddenUserIds: new Set(ids)
+        });
+    },
 }))

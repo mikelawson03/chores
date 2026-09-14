@@ -61,7 +61,6 @@ export default function PlannerToolbar({
           anchorEl={anchorEl}
           filterConfig={filterConfig}
         />
-           
         <Button 
           disabled={isThisWeek}
           onClick={onResetWeek}

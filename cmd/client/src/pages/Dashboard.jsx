@@ -1,14 +1,17 @@
-import PageHeader from "../components/PageHeader";
 import TaskCard from "../components/TaskCard";
 import TaskListCard from "../components/TaskListCard";
 import { Box, CircularProgress, Container, Grid, Stack, Typography } from "@mui/material"
-import { getActiveTasks, getScheduledTasksForDay, getUnscheduledTasks, getWeeklyTasks, getMonthlyTasks, getCompletedTasks } from "../utils/taskHelpers";
+import { getActiveTasks, getScheduledTasksForDay, getUnscheduledTasks, getCompletedTasks } from "../utils/taskHelpers";
 import dayjs from "dayjs";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../auth/useAuth";
 import { getAssignments } from "../utils/assignmentHelpers";
+import { getUsers } from "../utils/userHelpers";
+import isoWeek from "dayjs/plugin/isoWeek";
+
 
 export default function Dashboard({ toggleTaskComplete }) {
+  dayjs.extend(isoWeek);
   const { user } = useAuth();
   const { 
     data: tasks = [],
@@ -19,15 +22,60 @@ export default function Dashboard({ toggleTaskComplete }) {
     enabled: !!user,
   });
 
-  
+  const {
+    data: householdUsers = [],
+  } = useQuery({
+    queryKey: ["householdUsers", user?.householdId],
+    queryFn: () => getUsers(user.householdId),
+    enabled: !!user?.householdId && user?.role === "admin",
+  });
 
-  const activeTasks = getActiveTasks(tasks)
+  const dashboardUsers = user.role === "admin"
+    ? householdUsers
+    : [user];
+
+  const householdUsersById = new Map(
+    dashboardUsers.map(hhUser => [
+      hhUser.user.id,
+      hhUser
+    ])
+  )
+
+  const dashboardTasks = tasks.map(task => {
+    const hhUser = householdUsersById.get(task.userId);
+
+    return {
+      ...task,
+      userDisplayName: hhUser?.displayName ?? task.userFirstName,
+      userColorOption: hhUser?.colorOption ?? null,
+    }
+  })
+
+  const weekStart = dayjs().startOf("isoWeek")
+  const weekEnd = dayjs().endOf("isoWeek")
+  const monthRange = {
+    lower: weekStart.startOf("month").subtract(1,"day").endOf("day"),
+    upper: weekEnd.endOf("month").add(1, "day").startOf("day")
+  }
+
+  const activeTasks = getActiveTasks(dashboardTasks)
   const activeAndUnscheduledTasks = getUnscheduledTasks(activeTasks)
   
-  const weeklyTasks = getWeeklyTasks(activeAndUnscheduledTasks);
-  const monthlyTasks = getMonthlyTasks(activeAndUnscheduledTasks);
+  const weeklyTasks = activeAndUnscheduledTasks.filter(
+    task => task.cadence === "weekly"
+    && dayjs(task.dueDate).isAfter(weekEnd.subtract(1, "week"))
+    && dayjs(task.dueDate).isBefore(weekStart.add(1, "week"))
+  );
+
+  const monthlyTasks = activeAndUnscheduledTasks.filter(
+    task => task.cadence === "monthly"
+    && dayjs(task.dueDate).isAfter(monthRange.lower)
+    && dayjs(task.dueDate).isBefore(monthRange.upper)
+  );
+
   const todaysTasks = getScheduledTasksForDay(dayjs(), activeTasks);
   const completedTasks = getCompletedTasks(tasks);
+
 
   if (isPending){
     return (
@@ -45,27 +93,34 @@ export default function Dashboard({ toggleTaskComplete }) {
 
   return (
   <Container maxWidth="lg">
-    <PageHeader title="Dashboard" />
+    <Stack sx={{p: 3, justifyContent: "center", alignItems:"center", width: "100%"}}>
+    <Typography variant="h4" >Dashboard</Typography>
+    </Stack>
     <Stack spacing={2} direction={"row"} sx={{ marginBottom: 4, marginTop: 8}}>
       <TaskListCard 
-        cardName="Weekly Tasks"
+        cardTitle={"Weekly Tasks"}
+        subHead={`${weekStart.format("MMM D")} - ${weekEnd.format("MMM D")}`}
         tasks={weeklyTasks}
         maxItems={3}
         footerText="View planner →"
+        route="/planner"
         toggleTaskComplete={toggleTaskComplete}
       />
       <TaskListCard 
-        cardName="Monthly Tasks"
+        cardTitle="Monthly Tasks"
+        subHead={dayjs().format("MMMM")}
         tasks={monthlyTasks}
         maxItems={3}
         footerText="View planner →"
+        route="/planner"
         toggleTaskComplete={toggleTaskComplete}
       />
       <TaskListCard 
-        cardName="Completed Tasks"
+        cardTitle="Completed Tasks"
         tasks={completedTasks}
         maxItems={3}
-        footerText="View completed →"
+        footerText="View planner →"
+        route="/planner"
         toggleTaskComplete={toggleTaskComplete}
       />
     </Stack>

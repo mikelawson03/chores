@@ -9,7 +9,7 @@ import { HOUSEHOLD_USER_COLORS } from "../../constants/colorPalette";
 import { CADENCES } from "../../constants/cadences";
 
 
-export default function PlannerTaskCard({ task, width }) {
+export default function PlannerTaskCard({ task, width, isDragging }) {
   let bgColor;
   let txtColor;
   let txtDecoration;
@@ -36,7 +36,7 @@ export default function PlannerTaskCard({ task, width }) {
     (state) => state.openTaskDetails
   );
 
-  const ownerColor = HOUSEHOLD_USER_COLORS[task.userColorOption].bgColor
+  const ownerColor = HOUSEHOLD_USER_COLORS[task.userColorOption]?.bgColor ?? null;
 
   return (
     <Card onClick={() => openTaskDetails(task)}
@@ -48,6 +48,8 @@ export default function PlannerTaskCard({ task, width }) {
       backgroundColor: bgColor,
       maxWidth: "100%",
       minWidth: 0,
+      opacity: isDragging ? 0.5 : 1,
+      
 
       "&::before": {
         content: '""',
@@ -91,14 +93,14 @@ export default function PlannerTaskCard({ task, width }) {
             }}
           />
         </Stack>
-        <Typography variant="body2" sx = {{ color: txtColor, textDecoration: txtDecoration, mb: 0.25, lineHeight: 1.15}}>
+        <Typography variant="body2" sx = {{ color: 'text.secondary', textDecoration: txtDecoration, mb: 0.25, lineHeight: 1.15}}>
           {task.userDisplayName ? task.userDisplayName : "Unassigned"}
         </Typography>
         <Stack 
           direction="row" 
           sx = {{ width: "100%", justifyContent:"space-between"  }}
         >
-          <Typography variant="body2" sx={{ color: txtColor, textDecoration: txtDecoration }}>
+          <Typography variant="body2" sx={{ color: 'text.secondary', textDecoration: txtDecoration }}>
             {formatDuration(task.duration)}
           </Typography>
           <CompletionCheckbox

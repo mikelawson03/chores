@@ -11,12 +11,12 @@ export default function StagingSection({title, tasks, toggleTaskComplete }) {
         <Stack direction="row" sx={{ pb: 2, flexWrap: "wrap", gap: 1 }}>
             {tasks.map( task => (
                 <DraggableTask task={task} key={task.id}>
-                    <PlannerTaskCard
-                        key={task.id}
+                    {(isDragging) => (<PlannerTaskCard
                         task={task}
+                        isDragging={isDragging}
                         toggleTaskComplete={toggleTaskComplete}
                         width={175}
-                        />
+                        />)}
                 </DraggableTask>
             ))}
         </Stack>

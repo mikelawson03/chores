@@ -1,6 +1,5 @@
 import { Box, CircularProgress, Stack } from "@mui/material";
 import ChoresTable from "../components/chores/ChoresTable";
-import PageHeader from "../components/PageHeader";
 import EditChore from "../components/chores/EditChore";
 import { EDITABLE_CHORE_FIELDS, EMPTY_CHORE_TEMPLATE } from "../constants/choreTemplate";
 import { useState } from "react";
@@ -10,14 +9,48 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { createChore, updateChore } from "../utils/choreHelpers";
 import { queryClient } from "../query/queryClient";
 import { parseApiError } from "../utils/errorHelpers";
+import ChoresToolbar from "../components/chores/ChoresToolbar";
+import { useAuth } from "../auth/useAuth";
 
 
 
 export default function Chores() {
+  const { user } = useAuth();
+
   const [editedChoreTemplate, setEditedChoreTemplate] = useState(null);
   const [editChoreOpen, setEditChoreOpen] = useState(false);
   const [editChoreMode, setEditChoreMode] = useState(null);
   const [templateErrors, setTemplateErrors] = useState({});
+  const [hiddenUserIds, setHiddenUserIds] = useState(new Set());
+  const [hiddenCadences, setHiddenCadences] = useState(new Set());
+
+  const resetFilters = () => {
+    setHiddenUserIds(new Set());
+    setHiddenCadences(new Set());
+  }
+
+  const toggleFilterItem = (setter, value) => {
+    setter(current => {
+      const next = new Set(current);
+
+      if (next.has(value)) {
+        next.delete(value);
+      } else {
+        next.add(value);
+      }
+      return next;
+    });
+  }
+
+  const toggleAllFilters = (setter, values) => {
+    setter(current => {
+      if (current.size === 0) {
+        return new Set(values);
+      } else {
+        return new Set();
+      }
+    });
+  }
 
   const usersQuery = useQuery({
     queryKey: ["users"],
@@ -30,7 +63,17 @@ export default function Chores() {
   })
 
   const users = usersQuery.data ?? [];
+  const userIds = users.map(user => user.user.id);
+  const showMyTasks = () => {
+          const idsToHide = userIds.filter(userId => userId !== user.user.id);
+          setHiddenUserIds(new Set(["", ...idsToHide]));
+      };
+  
   const choreTemplates = choreTemplatesQuery.data ?? [];
+
+  let filteredTemplates=choreTemplates
+  filteredTemplates=filteredTemplates.filter(template => !hiddenUserIds.has(template.assignee));
+  filteredTemplates=filteredTemplates.filter(template => !hiddenCadences.has(template.cadence));
 
   function openEditChore(choreTemplate) {
     setEditedChoreTemplate({
@@ -79,6 +122,7 @@ export default function Chores() {
   }
 
   function handleSave() {
+    console.log(editedChoreTemplate)
     if (!validateChore(editedChoreTemplate)) {
       return;
     }
@@ -187,37 +231,42 @@ export default function Chores() {
   }
 
   return (
-      <Stack spacing={4} sx={{
+      <Stack spacing={2} sx={{
           flex: 1,
           alignItems: "center",
         }}
       >
-        <Box sx={{
-            width: "100%", 
-            pb: 3, 
-            borderBottom: 1, 
-            borderColor: "divider", 
-            display:"flex", 
-            flexDirection: "column", 
-            alignItems: "center"
-          }}
-        >
-          <PageHeader title="Chore Management" />
-        </Box>
-          <ChoresTable choreTemplates={choreTemplates} openEditChore={openEditChore} editNewChore={editNewChore} users={users}/>
-          {editedChoreTemplate && 
-            <EditChore 
-              open={editChoreOpen} 
-              chore={editedChoreTemplate} 
-              closeEditChore={closeEditChore} 
-              editChoreMode={editChoreMode}
-              onChoreDetailChange={onChoreDetailChange} 
-              users={users}
-              errors={templateErrors}
-              validateChoreField={validateChoreField}
-              handleSave={handleSave}
-              isSaving={isSaving}
-            />}
+        <ChoresToolbar 
+          editNewChore={editNewChore}
+          hiddenUserIds={hiddenUserIds}
+          hiddenCadences={hiddenCadences}
+          setHiddenUserIds={setHiddenUserIds}
+          setHiddenCadences={setHiddenCadences}
+          resetFilters={resetFilters}
+          toggleFilterItem={toggleFilterItem}
+          toggleAllFilters={toggleAllFilters}
+          users={users}
+          showMyTasks={showMyTasks}
+        />
+        <ChoresTable 
+          choreTemplates={filteredTemplates} 
+          openEditChore={openEditChore} 
+          editNewChore={editNewChore} 
+          users={users}
+        />
+        {editedChoreTemplate && 
+          <EditChore 
+            open={editChoreOpen} 
+            chore={editedChoreTemplate} 
+            closeEditChore={closeEditChore} 
+            editChoreMode={editChoreMode}
+            onChoreDetailChange={onChoreDetailChange} 
+            users={users}
+            errors={templateErrors}
+            validateChoreField={validateChoreField}
+            handleSave={handleSave}
+            isSaving={isSaving}
+          />}
       </Stack>
 )
 }

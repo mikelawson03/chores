@@ -28,6 +28,10 @@ export default function FilterMenu({
         (state) => state.toggleAllFilters
     );
 
+    const setHiddenUserIds = useFilterStore(
+        (state) => state.setHiddenUserIds
+    );
+
     const hiddenUserIds = useFilterStore(
         (state) => state.hiddenUserIds
       );
@@ -39,6 +43,11 @@ export default function FilterMenu({
     const hiddenStatuses = useFilterStore(
     (state) => state.hiddenStatuses
     );
+
+    function onShowMyTasks() {
+        const idsToHide = userIds.filter(userId => userId !== user.user.id);
+        setHiddenUserIds(idsToHide);
+    };
 
     return (
         <Popover 
@@ -126,22 +135,19 @@ export default function FilterMenu({
                                     />
                                 </ListItemIcon>
                                 <Chip 
-                                        label={cadenceConfig.cadenceBadge}
-                                        size="small"
-                                        sx={{
-                                            flexShrink: 0,
-                                            bgcolor: cadenceConfig.backgroundColor,
-                                            color: cadenceConfig.color,
-                                            mr: 1,
-                                        }}
-                                    />
+                                    label={cadenceConfig.cadenceBadge}
+                                    size="small"
+                                    sx={{
+                                        flexShrink: 0,
+                                        bgcolor: cadenceConfig.backgroundColor,
+                                        color: cadenceConfig.color,
+                                        mr: 1,
+                                    }}
+                                />
                                 <ListItemText 
                                     sx={{
-                                        // bgcolor: cadenceConfig.backgroundColor,
                                         py: 0.75,
-                                        // px: 2,
                                         borderRadius: 1,
-                                        // color: cadenceConfig.color,
                                     }}
                                     slotProps={{
                                         primary:{
@@ -152,10 +158,7 @@ export default function FilterMenu({
                                         }
                                     }}
                                     primary={cadenceConfig.label}
-                                >
-                                    
-                                    
-                                </ListItemText>
+                                />
                             </ListItem>
                         ))}
                     </List>
@@ -209,7 +212,9 @@ export default function FilterMenu({
                     >
                         Reset All
                     </Button>
-                    <Button>
+                    <Button
+                        onClick={onShowMyTasks}
+                    >
                         Show My Tasks
                     </Button>
                 </Stack>

@@ -1,14 +1,8 @@
 import dayjs from "dayjs"
+import { CADENCES } from "../constants/cadences"
 
 export function formatCadence(cadence) {
-  const cadenceLabels = {
-    daily: "Daily",
-    weekly: "Weekly",
-    monthly: "Monthly",
-    annually: "Annually"
-  }
-
-  return cadenceLabels[cadence]
+  return CADENCES[cadence].label;
 }
 
 export function formatDuration(duration) {

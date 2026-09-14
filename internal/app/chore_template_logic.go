@@ -58,11 +58,11 @@ func (a *App) validateChoreTemplateRequest(ctx context.Context, name, cadence, a
 			return err
 		}
 	}
+
 	err := a.choreNameExists(ctx, name, id)
 	if err != nil {
 		return err
 	}
-
 	return nil
 }
 
@@ -71,7 +71,6 @@ func (a *App) ValidateChoreTemplateAssignee(ctx context.Context, assigneeID, hou
 	if errors.Is(err, domain.ErrNotFound) {
 		return fmt.Errorf("%w: assigned user not found", domain.ErrInvalidRequest)
 	}
-
 	if err != nil {
 		return err
 	}
@@ -107,6 +106,7 @@ func (a *App) GetChoreTemplateByID(ctx context.Context, id string) (domain.Chore
 }
 
 func (a *App) CreateChoreTemplate(ctx context.Context, name, cadence, assignee, instructions string, duration *int) (domain.ChoreTemplate, error) {
+
 	hhUser, err := CheckAdmin(ctx)
 	if err != nil {
 		return domain.ChoreTemplate{}, err
