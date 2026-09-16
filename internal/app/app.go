@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/mikelawson03/chores/internal/auth"
 	"github.com/mikelawson03/chores/internal/domain"
+	"github.com/mikelawson03/chores/internal/events"
 	"github.com/mikelawson03/chores/internal/store"
 )
 
@@ -20,6 +21,7 @@ type Config struct {
 type App struct {
 	Store  *store.Store
 	Config Config
+	Bus    *events.Bus
 }
 
 func NewConfig(secret, password, user string) Config {
@@ -30,10 +32,11 @@ func NewConfig(secret, password, user string) Config {
 	}
 }
 
-func NewApp(store *store.Store, config Config) *App {
+func NewApp(store *store.Store, config Config, bus *events.Bus) *App {
 	return &App{
 		Store:  store,
 		Config: config,
+		Bus:    bus,
 	}
 }
 

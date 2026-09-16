@@ -11,6 +11,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/mikelawson03/chores/internal/api"
 	"github.com/mikelawson03/chores/internal/app"
+	"github.com/mikelawson03/chores/internal/events"
 	"github.com/mikelawson03/chores/internal/middleware"
 	"github.com/mikelawson03/chores/internal/store"
 	"github.com/pressly/goose"
@@ -66,9 +67,10 @@ func main() {
 	dbConn := dbConnect(dbPath)
 	dbMigrate(dbConn)
 
+	eventBus := events.NewBus()
 	config := app.NewConfig(JWTSigninSecret, devPassword, devUsername)
 	store := store.NewStore(dbConn)
-	app := app.NewApp(store, config)
+	app := app.NewApp(store, config, eventBus)
 
 	cfg := api.NewApiConfig(app)
 

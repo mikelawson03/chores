@@ -30,6 +30,21 @@ type EditAssignmentRequest struct {
 	Canceled       bool
 }
 
+func newAssignmentEvent(eventType domain.AssignmentEventType, occurredAt time.Time, actorType domain.ActorType, assignment domain.Assignment, householdID, userID string) domain.Event[domain.Assignment] {
+	e := domain.Event[domain.Assignment]{
+		Type:        string(eventType),
+		OccurredAt:  occurredAt,
+		HouseholdID: householdID,
+		Actor: domain.Actor{
+			Type: actorType,
+			ID:   userID,
+		},
+		Payload: assignment,
+	}
+
+	return e
+}
+
 func (a *App) validateTemplateID(ctx context.Context, templateID string) error {
 	if strings.TrimSpace(templateID) == "" {
 		return fmt.Errorf("%w: template ID required", domain.ErrInvalidRequest)
@@ -200,6 +215,7 @@ func (a *App) EditAssignment(ctx context.Context, editRequest EditAssignmentRequ
 
 	var completedAt *time.Time
 	var canceledAt *time.Time
+	updatedAt := time.Now()
 
 	if existing.Completed != editRequest.Completed {
 		if editRequest.Completed {
@@ -232,11 +248,14 @@ func (a *App) EditAssignment(ctx context.Context, editRequest EditAssignmentRequ
 		Canceled:       editRequest.Canceled,
 		CompletedAt:    completedAt,
 		CanceledAt:     canceledAt,
-		UpdatedAt:      time.Now(),
+		UpdatedAt:      updatedAt,
 	})
 	if err != nil {
 		return domain.Assignment{}, err
 	}
+
+	newEditEvent := newAssignmentEvent(domain.AssignmentEdited, updatedAt, domain.ActorTypeUser, assignment, user.HouseholdID, user.User.ID)
+	fmt.Printf("event: %+v\n", newEditEvent)
 
 	return assignment, nil
 }
