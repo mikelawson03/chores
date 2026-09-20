@@ -6,6 +6,8 @@ import (
 
 type DomainEvent interface {
 	EventType() string
+	GetHouseholdID() string
+	GetPayload() any
 }
 
 type Event[T EventPayload] struct {
@@ -43,4 +45,12 @@ const (
 
 func (e Event[T]) EventType() string {
 	return e.Type
+}
+
+func (e Event[T]) GetHouseholdID() string {
+	return e.HouseholdID
+}
+
+func (e Event[T]) GetPayload() any {
+	return e.Payload
 }

@@ -254,8 +254,15 @@ func (a *App) EditAssignment(ctx context.Context, editRequest EditAssignmentRequ
 		return domain.Assignment{}, err
 	}
 
-	newEditEvent := newAssignmentEvent(domain.AssignmentEdited, updatedAt, domain.ActorTypeUser, assignment, user.HouseholdID, user.User.ID)
-	fmt.Printf("event: %+v\n", newEditEvent)
+	newEditEvent := newAssignmentEvent(domain.AssignmentEdited,
+		updatedAt,
+		domain.ActorTypeUser,
+		assignment,
+		user.HouseholdID,
+		user.User.ID,
+	)
+
+	a.Bus.Publish(newEditEvent)
 
 	return assignment, nil
 }
