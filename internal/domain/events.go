@@ -11,11 +11,11 @@ type DomainEvent interface {
 }
 
 type Event[T EventPayload] struct {
-	Type        string
-	OccurredAt  time.Time
-	HouseholdID string
-	Actor       Actor
-	Payload     T
+	Type        string    `json:"type"`
+	OccurredAt  time.Time `json:"occurredAt"`
+	HouseholdID string    `json:"householdID"`
+	Actor       Actor     `json:"actor"`
+	Payload     T         `json:"payload"`
 }
 
 type EventPayload interface {
@@ -32,8 +32,8 @@ const (
 )
 
 type Actor struct {
-	Type ActorType
-	ID   string
+	Type ActorType `json:"type"`
+	ID   string    `json:"id"`
 }
 
 type ActorType string

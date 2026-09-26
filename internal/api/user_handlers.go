@@ -188,6 +188,13 @@ func (cfg *apiCfg) handlerLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	http.SetCookie(w, &http.Cookie{
+		Name:     "auth",
+		Value:    result.Token,
+		HttpOnly: true,
+		Path:     "/",
+	})
+
 	resp := LoginResponse{
 		Token: result.Token,
 	}

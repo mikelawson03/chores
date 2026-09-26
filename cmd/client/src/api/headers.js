@@ -1,4 +1,3 @@
-import { DEV_USER_ID } from "../config/dev";
 
 export function getHeaders() {
     return {

@@ -12,11 +12,22 @@ import (
 func (cfg *apiCfg) middlewareAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
-		tok, err := auth.GetBearerToken(r.Header)
-		if err != nil {
-			err = fmt.Errorf("%w: error retrieving token", domain.ErrUnauthorized)
-			RespondWithError(w, err)
-			return
+
+		var tok string
+
+		cookie, err := r.Cookie("auth")
+
+		if err == nil {
+			tok = cookie.Value
+		} else if errors.Is(err, http.ErrNoCookie) {
+			tok, err = auth.GetBearerToken(r.Header)
+			if err != nil {
+				err = fmt.Errorf("%w: error retrieving token", domain.ErrUnauthorized)
+				RespondWithError(w, err)
+				return
+			}
+		} else {
+			RespondWithError(w, errors.New("unexpected cookie error"))
 		}
 
 		uid, err := auth.ValidateToken(tok, cfg.App.Config.JWTSigninSecret)

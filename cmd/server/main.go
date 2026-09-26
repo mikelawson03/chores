@@ -1,9 +1,7 @@
 package main
 
 import (
-	"context"
 	"database/sql"
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -13,7 +11,6 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/mikelawson03/chores/internal/api"
 	"github.com/mikelawson03/chores/internal/app"
-	"github.com/mikelawson03/chores/internal/domain"
 	"github.com/mikelawson03/chores/internal/events"
 	"github.com/mikelawson03/chores/internal/middleware"
 	"github.com/mikelawson03/chores/internal/store"
@@ -76,32 +73,32 @@ func main() {
 	app := app.NewApp(store, config, eventBus)
 	go eventBus.Listen()
 
-	func() {
-		ctx := context.Background()
-		user1, err := store.GetHouseholdUserByID(ctx, "840a61a5-4a12-485c-9bf4-d373aa3074ff", domain.DefaultHouseholdID)
-		if err != nil {
-			fmt.Println(err)
-		}
+	// func() {
+	// 	ctx := context.Background()
+	// 	user1, err := store.GetHouseholdUserByID(ctx, "840a61a5-4a12-485c-9bf4-d373aa3074ff", domain.DefaultHouseholdID)
+	// 	if err != nil {
+	// 		fmt.Println(err)
+	// 	}
 
-		user2, err := store.GetHouseholdUserByID(ctx, "ae792ee8-c635-44f2-bcad-9bd2142d1c4d", domain.DefaultHouseholdID)
-		if err != nil {
-			fmt.Println(err)
-		}
+	// 	user2, err := store.GetHouseholdUserByID(ctx, "ae792ee8-c635-44f2-bcad-9bd2142d1c4d", domain.DefaultHouseholdID)
+	// 	if err != nil {
+	// 		fmt.Println(err)
+	// 	}
 
-		id1, events1 := eventBus.Subscribe(user1, events.SubscriberTypeClient)
-		id2, events2 := eventBus.Subscribe(user2, events.SubscriberTypeClient)
-		go func() {
-			for event := range events1 {
-				fmt.Println("subscriber1:", id1, event)
-			}
-		}()
+	// 	id1, events1 := eventBus.Subscribe(user1, events.SubscriberTypeClient)
+	// 	id2, events2 := eventBus.Subscribe(user2, events.SubscriberTypeClient)
+	// 	go func() {
+	// 		for event := range events1 {
+	// 			fmt.Println("subscriber1:", id1, event)
+	// 		}
+	// 	}()
 
-		go func() {
-			for event := range events2 {
-				fmt.Println("subscriber2:", id2, event)
-			}
-		}()
-	}()
+	// 	go func() {
+	// 		for event := range events2 {
+	// 			fmt.Println("subscriber2:", id2, event)
+	// 		}
+	// 	}()
+	// }()
 
 	cfg := api.NewApiConfig(app)
 

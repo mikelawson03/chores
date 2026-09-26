@@ -37,4 +37,7 @@ func (cfg *apiCfg) RegisterRoutes(mux *http.ServeMux) {
 	mux.Handle("POST /balancer/run", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerRunBalancer)))
 	mux.Handle("POST /login", http.HandlerFunc(cfg.handlerLogin))
 	mux.Handle("POST /bootstrap", http.HandlerFunc(cfg.handlerBootstrap))
+
+	// events
+	mux.Handle("GET /events", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerGetEvents)))
 }
