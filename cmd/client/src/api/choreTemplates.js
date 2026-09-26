@@ -6,6 +6,7 @@ export async function getChoreTemplates() {
     const response = await fetch(`${API_HOST}/chore-templates`,{
         method: "GET",
         headers: getHeaders(),
+        credentials: "include",
     })
 
     return await response.json();
@@ -18,6 +19,7 @@ export async function createChoreTemplate(template) {
     method: "POST",
     body: JSON.stringify(template),
     headers: getHeaders(),
+    credentials: "include",
   })
 
   if (!response.ok) {
@@ -34,6 +36,7 @@ export async function updateChoreTemplate(template) {
     method: "PUT",
     body: JSON.stringify(template),
     headers: getHeaders(),
+    credentials: "include",
   })
 
   if (!response.ok) {
@@ -48,6 +51,7 @@ export async function deleteChoreTemplate(id) {
   const response = await fetch(`${API_HOST}/chore-templates/${id}`, {
     method: "DELETE",
     headers: getHeaders(),
+    credentials: "include",
   })
 
   if (!response.ok) {

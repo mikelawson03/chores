@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/mikelawson03/chores/internal/app"
 	"github.com/mikelawson03/chores/internal/auth"
@@ -35,10 +36,6 @@ type EditHouseholdUserRequest struct {
 	ColorOption int    `json:"colorOption"`
 	IsActive    bool   `json:"isActive"`
 	HouseholdId string `json:"householdId"`
-}
-
-type LoginResponse struct {
-	Token string `json:"token"`
 }
 
 type ChangePasswordRequest struct {
@@ -195,12 +192,21 @@ func (cfg *apiCfg) handlerLogin(w http.ResponseWriter, r *http.Request) {
 		Path:     "/",
 	})
 
-	resp := LoginResponse{
-		Token: result.Token,
-	}
+	w.WriteHeader(http.StatusNoContent)
 
-	RespondWithJSON(w, http.StatusOK, resp)
+}
 
+func (cfg *apiCfg) handlerLogout(w http.ResponseWriter, r *http.Request) {
+	http.SetCookie(w, &http.Cookie{
+		Name:     "auth",
+		Value:    "",
+		Path:     "/",
+		HttpOnly: true,
+		MaxAge:   -1,
+		Expires:  time.Unix(0, 0),
+	})
+
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (cfg *apiCfg) handlerGetMe(w http.ResponseWriter, r *http.Request) {

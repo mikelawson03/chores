@@ -17,18 +17,18 @@ func (cfg *apiCfg) middlewareAuth(next http.Handler) http.Handler {
 
 		cookie, err := r.Cookie("auth")
 
-		if err == nil {
-			tok = cookie.Value
-		} else if errors.Is(err, http.ErrNoCookie) {
-			tok, err = auth.GetBearerToken(r.Header)
-			if err != nil {
-				err = fmt.Errorf("%w: error retrieving token", domain.ErrUnauthorized)
+		if err != nil {
+			if errors.Is(err, http.ErrNoCookie) {
+				err = fmt.Errorf("%w: auth cookie not found", domain.ErrUnauthorized)
 				RespondWithError(w, err)
 				return
 			}
-		} else {
-			RespondWithError(w, errors.New("unexpected cookie error"))
+
+			RespondWithError(w, err)
+			return
 		}
+
+		tok = cookie.Value
 
 		uid, err := auth.ValidateToken(tok, cfg.App.Config.JWTSigninSecret)
 		if err != nil {

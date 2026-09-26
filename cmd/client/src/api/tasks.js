@@ -6,6 +6,7 @@ export async function getTasks() {
     const response = await fetch(`${API_HOST}/assignments`,{
         method: "GET",
         headers: getHeaders(),
+        credentials: "include",
     })
 
     if (!response.ok) {
@@ -20,6 +21,7 @@ export async function getTasksForUser(id) {
     const response = await fetch(`${API_HOST}/assignments?user_id=${id}`, {
         method: "GET",
         headers: getHeaders(),
+        credentials: "include",
     })
 
     if (!response.ok) {
@@ -35,6 +37,7 @@ export async function updateTask(task) {
         method: "PUT",
         body: JSON.stringify(task),
         headers: getHeaders(),
+        credentials: "include",
     })
 
     if (!response.ok) {
@@ -49,6 +52,7 @@ export async function toggleCompletion(id) {
     const response = await fetch(`${API_HOST}/assignments/${id}/complete`, {
         method: "POST",
         headers: getHeaders(),
+        credentials: "include",
     })
 
     if (!response.ok) {
@@ -63,6 +67,7 @@ export async function rescheduleAssignment(props) {
     const response = await fetch(`${API_HOST}/assignments/${props.id}/reschedule`, {
         method: "POST",
         headers: getHeaders(),
+        credentials: "include",
         body: JSON.stringify({"scheduledFor": props.scheduledFor})
     })
 

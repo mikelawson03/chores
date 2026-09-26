@@ -1,7 +1,7 @@
 import { Button, Drawer, List, ListItem, ListItemButton, ListItemText, Stack } from "@mui/material";
 import { useState } from "react";
 import { clickableText } from "../styles/typography";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../auth/useAuth";
 import { TbLayoutSidebarLeftCollapse, TbLayoutSidebarRightCollapse } from "react-icons/tb";
 import DashboardIcon from '@mui/icons-material/Dashboard';
@@ -16,14 +16,24 @@ export default function Sidebar() {
   const DRAWER_WIDTH = 240;
   const MINI_DRAWER_WIDTH = 90;
 
-  const { user, logout } = useAuth();
+  const { user, logoutUser } = useAuth();
   const isAdmin = user?.role ==="admin"
+  const navigate = useNavigate();
 
   const [sidebarExpanded, setSidebarExpanded] = useState(true)
 
   const onExpandClick = () => {
     setSidebarExpanded(current => !current);
     
+  }
+
+  const handleLogout = async () => {
+    try {
+      await logoutUser();
+      navigate("/")
+    } catch (err) {
+      console.log(err)
+    }
   }
 
   const navItems = [
@@ -114,7 +124,7 @@ export default function Sidebar() {
       ))
       }
       <ListItem >
-        <ListItemButton onClick={logout}>
+        <ListItemButton onClick={handleLogout}>
           <LogoutIcon />
           {sidebarExpanded && <ListItemText
             sx={[clickableText, {pl: 1}]}
