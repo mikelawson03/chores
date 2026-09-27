@@ -466,9 +466,10 @@ func (s *Store) ToggleAssignmentCompletion(ctx context.Context, completion bool,
 	return assignment, nil
 }
 
-func (s *Store) RescheduleAssignment(ctx context.Context, assignmentID string, scheduledFor *time.Time) (domain.Assignment, error) {
+func (s *Store) RescheduleAssignment(ctx context.Context, assignmentID string, scheduledFor *time.Time, updatedAt time.Time) (domain.Assignment, error) {
 	err := s.Queries.RescheduleAssignment(ctx, db.RescheduleAssignmentParams{
 		ScheduledFor: pointerTimeToNullTime(scheduledFor),
+		UpdatedAt:    updatedAt,
 		ID:           assignmentID,
 	})
 	if errors.Is(err, sql.ErrNoRows) {

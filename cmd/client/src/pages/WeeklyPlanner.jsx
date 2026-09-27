@@ -151,13 +151,6 @@ export default function WeeklyPlanner({ toggleTaskComplete }) {
 
   const rescheduleMutation = useMutation({
     mutationFn: rescheduleTask,
-
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["assignments", user.id],
-      });
-    },
-
     onError: (error) => {
       handleRescheduleError(error);
     }

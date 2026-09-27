@@ -247,7 +247,7 @@ func (s *Store) AddUserToHousehold(ctx context.Context, req AddUserToHouseholdPa
 		return domain.HouseholdUser{}, err
 	}
 
-	hhUser, err := s.GetHouseholdUserByID(ctx, req.HouseholdId, req.UserId)
+	hhUser, err := s.GetHouseholdUserByID(ctx, req.UserId, req.HouseholdId)
 	if err != nil {
 		return domain.HouseholdUser{}, err
 	}

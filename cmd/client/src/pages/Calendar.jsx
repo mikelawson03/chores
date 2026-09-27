@@ -163,9 +163,6 @@ export default function Calendar({ toggleTaskComplete }) {
   const rescheduleMutation = useMutation({
     mutationFn: rescheduleTask,
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["assignments", user.id],
-      });
       setDragTask(null);
     },
 

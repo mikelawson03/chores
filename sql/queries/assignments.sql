@@ -107,7 +107,8 @@ WHERE id = ?;
 
 -- name: RescheduleAssignment :exec
 UPDATE assignments
-SET scheduled_for = ?
+SET scheduled_for = ?,
+updated_at = ?
 WHERE id = ?;
 
 -- name: AllocateAssignments :exec

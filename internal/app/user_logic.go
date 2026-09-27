@@ -25,8 +25,8 @@ type HouseholdUserRequest struct {
 	DisplayName string
 	ColorOption int
 	IsActive    bool
-	UserId      string
-	HouseholdId string
+	UserID      string
+	HouseholdID string
 }
 
 func hashPassword(password string) (string, error) {
@@ -58,6 +58,20 @@ func (a *App) UsernameExists(ctx context.Context, username string) (bool, error)
 
 	return true, nil
 
+}
+
+func (a *App) HouseholdUserExists(ctx context.Context, userID, householdID string) (bool, error) {
+	_, err := a.Store.GetHouseholdUserByID(ctx, userID, householdID)
+
+	if errors.Is(err, sql.ErrNoRows) {
+		return false, nil
+	}
+
+	if err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 func (a *App) validateNewUserRequest(ctx context.Context, username, firstName, password string) error {
@@ -120,7 +134,7 @@ func (a *App) validateHouseholdUserFields(ctx context.Context, req HouseholdUser
 		return domain.ErrInvalidDisplayName
 	}
 
-	exists, err := a.Store.HouseholdColorOptionInUse(ctx, req.HouseholdId, req.UserId, req.ColorOption)
+	exists, err := a.Store.HouseholdColorOptionInUse(ctx, req.HouseholdID, req.UserID, req.ColorOption)
 	if err != nil {
 		return err
 	}
@@ -199,9 +213,18 @@ func (a *App) AddUserToHousehold(ctx context.Context, req HouseholdUserRequest) 
 		return domain.HouseholdUser{}, domain.ErrHouseholdFull
 	}
 
+	exists, err := a.HouseholdUserExists(ctx, req.UserID, req.HouseholdID)
+	if err != nil {
+		return domain.HouseholdUser{}, err
+	}
+
+	if exists {
+		return domain.HouseholdUser{}, fmt.Errorf("%w: user already member of household", domain.ErrInvalidRequest)
+	}
+
 	hhUser, err := a.Store.AddUserToHousehold(ctx, store.AddUserToHouseholdParams{
-		HouseholdId: req.HouseholdId,
-		UserId:      req.UserId,
+		HouseholdId: req.HouseholdID,
+		UserId:      req.UserID,
 		Role:        req.Role,
 		DisplayName: req.DisplayName,
 		ColorOption: req.ColorOption,
@@ -289,7 +312,7 @@ func (a *App) EditHouseholdUser(ctx context.Context, req HouseholdUserRequest) (
 		return domain.HouseholdUser{}, err
 	}
 
-	existing, err := a.Store.GetHouseholdUserByID(ctx, req.HouseholdId, req.UserId)
+	existing, err := a.Store.GetHouseholdUserByID(ctx, req.HouseholdID, req.UserID)
 	if err != nil {
 		return domain.HouseholdUser{}, err
 	}
@@ -314,8 +337,8 @@ func (a *App) EditHouseholdUser(ctx context.Context, req HouseholdUserRequest) (
 		DisplayName: req.DisplayName,
 		ColorOption: req.ColorOption,
 		IsActive:    req.IsActive,
-		UserId:      req.UserId,
-		HouseholdId: req.HouseholdId,
+		UserId:      req.UserID,
+		HouseholdId: req.HouseholdID,
 	})
 
 	if err != nil {

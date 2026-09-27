@@ -46,9 +46,6 @@ function App() {
   const updateTaskMutation = useMutation({
     mutationFn: updateAssignment,
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["assignments", user.id],
-      });
       closeTaskDetails();
     },
     onError: (error) => {

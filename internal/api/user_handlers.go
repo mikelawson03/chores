@@ -30,6 +30,15 @@ type UserResponse struct {
 	Role      string `json:"role"`
 }
 
+type AddHouseholdUserRequest struct {
+	Role        string `json:"role"`
+	DisplayName string `json:"displayName"`
+	ColorOption int    `json:"colorOption"`
+	IsActive    bool   `json:"isActive"`
+	UserID      string `json:"userID"`
+	HouseholdID string `json:"householdID"`
+}
+
 type EditHouseholdUserRequest struct {
 	Role        string `json:"role"`
 	DisplayName string `json:"displayName"`
@@ -74,6 +83,36 @@ func (cfg *apiCfg) handlerCreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	RespondWithJSON(w, http.StatusCreated, user)
+}
+
+func (cfg *apiCfg) handlerAddUserToHousehold(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	hhID := r.PathValue("hhid")
+
+	d := json.NewDecoder(r.Body)
+	req := &AddHouseholdUserRequest{}
+
+	err := d.Decode(req)
+	if err != nil {
+		RespondWithError(w, err)
+		return
+	}
+
+	hhUser, err := cfg.App.AddUserToHousehold(ctx, app.HouseholdUserRequest{
+		Role:        req.Role,
+		DisplayName: req.DisplayName,
+		ColorOption: req.ColorOption,
+		IsActive:    req.IsActive,
+		UserID:      req.UserID,
+		HouseholdID: hhID,
+	})
+	if err != nil {
+		RespondWithError(w, err)
+		return
+	}
+
+	RespondWithJSON(w, http.StatusCreated, hhUser)
+
 }
 
 func (cfg *apiCfg) handlerGetHouseholdUsers(w http.ResponseWriter, r *http.Request) {
@@ -143,8 +182,8 @@ func (cfg *apiCfg) handlerEditHouseholdUser(w http.ResponseWriter, r *http.Reque
 		DisplayName: req.DisplayName,
 		ColorOption: req.ColorOption,
 		IsActive:    req.IsActive,
-		UserId:      userId,
-		HouseholdId: householdId,
+		UserID:      userId,
+		HouseholdID: householdId,
 	})
 
 	if err != nil {

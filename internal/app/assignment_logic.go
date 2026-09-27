@@ -386,7 +386,7 @@ func (a *App) RescheduleAssignment(ctx context.Context, assignmentID string, sch
 
 	now := time.Now()
 
-	assignment, err := a.Store.RescheduleAssignment(ctx, assignmentID, scheduledFor)
+	assignment, err := a.Store.RescheduleAssignment(ctx, assignmentID, scheduledFor, now)
 	if err != nil {
 		return domain.Assignment{}, err
 	}

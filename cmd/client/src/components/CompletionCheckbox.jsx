@@ -14,11 +14,6 @@ export default function CompletionCheckbox({ checked, taskId, visible = true, si
 
     const toggleTaskCompletionMutation = useMutation({
         mutationFn: toggleTaskCompletion,
-        onSuccess: () => {
-        queryClient.invalidateQueries({
-            queryKey: ["assignments", user.id],
-        });
-        },
         onError: (error) => {
         handleToggleCompletionError(error);
         }

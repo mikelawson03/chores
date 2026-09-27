@@ -79,23 +79,23 @@ func CheckAdmin(ctx context.Context) (domain.HouseholdUser, error) {
 	return user, nil
 }
 
-func (a *App) Bootstrap(ctx context.Context, username, firstName, password string) (domain.User, error) {
+func (a *App) Bootstrap(ctx context.Context, username, firstName, password string) (domain.HouseholdUser, error) {
 	userCount, err := a.Store.GetUserCount(ctx)
 	if err != nil {
-		return domain.User{}, err
+		return domain.HouseholdUser{}, err
 	}
 
 	if userCount != 0 {
-		return domain.User{}, errors.New("may only use bootstrap if no users exist")
+		return domain.HouseholdUser{}, errors.New("may only use bootstrap if no users exist")
 	}
 
 	if err = validatePassword(password); err != nil {
-		return domain.User{}, err
+		return domain.HouseholdUser{}, err
 	}
 
 	hashedPW, err := hashPassword(password)
 	if err != nil {
-		return domain.User{}, err
+		return domain.HouseholdUser{}, err
 	}
 
 	user, err := a.Store.CreateUser(ctx, store.CreateUserParams{
@@ -107,8 +107,22 @@ func (a *App) Bootstrap(ctx context.Context, username, firstName, password strin
 		UpdatedAt: time.Now(),
 	})
 	if err != nil {
-		return domain.User{}, err
+		return domain.HouseholdUser{}, err
 	}
 
-	return user, nil
+	hhUser, err := a.Store.AddUserToHousehold(ctx, store.AddUserToHouseholdParams{
+		HouseholdId: domain.DefaultHouseholdID,
+		UserId:      user.ID,
+		Role:        string(domain.RoleAdmin),
+		DisplayName: user.FirstName,
+		ColorOption: 0,
+		JoinedAt:    time.Now(),
+		IsActive:    true,
+	})
+
+	if err != nil {
+		return domain.HouseholdUser{}, err
+	}
+
+	return hhUser, nil
 }
