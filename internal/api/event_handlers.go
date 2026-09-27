@@ -24,6 +24,8 @@ func (cfg *apiCfg) handlerGetEvents(w http.ResponseWriter, r *http.Request) {
 
 	defer cfg.App.Bus.Unsubscribe(subscriberID)
 
+	fmt.Println("SSE client connected")
+
 	w.Header().Set("Content-Type", "text/event-stream")
 
 	flusher, ok := w.(http.Flusher)
@@ -31,6 +33,9 @@ func (cfg *apiCfg) handlerGetEvents(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "streaming unsupported", http.StatusInternalServerError)
 		return
 	}
+
+	w.WriteHeader(http.StatusOK)
+	flusher.Flush()
 
 	for {
 		select {

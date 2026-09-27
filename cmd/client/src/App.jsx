@@ -19,10 +19,10 @@ import { useTaskStore } from "./stores/taskStore";
 import CloseDetailsAlert from "./components/CloseDetailsAlert";
 import { useState } from "react";
 import NotificationToast from "./components/NotificationToast";
+import { useEventStream } from "./hooks/useEventStream";
 
 
 function App() {
-
   const { user } = useAuth();
 
   const selectedTask = useTaskStore(
@@ -66,8 +66,6 @@ function App() {
     return savedTask;
   }
 
-  
-
   function handleTaskError(error) {
     switch (error.status){
       case 403:
@@ -108,6 +106,8 @@ function App() {
     setDialogOpen(false);
     closeTaskDetails();
   }
+
+  useEventStream();
 
   return (
     <>

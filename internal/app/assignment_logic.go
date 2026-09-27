@@ -162,6 +162,16 @@ func (a *App) CreateAssignmentFromTemplate(ctx context.Context, req CreateAsssig
 		return domain.Assignment{}, err
 	}
 
+	event := newAssignmentEvent(domain.AssignmentCreated,
+		now,
+		domain.ActorTypeUser,
+		assignment,
+		user.HouseholdID,
+		user.User.ID,
+	)
+
+	a.Bus.Publish(event)
+
 	return assignment, nil
 }
 
@@ -254,7 +264,7 @@ func (a *App) EditAssignment(ctx context.Context, editRequest EditAssignmentRequ
 		return domain.Assignment{}, err
 	}
 
-	newEditEvent := newAssignmentEvent(domain.AssignmentEdited,
+	event := newAssignmentEvent(domain.AssignmentEdited,
 		updatedAt,
 		domain.ActorTypeUser,
 		assignment,
@@ -262,7 +272,7 @@ func (a *App) EditAssignment(ctx context.Context, editRequest EditAssignmentRequ
 		user.User.ID,
 	)
 
-	a.Bus.Publish(newEditEvent)
+	a.Bus.Publish(event)
 
 	return assignment, nil
 }
@@ -325,10 +335,10 @@ func (a *App) ToggleAssignmentCompletion(ctx context.Context, id string) (domain
 	}
 
 	completion := !existing.Completed
+	now := time.Now()
 	var completedAt *time.Time
 	if !existing.Completed {
-		t := time.Now()
-		completedAt = &t
+		completedAt = &now
 	} else {
 		completedAt = nil
 	}
@@ -337,6 +347,16 @@ func (a *App) ToggleAssignmentCompletion(ctx context.Context, id string) (domain
 	if err != nil {
 		return domain.Assignment{}, err
 	}
+
+	event := newAssignmentEvent(domain.AssignmentCompleted,
+		now,
+		domain.ActorTypeUser,
+		assignment,
+		user.HouseholdID,
+		user.User.ID,
+	)
+
+	a.Bus.Publish(event)
 
 	return assignment, nil
 }
@@ -364,10 +384,22 @@ func (a *App) RescheduleAssignment(ctx context.Context, assignmentID string, sch
 		return domain.Assignment{}, domain.ErrForbidden
 	}
 
+	now := time.Now()
+
 	assignment, err := a.Store.RescheduleAssignment(ctx, assignmentID, scheduledFor)
 	if err != nil {
 		return domain.Assignment{}, err
 	}
+
+	event := newAssignmentEvent(domain.AssignmentRescheduled,
+		now,
+		domain.ActorTypeUser,
+		assignment,
+		user.HouseholdID,
+		user.User.ID,
+	)
+
+	a.Bus.Publish(event)
 
 	return assignment, nil
 }
