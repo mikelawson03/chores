@@ -12,6 +12,21 @@ import (
 	domain "github.com/mikelawson03/chores/internal/domain"
 )
 
+func newChoreTemplateEvent(eventType domain.ChoreTemplateEventType, occurredAt time.Time, actorType domain.ActorType, choreTemplate domain.ChoreTemplate, householdID, userID string) domain.Event[domain.ChoreTemplate] {
+	e := domain.Event[domain.ChoreTemplate]{
+		Type:        string(eventType),
+		OccurredAt:  occurredAt,
+		HouseholdID: householdID,
+		Actor: domain.Actor{
+			Type: actorType,
+			ID:   userID,
+		},
+		Payload: choreTemplate,
+	}
+
+	return e
+}
+
 func (a *App) choreNameExists(ctx context.Context, name, id string) error {
 	ct, err := a.Store.GetTemplateByName(ctx, name)
 
@@ -118,6 +133,7 @@ func (a *App) CreateChoreTemplate(ctx context.Context, name, cadence, assignee, 
 	}
 
 	id := uuid.NewString()
+	now := time.Now()
 
 	chore := domain.ChoreTemplate{
 		ID:           id,
@@ -126,14 +142,25 @@ func (a *App) CreateChoreTemplate(ctx context.Context, name, cadence, assignee, 
 		Assignee:     assignee,
 		Instructions: instructions,
 		Duration:     *duration,
-		CreatedAt:    time.Now(),
-		UpdatedAt:    time.Now(),
+		CreatedAt:    now,
+		UpdatedAt:    now,
 	}
 
 	err = a.Store.AddChoreTemplate(ctx, chore)
 	if err != nil {
 		return domain.ChoreTemplate{}, err
 	}
+
+	event := newChoreTemplateEvent(domain.ChoreTemplateCreated,
+		now,
+		domain.ActorTypeUser,
+		chore,
+		domain.DefaultHouseholdID,
+		hhUser.User.ID,
+	)
+
+	fmt.Println(event)
+	a.Bus.Publish(event)
 
 	return chore, nil
 }
@@ -154,6 +181,8 @@ func (a *App) EditChoreTemplate(ctx context.Context, id, name, cadence, assignee
 		return domain.ChoreTemplate{}, err
 	}
 
+	now := time.Now()
+
 	updatedTmp := domain.ChoreTemplate{
 		ID:           id,
 		Name:         name,
@@ -162,7 +191,7 @@ func (a *App) EditChoreTemplate(ctx context.Context, id, name, cadence, assignee
 		Instructions: instructions,
 		Duration:     *duration,
 		CreatedAt:    tmp.CreatedAt,
-		UpdatedAt:    time.Now(),
+		UpdatedAt:    now,
 	}
 
 	err = a.Store.EditChoreTemplate(ctx, updatedTmp)
@@ -170,11 +199,26 @@ func (a *App) EditChoreTemplate(ctx context.Context, id, name, cadence, assignee
 		return domain.ChoreTemplate{}, err
 	}
 
+	event := newChoreTemplateEvent(domain.ChoreTemplateEdited,
+		now,
+		domain.ActorTypeUser,
+		updatedTmp,
+		hhUser.HouseholdID,
+		hhUser.User.ID,
+	)
+
+	a.Bus.Publish(event)
+
 	return updatedTmp, nil
 }
 
 func (a *App) DeleteChoreTemplate(ctx context.Context, id string) error {
-	_, err := CheckAdmin(ctx)
+	user, err := CheckAdmin(ctx)
+	if err != nil {
+		return err
+	}
+
+	template, err := a.GetChoreTemplateByID(ctx, id)
 	if err != nil {
 		return err
 	}
@@ -187,5 +231,16 @@ func (a *App) DeleteChoreTemplate(ctx context.Context, id string) error {
 	if err != nil {
 		return err
 	}
+
+	event := newChoreTemplateEvent(domain.ChoreTemplateDeleted,
+		time.Now(),
+		domain.ActorTypeUser,
+		template,
+		domain.DefaultHouseholdID,
+		user.User.ID,
+	)
+
+	a.Bus.Publish(event)
+
 	return nil
 }

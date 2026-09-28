@@ -122,7 +122,6 @@ export default function Chores() {
   }
 
   function handleSave() {
-    console.log(editedChoreTemplate)
     if (!validateChore(editedChoreTemplate)) {
       return;
     }
@@ -138,9 +137,6 @@ export default function Chores() {
   const newChoreMutation = useMutation({
     mutationFn: createChore,
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["choreTemplates"],
-      });
       closeEditChore();
     },
     onError: (error) => {
@@ -151,9 +147,6 @@ export default function Chores() {
   const editChoreMutation = useMutation({
     mutationFn: updateChore,
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["choreTemplates"],
-      });
       closeEditChore();
     },
     onError: (error) => {

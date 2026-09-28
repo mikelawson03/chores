@@ -67,3 +67,7 @@ func CanEditIsActive(reqUser domain.HouseholdUser) bool {
 	}
 	return true
 }
+
+func CanGetChoreTemplate(reqUser domain.HouseholdUser) bool {
+	return reqUser.Role == domain.RoleAdmin
+}

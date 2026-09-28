@@ -23,16 +23,23 @@ export function useEventStream(){
 
     eventSource.onmessage = (message) => {
       const event = JSON.parse(message.data);
-
       switch (event.type) {
         case "assignment.edited":
         case "assignment.created":
         case "assignment.completed":
         case "assignment.rescheduled":
-            queryClient.invalidateQueries({
-                queryKey: ["assignments", user?.id],
-            });
-            break;
+          queryClient.invalidateQueries({
+            queryKey: ["assignments", user?.id],
+          });
+          break;
+        case "choreTemplate.edited":
+        case "choreTemplate.created":
+        case "choreTemplate.deleted":
+          console.log("beep")
+          queryClient.invalidateQueries({
+            queryKey: ["choreTemplates", user?.id],
+          });
+          break;
       }
 
       console.log(event);

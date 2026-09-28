@@ -32,9 +32,6 @@ export default function EditChore({ open, chore, closeEditChore, editChoreMode, 
     const deleteChoreMutation = useMutation({
         mutationFn: deleteChore,
         onSuccess: () => {
-            queryClient.invalidateQueries({
-                queryKey: ["choreTemplates"],
-            });
             closeEditChore();
         },
     });

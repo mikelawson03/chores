@@ -31,6 +31,14 @@ const (
 	AssignmentRescheduled AssignmentEventType = "assignment.rescheduled"
 )
 
+type ChoreTemplateEventType string
+
+const (
+	ChoreTemplateCreated ChoreTemplateEventType = "choreTemplate.created"
+	ChoreTemplateEdited  ChoreTemplateEventType = "choreTemplate.edited"
+	ChoreTemplateDeleted ChoreTemplateEventType = "choreTemplate.deleted"
+)
+
 type Actor struct {
 	Type ActorType `json:"type"`
 	ID   string    `json:"id"`

@@ -131,6 +131,8 @@ func shouldDeliver(event domain.DomainEvent, sub Subscriber) bool {
 		switch payload := event.GetPayload().(type) {
 		case domain.Assignment:
 			return auth.CanGetAssignment(sub.HouseholdUser, payload)
+		case domain.ChoreTemplate:
+			return auth.CanGetChoreTemplate(sub.HouseholdUser)
 		default:
 			// TODO: Log unexpected/unsupported event payload type.
 			return false
