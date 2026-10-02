@@ -34,3 +34,22 @@ func stringToNullString(str string) sql.NullString {
 
 	return s
 }
+
+func NullStringToString(ns sql.NullString) string {
+	var s string
+	if ns.Valid {
+		s = ns.String
+	}
+
+	return s
+}
+
+func NullTimeToPointerTime(nt sql.NullTime) *time.Time {
+	var pt *time.Time
+	if nt.Valid {
+		t := nt.Time
+		pt = &t
+	}
+
+	return pt
+}

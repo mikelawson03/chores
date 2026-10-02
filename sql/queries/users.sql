@@ -109,3 +109,14 @@ SELECT EXISTS (
 -- name: HouseholdUsersCount :one
 SELECT COUNT(*)
 FROM household_users;
+
+-- name: GetHouseholdsForUser :many
+SELECT household_id
+FROM household_users
+WHERE user_id = ?;
+
+-- name: SetHouseholdUserInactive :exec
+UPDATE household_users
+SET is_active = false
+WHERE household_id = ?
+AND user_id = ?;

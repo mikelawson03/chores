@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"strings"
 	"time"
-	"unicode/utf8"
 
 	"github.com/alexedwards/argon2id"
 	"github.com/google/uuid"
@@ -20,13 +19,22 @@ type LoginResult struct {
 	Token string
 }
 
-type HouseholdUserRequest struct {
-	Role        string
-	DisplayName string
-	ColorOption int
-	IsActive    bool
-	UserID      string
-	HouseholdID string
+func newUserEvent(eventType domain.UserEventType,
+	occurredAt time.Time,
+	actorType domain.ActorType,
+	user domain.User,
+	householdID,
+	userID string) domain.Event[domain.User] {
+	return domain.Event[domain.User]{
+		Type:        string(eventType),
+		OccurredAt:  occurredAt,
+		HouseholdID: householdID,
+		Actor: domain.Actor{
+			Type: actorType,
+			ID:   userID,
+		},
+		Payload: user,
+	}
 }
 
 func hashPassword(password string) (string, error) {
@@ -58,20 +66,6 @@ func (a *App) UsernameExists(ctx context.Context, username string) (bool, error)
 
 	return true, nil
 
-}
-
-func (a *App) HouseholdUserExists(ctx context.Context, userID, householdID string) (bool, error) {
-	_, err := a.Store.GetHouseholdUserByID(ctx, userID, householdID)
-
-	if errors.Is(err, sql.ErrNoRows) {
-		return false, nil
-	}
-
-	if err != nil {
-		return false, err
-	}
-
-	return true, nil
 }
 
 func (a *App) validateNewUserRequest(ctx context.Context, username, firstName, password string) error {
@@ -120,48 +114,6 @@ func (a *App) validateEditUserRequest(ctx context.Context, newUsername, firstNam
 	return nil
 }
 
-func (a *App) validateHouseholdUserFields(ctx context.Context, req HouseholdUserRequest) error {
-	role := domain.Role(req.Role)
-	if !role.IsValid() {
-		return domain.ErrInvalidRole
-	}
-
-	if req.ColorOption < 0 || req.ColorOption >= domain.MaxHouseholdMembers {
-		return domain.ErrInvalidColorOption
-	}
-
-	if utf8.RuneCountInString(req.DisplayName) > 16 {
-		return domain.ErrInvalidDisplayName
-	}
-
-	exists, err := a.Store.HouseholdColorOptionInUse(ctx, req.HouseholdID, req.UserID, req.ColorOption)
-	if err != nil {
-		return err
-	}
-
-	if exists {
-		return fmt.Errorf("%w: color already taken", domain.ErrConflict)
-	}
-
-	return nil
-}
-
-func validateEditHouseholdUserRequest(req HouseholdUserRequest, existing, user domain.HouseholdUser) error {
-	if !auth.CanEditHouseholdUser(user, existing.User.ID) {
-		return fmt.Errorf("%w: may not edit this household user", domain.ErrForbidden)
-	}
-
-	if domain.Role(req.Role) != existing.Role && !auth.CanEditRole(user) {
-		return fmt.Errorf("%w: may not edit role", domain.ErrForbidden)
-	}
-
-	if req.IsActive != existing.IsActive && !auth.CanEditIsActive(user) {
-		return fmt.Errorf("%w: may not edit active state", domain.ErrForbidden)
-	}
-
-	return nil
-}
-
 func (a *App) CreateNewUser(ctx context.Context, username, firstName, password string) (domain.User, error) {
 	_, err := CheckAdmin(ctx)
 	if err != nil {
@@ -191,66 +143,6 @@ func (a *App) CreateNewUser(ctx context.Context, username, firstName, password s
 	}
 
 	return user, nil
-}
-
-func (a *App) AddUserToHousehold(ctx context.Context, req HouseholdUserRequest) (domain.HouseholdUser, error) {
-	_, err := CheckAdmin(ctx)
-	if err != nil {
-		return domain.HouseholdUser{}, err
-	}
-
-	err = a.validateHouseholdUserFields(ctx, req)
-	if err != nil {
-		return domain.HouseholdUser{}, err
-	}
-
-	hhCount, err := a.Store.HouseholdUsersCount(ctx)
-	if err != nil {
-		return domain.HouseholdUser{}, err
-	}
-
-	if hhCount >= domain.MaxHouseholdMembers {
-		return domain.HouseholdUser{}, domain.ErrHouseholdFull
-	}
-
-	exists, err := a.HouseholdUserExists(ctx, req.UserID, req.HouseholdID)
-	if err != nil {
-		return domain.HouseholdUser{}, err
-	}
-
-	if exists {
-		return domain.HouseholdUser{}, fmt.Errorf("%w: user already member of household", domain.ErrInvalidRequest)
-	}
-
-	hhUser, err := a.Store.AddUserToHousehold(ctx, store.AddUserToHouseholdParams{
-		HouseholdId: req.HouseholdID,
-		UserId:      req.UserID,
-		Role:        req.Role,
-		DisplayName: req.DisplayName,
-		ColorOption: req.ColorOption,
-		JoinedAt:    time.Now(),
-		IsActive:    req.IsActive,
-	})
-
-	if err != nil {
-		return domain.HouseholdUser{}, err
-	}
-
-	return hhUser, nil
-}
-
-func (a *App) GetHouseholdUsers(ctx context.Context) ([]domain.HouseholdUser, error) {
-	hhUser, err := CheckAdmin(ctx)
-	if err != nil {
-		return []domain.HouseholdUser{}, err
-	}
-
-	users, err := a.Store.GetHouseholdUsers(ctx, hhUser.HouseholdID)
-	if err != nil {
-		return []domain.HouseholdUser{}, err
-	}
-
-	return users, nil
 }
 
 func (a *App) GetUserByID(ctx context.Context, id string) (domain.User, error) {
@@ -293,59 +185,31 @@ func (a *App) EditUser(ctx context.Context, id, newUsername, firstName string) (
 		return domain.User{}, err
 	}
 
+	now := time.Now()
+
 	updatedUser, err := a.Store.EditUser(ctx, store.EditUserParams{
 		ID:        id,
 		Username:  newUsername,
 		FirstName: firstName,
-		UpdatedAt: time.Now(),
+		UpdatedAt: now,
 	})
 	if err != nil {
 		return domain.User{}, err
 	}
 
+	// TODO: When multiple households are supported, publish this event
+	// once for each household the user belongs to.
+	event := newUserEvent(domain.UserEdited,
+		now,
+		domain.ActorTypeUser,
+		updatedUser,
+		domain.DefaultHouseholdID,
+		user.User.ID,
+	)
+
+	a.Bus.Publish(event)
+
 	return updatedUser, nil
-}
-
-func (a *App) EditHouseholdUser(ctx context.Context, req HouseholdUserRequest) (domain.HouseholdUser, error) {
-	user, err := auth.AuthenticatedUser(ctx)
-	if err != nil {
-		return domain.HouseholdUser{}, err
-	}
-
-	existing, err := a.Store.GetHouseholdUserByID(ctx, req.HouseholdID, req.UserID)
-	if err != nil {
-		return domain.HouseholdUser{}, err
-	}
-
-	err = a.validateHouseholdUserFields(ctx, req)
-	if err != nil {
-		return domain.HouseholdUser{}, err
-	}
-
-	err = validateEditHouseholdUserRequest(req, existing, user)
-	if err != nil {
-		return domain.HouseholdUser{}, err
-	}
-
-	role := domain.Role(req.Role)
-	if !role.IsValid() {
-		return domain.HouseholdUser{}, domain.ErrInvalidRole
-	}
-
-	updatedHouseholdUser, err := a.Store.EditHouseholdUser(ctx, store.EditHouseholdUserParams{
-		Role:        role,
-		DisplayName: req.DisplayName,
-		ColorOption: req.ColorOption,
-		IsActive:    req.IsActive,
-		UserId:      req.UserID,
-		HouseholdId: req.HouseholdID,
-	})
-
-	if err != nil {
-		return domain.HouseholdUser{}, err
-	}
-
-	return updatedHouseholdUser, nil
 }
 
 func (a *App) DeleteUser(ctx context.Context, id string) error {

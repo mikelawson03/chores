@@ -136,6 +136,28 @@ func (s *Store) CreateUser(ctx context.Context, req CreateUserParams) (domain.Us
 	return user, nil
 }
 
+func (s *Store) WithTx(
+	ctx context.Context,
+	fn func(*Store) error,
+) error {
+	tx, err := s.Db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+
+	defer tx.Rollback()
+
+	txStore := &Store{
+		Queries: s.Queries.WithTx(tx),
+	}
+
+	if err := fn(txStore); err != nil {
+		return err
+	}
+
+	return tx.Commit()
+}
+
 func (s *Store) GetUserByUsername(ctx context.Context, username string) (domain.User, error) {
 	res, err := s.Queries.GetUserByUsername(ctx, username)
 	if err != nil {
@@ -273,7 +295,7 @@ func (s *Store) EditHouseholdUser(ctx context.Context, req EditHouseholdUserPara
 		return domain.HouseholdUser{}, err
 	}
 
-	hhUser, err := s.GetHouseholdUserByID(ctx, req.HouseholdId, req.UserId)
+	hhUser, err := s.GetHouseholdUserByID(ctx, req.UserId, req.HouseholdId)
 	if err != nil {
 		return domain.HouseholdUser{}, err
 	}
@@ -349,4 +371,11 @@ func (s *Store) HouseholdColorOptionInUse(ctx context.Context, householdId, user
 
 func (s *Store) HouseholdUsersCount(ctx context.Context) (int64, error) {
 	return s.Queries.HouseholdUsersCount(ctx)
+}
+
+func (s *Store) SetHouseholdUserInactive(ctx context.Context, householdId, userId string) error {
+	return s.Queries.SetHouseholdUserInactive(ctx, db.SetHouseholdUserInactiveParams{
+		HouseholdID: householdId,
+		UserID:      userId,
+	})
 }

@@ -11,7 +11,6 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { getAssignments, rescheduleTask } from "../utils/assignmentHelpers";
 import { DragDropProvider, DragOverlay } from "@dnd-kit/react";
 import { useNotificationStore } from "../stores/notificationStore";
-import { queryClient } from "../query/queryClient";
 import { parseApiError } from "../utils/errorHelpers";
 import CalendarTask from "../components/calendar/CalendarTask";
 import { getHouseholdUsers } from "../api/users";

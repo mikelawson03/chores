@@ -19,7 +19,7 @@ type Event[T EventPayload] struct {
 }
 
 type EventPayload interface {
-	Assignment | ChoreTemplate | User
+	Assignment | ChoreTemplate | User | HouseholdUser
 }
 
 type AssignmentEventType string
@@ -37,6 +37,19 @@ const (
 	ChoreTemplateCreated ChoreTemplateEventType = "choreTemplate.created"
 	ChoreTemplateEdited  ChoreTemplateEventType = "choreTemplate.edited"
 	ChoreTemplateDeleted ChoreTemplateEventType = "choreTemplate.deleted"
+)
+
+type HouseholdUserEventType string
+
+const (
+	HouseholdUserAdded  HouseholdUserEventType = "householdUser.added"
+	HouseholdUserEdited HouseholdUserEventType = "householdUser.edited"
+)
+
+type UserEventType string
+
+const (
+	UserEdited UserEventType = "user.edited"
 )
 
 type Actor struct {

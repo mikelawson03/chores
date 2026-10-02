@@ -7,7 +7,6 @@ import DetailRowTitle from "../details/DetailRowTitle";
 import { formatTimestamp } from "../../utils/formatters";
 import { useMutation } from "@tanstack/react-query";
 import { deleteChore } from "../../utils/choreHelpers";
-import { queryClient } from "../../query/queryClient";
 
 
 

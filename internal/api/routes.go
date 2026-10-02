@@ -25,13 +25,16 @@ func (cfg *apiCfg) RegisterRoutes(mux *http.ServeMux) {
 	mux.Handle("GET /users/{id}", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerGetUserByID)))
 	mux.Handle("PUT /users/{id}", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerEditUser)))
 	mux.Handle("GET /users", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerGetHouseholdUsers)))
-	mux.Handle("POST /households/{hhid}/users", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerAddUserToHousehold)))
-	mux.Handle("GET /households/{hhid}/users", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerGetHouseholdUsers)))
-	mux.Handle("PUT /households/{hhid}/users/{uid}", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerEditHouseholdUser)))
 	mux.Handle("DELETE /users/{id}", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerDeleteUser)))
 	mux.Handle("GET /me", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerGetMe)))
 	mux.Handle("PUT /me/password", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerChangePassword)))
 	mux.Handle("PUT /users/{id}/reset-password", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerResetPassword)))
+
+	// households
+	mux.Handle("POST /households/{hhid}/users", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerAddUserToHousehold)))
+	mux.Handle("GET /households/{hhid}/users", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerGetHouseholdUsers)))
+	mux.Handle("PUT /households/{hhid}/users/{uid}", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerEditHouseholdUser)))
+	mux.Handle("POST /households/{hhid}/users/{uid}/deactivate", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerDeactivateHouseholdUser)))
 
 	// admin
 	mux.Handle("POST /scheduler/run", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerRunScheduler)))

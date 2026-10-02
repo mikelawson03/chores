@@ -24,7 +24,7 @@ SELECT
     u.first_name
 FROM assignments a
 JOIN chore_templates ct ON a.template_id = ct.id
-JOIN users u ON a.assigned_user_id = u.id;
+LEFT JOIN users u ON a.assigned_user_id = u.id;
 
 
 -- name: GetAssignment :one
@@ -36,7 +36,7 @@ SELECT
     u.first_name
 FROM assignments a
 JOIN chore_templates ct ON a.template_id = ct.id
-JOIN users u on a.assigned_user_id = u.id
+LEFT JOIN users u on a.assigned_user_id = u.id
 WHERE a.id = ?;
 
 -- name: EditAssignment :exec
@@ -66,7 +66,7 @@ SELECT
     u.first_name
 FROM assignments a
 JOIN chore_templates ct ON a.template_id = ct.id
-JOIN users u on a.assigned_user_id = u.id
+LEFT JOIN users u on a.assigned_user_id = u.id
 WHERE a.template_id = ?;
 
 -- name: GetAssignmentsByUserID :many
@@ -78,7 +78,7 @@ SELECT
     u.first_name
 FROM assignments a
 JOIN chore_templates ct ON a.template_id = ct.id
-JOIN users u on a.assigned_user_id = u.id
+LEFT JOIN users u on a.assigned_user_id = u.id
 WHERE a.assigned_user_id = ?;
 
 -- name: GetAssignmentsWithMetadataForDateRange :many
@@ -115,3 +115,17 @@ WHERE id = ?;
 UPDATE assignments
 SET assigned_user_id = ?
 WHERE id = ?;
+
+-- name: GetCurrentUserAssignments :many
+SELECT 
+    a.*,
+    ct.name,
+    ct.duration,
+    ct.cadence,
+    u.first_name
+FROM assignments a
+JOIN chore_templates ct ON a.template_id = ct.id
+JOIN users u ON a.assigned_user_id = u.id
+WHERE a.completed = false
+AND a.canceled = false
+AND a.assigned_user_id = ?;

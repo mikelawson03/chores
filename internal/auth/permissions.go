@@ -61,6 +61,14 @@ func CanEditHouseholdUser(reqUser domain.HouseholdUser, userID string) bool {
 	return true
 }
 
+func CanGetHouseholdUser(reqUser domain.HouseholdUser, userID string) bool {
+	if reqUser.Role != domain.RoleAdmin && reqUser.User.ID != userID {
+		return false
+	}
+
+	return true
+}
+
 func CanEditIsActive(reqUser domain.HouseholdUser) bool {
 	if reqUser.Role != domain.RoleAdmin {
 		return false

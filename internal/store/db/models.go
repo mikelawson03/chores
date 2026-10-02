@@ -12,7 +12,7 @@ import (
 type Assignment struct {
 	ID             string
 	TemplateID     string
-	AssignedUserID string
+	AssignedUserID sql.NullString
 	Instructions   sql.NullString
 	Notes          sql.NullString
 	DueDate        time.Time

@@ -168,3 +168,41 @@ func (q *Queries) GetChoreTemplateByName(ctx context.Context, name string) (Chor
 	)
 	return i, err
 }
+
+const getChoreTemplatesForUser = `-- name: GetChoreTemplatesForUser :many
+SELECT id, name, cadence, assignee, instructions, duration, created_at, updated_at
+FROM chore_templates
+WHERE assignee = ?
+`
+
+func (q *Queries) GetChoreTemplatesForUser(ctx context.Context, assignee sql.NullString) ([]ChoreTemplate, error) {
+	rows, err := q.db.QueryContext(ctx, getChoreTemplatesForUser, assignee)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ChoreTemplate
+	for rows.Next() {
+		var i ChoreTemplate
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Cadence,
+			&i.Assignee,
+			&i.Instructions,
+			&i.Duration,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

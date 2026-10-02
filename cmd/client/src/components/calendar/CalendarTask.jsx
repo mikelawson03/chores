@@ -9,7 +9,7 @@ export default function CalendarTask( {task, isDragging} ) {
         (state) => state.openTaskDetails
     );
 
-    const ownerColor = HOUSEHOLD_USER_COLORS[task.userColorOption].bgColor
+    const ownerColor = HOUSEHOLD_USER_COLORS[task.userColorOption]?.bgColor ?? null;
     const cadenceColor = CADENCES[task.cadence].outlineColor
 
     return(

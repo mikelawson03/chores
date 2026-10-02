@@ -2,7 +2,7 @@
 CREATE TABLE assignments (
     id TEXT PRIMARY KEY,
     template_id TEXT NOT NULL,
-    assigned_user_id TEXT NOT NULL,
+    assigned_user_id TEXT,
     instructions TEXT,
     notes TEXT,
     due_date TIMESTAMP NOT NULL,

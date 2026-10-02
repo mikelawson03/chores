@@ -16,6 +16,11 @@ WHERE id = ?;
 SELECT *
 FROM chore_templates;
 
+-- name: GetChoreTemplatesForUser :many
+SELECT *
+FROM chore_templates
+WHERE assignee = ?;
+
 -- name: EditChoreTemplate :exec
 UPDATE chore_templates
 SET name = ?,

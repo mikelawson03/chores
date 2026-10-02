@@ -24,7 +24,7 @@ export default function ShelfTask({ task, isDragging, openTaskDetails }) {
                     top: 1,
                     bottom: 1,
                     width: 4,
-                    backgroundColor: HOUSEHOLD_USER_COLORS[task.userColorOption].bgColor,
+                    backgroundColor: HOUSEHOLD_USER_COLORS[task.userColorOption]?.bgColor ?? null,
                 }
             }]}
         >

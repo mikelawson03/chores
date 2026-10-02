@@ -18,7 +18,7 @@ WHERE id = ?
 `
 
 type AllocateAssignmentsParams struct {
-	AssignedUserID string
+	AssignedUserID sql.NullString
 	ID             string
 }
 
@@ -48,7 +48,7 @@ INSERT INTO assignments (
 type CreateAssignmentParams struct {
 	ID             string
 	TemplateID     string
-	AssignedUserID string
+	AssignedUserID sql.NullString
 	DueDate        time.Time
 	ScheduledFor   sql.NullTime
 	Instructions   sql.NullString
@@ -94,7 +94,7 @@ WHERE id = ?
 `
 
 type EditAssignmentParams struct {
-	AssignedUserID string
+	AssignedUserID sql.NullString
 	ScheduledFor   sql.NullTime
 	Notes          sql.NullString
 	UpdatedAt      time.Time
@@ -129,13 +129,13 @@ SELECT
     u.first_name
 FROM assignments a
 JOIN chore_templates ct ON a.template_id = ct.id
-JOIN users u ON a.assigned_user_id = u.id
+LEFT JOIN users u ON a.assigned_user_id = u.id
 `
 
 type GetAllAssignmentsRow struct {
 	ID             string
 	TemplateID     string
-	AssignedUserID string
+	AssignedUserID sql.NullString
 	Instructions   sql.NullString
 	Notes          sql.NullString
 	DueDate        time.Time
@@ -149,7 +149,7 @@ type GetAllAssignmentsRow struct {
 	Name           string
 	Duration       int64
 	Cadence        string
-	FirstName      string
+	FirstName      sql.NullString
 }
 
 func (q *Queries) GetAllAssignments(ctx context.Context) ([]GetAllAssignmentsRow, error) {
@@ -202,14 +202,14 @@ SELECT
     u.first_name
 FROM assignments a
 JOIN chore_templates ct ON a.template_id = ct.id
-JOIN users u on a.assigned_user_id = u.id
+LEFT JOIN users u on a.assigned_user_id = u.id
 WHERE a.id = ?
 `
 
 type GetAssignmentRow struct {
 	ID             string
 	TemplateID     string
-	AssignedUserID string
+	AssignedUserID sql.NullString
 	Instructions   sql.NullString
 	Notes          sql.NullString
 	DueDate        time.Time
@@ -223,7 +223,7 @@ type GetAssignmentRow struct {
 	Name           string
 	Duration       int64
 	Cadence        string
-	FirstName      string
+	FirstName      sql.NullString
 }
 
 func (q *Queries) GetAssignment(ctx context.Context, id string) (GetAssignmentRow, error) {
@@ -301,14 +301,14 @@ SELECT
     u.first_name
 FROM assignments a
 JOIN chore_templates ct ON a.template_id = ct.id
-JOIN users u on a.assigned_user_id = u.id
+LEFT JOIN users u on a.assigned_user_id = u.id
 WHERE a.template_id = ?
 `
 
 type GetAssignmentsByTemplateIDRow struct {
 	ID             string
 	TemplateID     string
-	AssignedUserID string
+	AssignedUserID sql.NullString
 	Instructions   sql.NullString
 	Notes          sql.NullString
 	DueDate        time.Time
@@ -322,7 +322,7 @@ type GetAssignmentsByTemplateIDRow struct {
 	Name           string
 	Duration       int64
 	Cadence        string
-	FirstName      string
+	FirstName      sql.NullString
 }
 
 func (q *Queries) GetAssignmentsByTemplateID(ctx context.Context, templateID string) ([]GetAssignmentsByTemplateIDRow, error) {
@@ -375,14 +375,14 @@ SELECT
     u.first_name
 FROM assignments a
 JOIN chore_templates ct ON a.template_id = ct.id
-JOIN users u on a.assigned_user_id = u.id
+LEFT JOIN users u on a.assigned_user_id = u.id
 WHERE a.assigned_user_id = ?
 `
 
 type GetAssignmentsByUserIDRow struct {
 	ID             string
 	TemplateID     string
-	AssignedUserID string
+	AssignedUserID sql.NullString
 	Instructions   sql.NullString
 	Notes          sql.NullString
 	DueDate        time.Time
@@ -396,10 +396,10 @@ type GetAssignmentsByUserIDRow struct {
 	Name           string
 	Duration       int64
 	Cadence        string
-	FirstName      string
+	FirstName      sql.NullString
 }
 
-func (q *Queries) GetAssignmentsByUserID(ctx context.Context, assignedUserID string) ([]GetAssignmentsByUserIDRow, error) {
+func (q *Queries) GetAssignmentsByUserID(ctx context.Context, assignedUserID sql.NullString) ([]GetAssignmentsByUserIDRow, error) {
 	rows, err := q.db.QueryContext(ctx, getAssignmentsByUserID, assignedUserID)
 	if err != nil {
 		return nil, err
@@ -469,7 +469,7 @@ type GetAssignmentsWithMetadataForDateRangeParams struct {
 type GetAssignmentsWithMetadataForDateRangeRow struct {
 	ID             string
 	TemplateID     string
-	AssignedUserID string
+	AssignedUserID sql.NullString
 	DueDate        time.Time
 	Duration       int64
 	Cadence        string
@@ -496,6 +496,82 @@ func (q *Queries) GetAssignmentsWithMetadataForDateRange(ctx context.Context, ar
 			&i.DueDate,
 			&i.Duration,
 			&i.Cadence,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getCurrentUserAssignments = `-- name: GetCurrentUserAssignments :many
+SELECT 
+    a.id, a.template_id, a.assigned_user_id, a.instructions, a.notes, a.due_date, a.scheduled_for, a.completed, a.canceled, a.created_at, a.updated_at, a.completed_at, a.canceled_at,
+    ct.name,
+    ct.duration,
+    ct.cadence,
+    u.first_name
+FROM assignments a
+JOIN chore_templates ct ON a.template_id = ct.id
+JOIN users u ON a.assigned_user_id = u.id
+WHERE a.completed = false
+AND a.canceled = false
+AND a.assigned_user_id = ?
+`
+
+type GetCurrentUserAssignmentsRow struct {
+	ID             string
+	TemplateID     string
+	AssignedUserID sql.NullString
+	Instructions   sql.NullString
+	Notes          sql.NullString
+	DueDate        time.Time
+	ScheduledFor   sql.NullTime
+	Completed      bool
+	Canceled       bool
+	CreatedAt      time.Time
+	UpdatedAt      time.Time
+	CompletedAt    sql.NullTime
+	CanceledAt     sql.NullTime
+	Name           string
+	Duration       int64
+	Cadence        string
+	FirstName      string
+}
+
+func (q *Queries) GetCurrentUserAssignments(ctx context.Context, assignedUserID sql.NullString) ([]GetCurrentUserAssignmentsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getCurrentUserAssignments, assignedUserID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetCurrentUserAssignmentsRow
+	for rows.Next() {
+		var i GetCurrentUserAssignmentsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.TemplateID,
+			&i.AssignedUserID,
+			&i.Instructions,
+			&i.Notes,
+			&i.DueDate,
+			&i.ScheduledFor,
+			&i.Completed,
+			&i.Canceled,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.CompletedAt,
+			&i.CanceledAt,
+			&i.Name,
+			&i.Duration,
+			&i.Cadence,
+			&i.FirstName,
 		); err != nil {
 			return nil, err
 		}

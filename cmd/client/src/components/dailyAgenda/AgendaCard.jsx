@@ -12,7 +12,7 @@ export default function AgendaCard({ task }) {
         (state) => state.openTaskDetails
     );
 
-    const ownerColor = HOUSEHOLD_USER_COLORS[task.userColorOption].bgColor
+    const ownerColor = HOUSEHOLD_USER_COLORS[task.userColorOption]?.bgColor ?? null;
     return (
         <Card sx={[clickableSurface, {
             backgroundColor: "background.paper",

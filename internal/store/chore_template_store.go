@@ -154,3 +154,22 @@ func (s *Store) DeleteChoreTemplate(ctx context.Context, id string) error {
 
 	return nil
 }
+
+func (s *Store) GetChoreTemplatesForUser(ctx context.Context, assignee string) ([]domain.ChoreTemplate, error) {
+	domainTmps := make([]domain.ChoreTemplate, 0)
+
+	dbTmps, err := s.Queries.GetChoreTemplatesForUser(ctx, stringToNullString(assignee))
+	if errors.Is(err, sql.ErrNoRows) {
+		return []domain.ChoreTemplate{}, nil
+	}
+	if err != nil {
+		return []domain.ChoreTemplate{}, err
+	}
+
+	for _, tmp := range dbTmps {
+		domainTmps = append(domainTmps, dbTemplateToDomainTemplate(tmp))
+	}
+
+	return domainTmps, nil
+
+}

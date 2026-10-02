@@ -20,7 +20,7 @@ import (
 func dbConnect(dbPath string) *sql.DB {
 	goose.SetDialect("sqlite3")
 
-	db, err := sql.Open("sqlite3", dbPath)
+	db, err := sql.Open("sqlite3", dbPath+"?_foreign_keys=on")
 	if err != nil {
 		log.Fatal(err)
 	}

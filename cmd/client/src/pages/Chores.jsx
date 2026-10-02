@@ -3,14 +3,13 @@ import ChoresTable from "../components/chores/ChoresTable";
 import EditChore from "../components/chores/EditChore";
 import { EDITABLE_CHORE_FIELDS, EMPTY_CHORE_TEMPLATE } from "../constants/choreTemplate";
 import { useState } from "react";
-import { getUsers } from "../utils/userHelpers";
 import { choreTemplateValidationErrors, getChores, getChoreFieldError } from "../utils/choreHelpers";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { createChore, updateChore } from "../utils/choreHelpers";
-import { queryClient } from "../query/queryClient";
 import { parseApiError } from "../utils/errorHelpers";
 import ChoresToolbar from "../components/chores/ChoresToolbar";
 import { useAuth } from "../auth/useAuth";
+import { getHouseholdUsers } from "../api/users";
 
 
 
@@ -52,18 +51,21 @@ export default function Chores() {
     });
   }
 
-  const usersQuery = useQuery({
-    queryKey: ["users"],
-    queryFn: () => getUsers(),
-  })
+  const {
+    data: householdUsers = [],
+  } = useQuery({
+    queryKey: ["householdUsers", user?.householdId],
+    queryFn: () => getHouseholdUsers(user.householdId),
+    enabled: !!user?.householdId && user?.role === "admin",
+  });
 
   const choreTemplatesQuery = useQuery({
     queryKey: ["choreTemplates"],
     queryFn: () => getChores(),
   })
 
-  const users = usersQuery.data ?? [];
-  const userIds = users.map(user => user.user.id);
+  
+  const userIds = householdUsers.map(user => user.user.id);
   const showMyTasks = () => {
           const idsToHide = userIds.filter(userId => userId !== user.user.id);
           setHiddenUserIds(new Set(["", ...idsToHide]));
@@ -209,7 +211,7 @@ export default function Chores() {
   const isSaving = newChoreMutation.isPending || editChoreMutation.isPending
 
 
-  if (usersQuery.isPending || choreTemplatesQuery.isPending) {
+  if (householdUsers.isPending || choreTemplatesQuery.isPending) {
     return( 
       <Box sx ={{
         width: "100%",
@@ -238,14 +240,14 @@ export default function Chores() {
           resetFilters={resetFilters}
           toggleFilterItem={toggleFilterItem}
           toggleAllFilters={toggleAllFilters}
-          users={users}
+          users={householdUsers}
           showMyTasks={showMyTasks}
         />
         <ChoresTable 
           choreTemplates={filteredTemplates} 
           openEditChore={openEditChore} 
           editNewChore={editNewChore} 
-          users={users}
+          users={householdUsers}
         />
         {editedChoreTemplate && 
           <EditChore 
@@ -254,7 +256,7 @@ export default function Chores() {
             closeEditChore={closeEditChore} 
             editChoreMode={editChoreMode}
             onChoreDetailChange={onChoreDetailChange} 
-            users={users}
+            users={householdUsers}
             errors={templateErrors}
             validateChoreField={validateChoreField}
             handleSave={handleSave}

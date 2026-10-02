@@ -4,7 +4,7 @@ import { API_HOST } from "../config/dev";
 import { queryClient } from "../query/queryClient";
 
 export function useEventStream(){
-    const { user } = useAuth();
+    const { user, refreshUser } = useAuth();
     
 
     useEffect(() => {
@@ -21,7 +21,7 @@ export function useEventStream(){
         console.log("EventSource opened")
     }
 
-    eventSource.onmessage = (message) => {
+    eventSource.onmessage = async (message) => {
       const event = JSON.parse(message.data);
       switch (event.type) {
         case "assignment.edited":
@@ -35,14 +35,32 @@ export function useEventStream(){
         case "choreTemplate.edited":
         case "choreTemplate.created":
         case "choreTemplate.deleted":
-          console.log("beep")
           queryClient.invalidateQueries({
             queryKey: ["choreTemplates", user?.id],
           });
           break;
+        case "householdUser.edited":
+        case "householdUser.added":
+          queryClient.invalidateQueries({
+            queryKey: ["householdUsers", user?.householdId],
+          });
+
+          if (event.payload.user.id === user?.user.id) {
+            await refreshUser();
+          }
+          break;
+        case "user.edited":
+          queryClient.invalidateQueries({
+            queryKey: ["householdUsers", user?.householdId],
+          });
+
+          if (event.payload.id === user?.user.id) {
+            await refreshUser();
+          }
+          break;
       }
 
-      console.log(event);
+      // console.log(event);
     };
 
     eventSource.onerror = (error) => {

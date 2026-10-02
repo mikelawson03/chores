@@ -310,6 +310,35 @@ func (q *Queries) GetHouseholdUsers(ctx context.Context, householdID string) ([]
 	return items, nil
 }
 
+const getHouseholdsForUser = `-- name: GetHouseholdsForUser :many
+SELECT household_id
+FROM household_users
+WHERE user_id = ?
+`
+
+func (q *Queries) GetHouseholdsForUser(ctx context.Context, userID string) ([]string, error) {
+	rows, err := q.db.QueryContext(ctx, getHouseholdsForUser, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var household_id string
+		if err := rows.Scan(&household_id); err != nil {
+			return nil, err
+		}
+		items = append(items, household_id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getUserByID = `-- name: GetUserByID :one
 SELECT id,
     username,
@@ -416,6 +445,23 @@ func (q *Queries) HouseholdUsersCount(ctx context.Context) (int64, error) {
 	var count int64
 	err := row.Scan(&count)
 	return count, err
+}
+
+const setHouseholdUserInactive = `-- name: SetHouseholdUserInactive :exec
+UPDATE household_users
+SET is_active = false
+WHERE household_id = ?
+AND user_id = ?
+`
+
+type SetHouseholdUserInactiveParams struct {
+	HouseholdID string
+	UserID      string
+}
+
+func (q *Queries) SetHouseholdUserInactive(ctx context.Context, arg SetHouseholdUserInactiveParams) error {
+	_, err := q.db.ExecContext(ctx, setHouseholdUserInactive, arg.HouseholdID, arg.UserID)
+	return err
 }
 
 const updatePassword = `-- name: UpdatePassword :exec

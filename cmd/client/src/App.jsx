@@ -3,7 +3,6 @@ import { useMutation } from "@tanstack/react-query";
 import { Route, Routes } from "react-router-dom";
 import AdminRoute from "./auth/AdminRoute";
 import ProtectedRoute from "./auth/ProtectedRoute";
-import { useAuth } from "./auth/useAuth";
 import TaskDetails from "./components/TaskDetails";
 import AppLayout from "./layouts/AppLayout";
 import Calendar from "./pages/Calendar";
@@ -12,7 +11,6 @@ import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
 import Settings from "./pages/Settings";
 import WeeklyPlanner from "./pages/WeeklyPlanner";
-import { queryClient } from "./query/queryClient";
 import { updateAssignment } from "./utils/assignmentHelpers";
 import { tasksEqual } from "./utils/taskHelpers";
 import { useTaskStore } from "./stores/taskStore";
@@ -23,7 +21,6 @@ import { useEventStream } from "./hooks/useEventStream";
 
 
 function App() {
-  const { user } = useAuth();
 
   const selectedTask = useTaskStore(
     (state) => state.selectedTask
