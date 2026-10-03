@@ -40,7 +40,8 @@ export async function getMe() {
     })
 
     if (!response.ok) {
-        throw new Error("User not found");
+        const error = await response.json();
+        throw new Error(error.error);
     }
 
     return response.json();

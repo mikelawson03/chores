@@ -44,6 +44,12 @@ func (cfg *apiCfg) middlewareAuth(next http.Handler) http.Handler {
 			return
 		}
 
+		if !user.IsActive {
+			err = fmt.Errorf("%w: household membership is inactive", domain.ErrInactiveHouseholdUser)
+			RespondWithError(w, err)
+			return
+		}
+
 		if err != nil {
 			RespondWithError(w, err)
 			return
