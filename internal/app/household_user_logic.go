@@ -41,7 +41,6 @@ func newHouseholdUserEvent(eventType domain.HouseholdUserEventType,
 
 func (a *App) HouseholdUserExists(ctx context.Context, userID, householdID string) (bool, error) {
 	_, err := a.Store.GetHouseholdUserByID(ctx, userID, householdID)
-
 	if errors.Is(err, domain.ErrNotFound) {
 		return false, nil
 	}
@@ -220,14 +219,47 @@ func (a *App) EditHouseholdUser(ctx context.Context, req HouseholdUserRequest) (
 	return updatedHouseholdUser, nil
 }
 
+func (a *App) ActivateHouseholdUser(ctx context.Context, householdId, userId string) (domain.HouseholdUser, error) {
+	reqUser, err := CheckAdmin(ctx)
+	if err != nil {
+		return domain.HouseholdUser{}, nil
+	}
+
+	now := time.Now()
+
+	err = a.Store.SetHouseholdUserActive(ctx, householdId, userId)
+	if err != nil {
+		return domain.HouseholdUser{}, err
+	}
+
+	updatedUser, err := a.Store.GetHouseholdUserByID(ctx, userId, householdId)
+	if err != nil {
+		return domain.HouseholdUser{}, err
+	}
+
+	event := newHouseholdUserEvent(domain.HouseholdUserActivated,
+		now,
+		domain.ActorTypeUser,
+		updatedUser,
+		householdId,
+		reqUser.User.ID,
+	)
+
+	a.Bus.Publish(event)
+
+	return updatedUser, nil
+}
+
 func (a *App) DeactivateHouseholdUser(ctx context.Context, householdId, userId string) (domain.HouseholdUser, error) {
-	hhUser, err := CheckAdmin(ctx)
+	reqUser, err := CheckAdmin(ctx)
 	if err != nil {
 		return domain.HouseholdUser{}, nil
 	}
 
 	now := time.Now()
 	var updatedUser domain.HouseholdUser
+	var updatedTemplates []domain.ChoreTemplate
+	var updatedAssignments []domain.Assignment
 
 	err = a.Store.WithTx(ctx, func(txStore *store.Store) error {
 		templates, err := txStore.GetChoreTemplatesForUser(ctx, userId)
@@ -235,7 +267,6 @@ func (a *App) DeactivateHouseholdUser(ctx context.Context, householdId, userId s
 			return nil
 		}
 
-		updatedTemplates := make([]domain.ChoreTemplate, 0, len(templates))
 		for _, tmp := range templates {
 			updatedTmp := tmp
 			updatedTmp.Assignee = ""
@@ -252,7 +283,6 @@ func (a *App) DeactivateHouseholdUser(ctx context.Context, householdId, userId s
 			return err
 		}
 
-		updatedAssignments := make([]domain.Assignment, 0, len(assignments))
 		for _, assignment := range assignments {
 			updatedAsmt, err := txStore.EditAssignment(ctx, store.EditAssignmentParams{
 				ID:             assignment.ID,
@@ -278,7 +308,6 @@ func (a *App) DeactivateHouseholdUser(ctx context.Context, householdId, userId s
 
 		updatedUser, err = txStore.GetHouseholdUserByID(ctx, userId, householdId)
 		if err != nil {
-			fmt.Println(householdId, userId)
 			return err
 		}
 
@@ -289,7 +318,151 @@ func (a *App) DeactivateHouseholdUser(ctx context.Context, householdId, userId s
 		return domain.HouseholdUser{}, err
 	}
 
-	fmt.Println(hhUser)
-	return updatedUser, nil
+	for _, template := range updatedTemplates {
+		event := newChoreTemplateEvent(
+			domain.ChoreTemplateEdited,
+			now,
+			domain.ActorTypeUser,
+			template,
+			householdId,
+			reqUser.User.ID,
+		)
 
+		a.Bus.Publish(event)
+	}
+
+	for _, assignment := range updatedAssignments {
+		event := newAssignmentEvent(
+			domain.AssignmentEdited,
+			now,
+			domain.ActorTypeUser,
+			assignment,
+			householdId,
+			reqUser.User.ID,
+		)
+
+		a.Bus.Publish(event)
+	}
+
+	event := newHouseholdUserEvent(
+		domain.HouseholdUserDeactivated,
+		now,
+		domain.ActorTypeUser,
+		updatedUser,
+		householdId,
+		reqUser.User.ID,
+	)
+
+	a.Bus.Publish(event)
+
+	return updatedUser, nil
+}
+
+func (a *App) RemoveUserFromHousehold(ctx context.Context, householdId, userId string) error {
+	reqUser, err := CheckAdmin(ctx)
+	if err != nil {
+		return err
+	}
+
+	now := time.Now()
+	var userToDelete domain.HouseholdUser
+	var updatedTemplates []domain.ChoreTemplate
+	var updatedAssignments []domain.Assignment
+
+	err = a.Store.WithTx(ctx, func(txStore *store.Store) error {
+		templates, err := txStore.GetChoreTemplatesForUser(ctx, userId)
+		if err != nil {
+			return err
+		}
+
+		for _, tmp := range templates {
+			updatedTmp := tmp
+			updatedTmp.Assignee = ""
+			updatedTmp.UpdatedAt = now
+			err := txStore.EditChoreTemplate(ctx, updatedTmp)
+			if err != nil {
+				return err
+			}
+
+			updatedTemplates = append(updatedTemplates, updatedTmp)
+		}
+
+		assignments, err := txStore.GetCurrentUserAssignments(ctx, userId)
+		if err != nil {
+			return err
+		}
+
+		for _, assignment := range assignments {
+			updatedAsmt, err := txStore.EditAssignment(ctx, store.EditAssignmentParams{
+				ID:             assignment.ID,
+				AssignedUserID: "",
+				ScheduledFor:   assignment.ScheduledFor,
+				Notes:          assignment.Notes,
+				Completed:      assignment.Completed,
+				Canceled:       assignment.Canceled,
+				UpdatedAt:      now,
+				CompletedAt:    assignment.CompletedAt,
+				CanceledAt:     assignment.CanceledAt,
+			})
+			if err != nil {
+				return err
+			}
+			updatedAssignments = append(updatedAssignments, updatedAsmt)
+		}
+
+		userToDelete, err = txStore.GetHouseholdUserByID(ctx, userId, householdId)
+		if err != nil {
+			return err
+		}
+
+		err = txStore.DeleteHouseholdUser(ctx, householdId, userId)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return err
+	}
+
+	for _, template := range updatedTemplates {
+		event := newChoreTemplateEvent(
+			domain.ChoreTemplateEdited,
+			now,
+			domain.ActorTypeUser,
+			template,
+			householdId,
+			reqUser.User.ID,
+		)
+
+		a.Bus.Publish(event)
+	}
+
+	for _, assignment := range updatedAssignments {
+		event := newAssignmentEvent(
+			domain.AssignmentEdited,
+			now,
+			domain.ActorTypeUser,
+			assignment,
+			householdId,
+			reqUser.User.ID,
+		)
+
+		a.Bus.Publish(event)
+	}
+
+	event := newHouseholdUserEvent(
+		domain.HouseholdUserRemoved,
+		now,
+		domain.ActorTypeUser,
+		userToDelete,
+		householdId,
+		reqUser.User.ID,
+	)
+
+	a.Bus.Publish(event)
+
+	return nil
 }

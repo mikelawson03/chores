@@ -34,7 +34,9 @@ func (cfg *apiCfg) RegisterRoutes(mux *http.ServeMux) {
 	mux.Handle("POST /households/{hhid}/users", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerAddUserToHousehold)))
 	mux.Handle("GET /households/{hhid}/users", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerGetHouseholdUsers)))
 	mux.Handle("PUT /households/{hhid}/users/{uid}", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerEditHouseholdUser)))
+	mux.Handle("POST /households/{hhid}/users/{uid}/activate", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerActivateUser)))
 	mux.Handle("POST /households/{hhid}/users/{uid}/deactivate", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerDeactivateHouseholdUser)))
+	mux.Handle("DELETE /households/{hhid}/users/{uid}", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerRemoveUserFromHousehold)))
 
 	// admin
 	mux.Handle("POST /scheduler/run", cfg.middlewareAuth(http.HandlerFunc(cfg.handlerRunScheduler)))

@@ -41,7 +41,9 @@ export async function getMe() {
 
     if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error);
+        const err = new Error(error.error);
+        err.status = response.status;
+        throw err;
     }
 
     return response.json();

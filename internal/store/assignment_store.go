@@ -181,7 +181,6 @@ func (s *Store) AddAssignment(ctx context.Context, params CreateAssignmentParams
 
 func (s *Store) GetAssignment(ctx context.Context, id string) (domain.Assignment, error) {
 	dbAssignment, err := s.Queries.GetAssignment(ctx, id)
-	fmt.Println(dbAssignment)
 	if errors.Is(err, sql.ErrNoRows) {
 		return domain.Assignment{}, fmt.Errorf("%w: assignment", domain.ErrNotFound)
 	}
@@ -376,9 +375,6 @@ func (s *Store) RescheduleAssignment(ctx context.Context, assignmentID string, s
 
 func (s *Store) GetCurrentUserAssignments(ctx context.Context, userId string) ([]domain.Assignment, error) {
 	res, err := s.Queries.GetCurrentUserAssignments(ctx, stringToNullString(userId))
-
-	fmt.Println(res)
-
 	if err != nil {
 		return []domain.Assignment{}, err
 	}

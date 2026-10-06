@@ -42,8 +42,11 @@ const (
 type HouseholdUserEventType string
 
 const (
-	HouseholdUserAdded  HouseholdUserEventType = "householdUser.added"
-	HouseholdUserEdited HouseholdUserEventType = "householdUser.edited"
+	HouseholdUserAdded       HouseholdUserEventType = "householdUser.added"
+	HouseholdUserEdited      HouseholdUserEventType = "householdUser.edited"
+	HouseholdUserDeactivated HouseholdUserEventType = "householdUser.deactivated"
+	HouseholdUserActivated   HouseholdUserEventType = "householdUser.activated"
+	HouseholdUserRemoved     HouseholdUserEventType = "householdUser.removed"
 )
 
 type UserEventType string

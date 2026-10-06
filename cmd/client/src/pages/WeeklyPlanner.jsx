@@ -10,7 +10,6 @@ import { getAssignments, rescheduleTask } from "../utils/assignmentHelpers";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { DragDropProvider, DragOverlay } from "@dnd-kit/react";
 import { useNotificationStore } from "../stores/notificationStore";
-import { queryClient } from "../query/queryClient";
 import { parseApiError } from "../utils/errorHelpers";
 import PlannerTaskCard from "../components/planner/PlannerTaskCard";
 import { getUsers } from "../utils/userHelpers";

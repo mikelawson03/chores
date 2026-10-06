@@ -35,10 +35,19 @@ export default function AuthProvider({ children }) {
     };
 
     const refreshUser = async () => {
-        const refreshedUser = await getMe();
-        setUser(refreshedUser);
-
-        return refreshedUser;
+        try {
+            const refreshedUser = await getMe();
+            setUser(refreshedUser);
+            return refreshedUser;
+        } catch (err) {
+            if (err.status === 401) {
+                setUser(null);
+                return null;
+            }
+            
+            throw err;
+        }
+        
     }
 
     return(

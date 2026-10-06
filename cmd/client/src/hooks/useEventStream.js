@@ -41,6 +41,9 @@ export function useEventStream(){
           break;
         case "householdUser.edited":
         case "householdUser.added":
+        case "householdUser.deactivated":
+        case "householdUser.activated":
+        case "householdUser.removed":
           queryClient.invalidateQueries({
             queryKey: ["householdUsers", user?.householdId],
           });

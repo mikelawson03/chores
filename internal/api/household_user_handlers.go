@@ -97,6 +97,20 @@ func (cfg *apiCfg) handlerEditHouseholdUser(w http.ResponseWriter, r *http.Reque
 
 }
 
+func (cfg *apiCfg) handlerActivateUser(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	householdId := r.PathValue("hhid")
+	userId := r.PathValue("uid")
+
+	user, err := cfg.App.ActivateHouseholdUser(ctx, householdId, userId)
+	if err != nil {
+		RespondWithError(w, err)
+		return
+	}
+
+	RespondWithJSON(w, http.StatusOK, user)
+}
+
 func (cfg *apiCfg) handlerDeactivateHouseholdUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	householdId := r.PathValue("hhid")
@@ -109,4 +123,18 @@ func (cfg *apiCfg) handlerDeactivateHouseholdUser(w http.ResponseWriter, r *http
 	}
 
 	RespondWithJSON(w, http.StatusOK, user)
+}
+
+func (cfg *apiCfg) handlerRemoveUserFromHousehold(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	householdId := r.PathValue("hhid")
+	userId := r.PathValue("uid")
+
+	err := cfg.App.RemoveUserFromHousehold(ctx, householdId, userId)
+	if err != nil {
+		RespondWithError(w, err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
 }
