@@ -9,7 +9,7 @@ import { createChore, updateChore } from "../utils/choreHelpers";
 import { parseApiError } from "../utils/errorHelpers";
 import ChoresToolbar from "../components/chores/ChoresToolbar";
 import { useAuth } from "../auth/useAuth";
-import { getHouseholdUsers } from "../api/users";
+import { getActiveHouseholdUsers } from "../api/users";
 
 
 
@@ -54,13 +54,13 @@ export default function Chores() {
   const {
     data: householdUsers = [],
   } = useQuery({
-    queryKey: ["householdUsers", user?.householdId],
-    queryFn: () => getHouseholdUsers(user.householdId),
+    queryKey: ["activeHouseholdUsers", user?.householdId],
+    queryFn: () => getActiveHouseholdUsers(user.householdId),
     enabled: !!user?.householdId && user?.role === "admin",
   });
 
   const choreTemplatesQuery = useQuery({
-    queryKey: ["choreTemplates"],
+    queryKey: ["choreTemplates", user?.householdId],
     queryFn: () => getChores(),
   })
 

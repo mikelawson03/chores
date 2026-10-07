@@ -87,6 +87,34 @@ func mapGetHouseholdUserByIdRow(user db.GetHouseholdUserByIDRow) (domain.Househo
 	}, nil
 }
 
+func mapGetActiveHouseholdUsersRow(user db.GetActiveHouseholdUsersRow) (domain.HouseholdUser, error) {
+	role := domain.Role(user.Role)
+	if !role.IsValid() {
+		return domain.HouseholdUser{}, domain.ErrInvalidRole
+	}
+
+	displayName := user.FirstName
+	if user.DisplayName.Valid {
+		displayName = user.DisplayName.String
+	}
+
+	return domain.HouseholdUser{
+		HouseholdID: user.HouseholdID,
+		Role:        role,
+		DisplayName: displayName,
+		ColorOption: int(user.ColorOption),
+		JoinedAt:    user.JoinedAt,
+		IsActive:    user.IsActive,
+		User: domain.User{
+			ID:        user.ID,
+			Username:  user.Username,
+			FirstName: user.FirstName,
+			CreatedAt: user.CreatedAt,
+			UpdatedAt: user.UpdatedAt,
+		},
+	}, nil
+}
+
 func (s *Store) GetHouseholdUsers(ctx context.Context, householdId string) ([]domain.HouseholdUser, error) {
 	var householdUsers []domain.HouseholdUser
 
@@ -107,6 +135,26 @@ func (s *Store) GetHouseholdUsers(ctx context.Context, householdId string) ([]do
 	}
 
 	return householdUsers, nil
+}
+
+func (s *Store) GetActiveHouseholdUsers(ctx context.Context, householdId string) ([]domain.HouseholdUser, error) {
+	var activeHouseholdUsers []domain.HouseholdUser
+
+	res, err := s.Queries.GetActiveHouseholdUsers(ctx, householdId)
+	if err != nil {
+		return []domain.HouseholdUser{}, err
+	}
+
+	for _, user := range res {
+		hhUser, err := mapGetActiveHouseholdUsersRow(user)
+		if err != nil {
+			return []domain.HouseholdUser{}, err
+		}
+
+		activeHouseholdUsers = append(activeHouseholdUsers, hhUser)
+	}
+
+	return activeHouseholdUsers, nil
 }
 
 func (s *Store) GetHouseholdUserByID(ctx context.Context, userId, householdId string) (domain.HouseholdUser, error) {

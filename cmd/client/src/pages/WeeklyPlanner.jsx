@@ -12,8 +12,8 @@ import { DragDropProvider, DragOverlay } from "@dnd-kit/react";
 import { useNotificationStore } from "../stores/notificationStore";
 import { parseApiError } from "../utils/errorHelpers";
 import PlannerTaskCard from "../components/planner/PlannerTaskCard";
-import { getUsers } from "../utils/userHelpers";
 import { useFilterStore } from "../stores/filterStore";
+import { getActiveHouseholdUsers } from "../api/users";
 import { PLANNER_FILTER_CONFIG } from "../config/filterConfigs";
 
 export default function WeeklyPlanner({ toggleTaskComplete }) {
@@ -48,7 +48,7 @@ export default function WeeklyPlanner({ toggleTaskComplete }) {
     data: tasks = [],
     isPending,
   } = useQuery({
-    queryKey: ["assignments", user?.id],
+    queryKey: ["assignments", user?.user.id],
     queryFn: () => getAssignments(user),
     enabled: !!user,
   });
@@ -56,8 +56,8 @@ export default function WeeklyPlanner({ toggleTaskComplete }) {
   const {
     data: householdUsers = [],
   } = useQuery({
-    queryKey: ["householdUsers", user?.householdId],
-    queryFn: () => getUsers(user.householdId),
+    queryKey: ["activeHouseholdUsers", user?.householdId],
+    queryFn: () => getActiveHouseholdUsers(user.householdId),
     enabled: !!user?.householdId && user?.role === "admin",
   });
 

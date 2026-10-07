@@ -61,3 +61,16 @@ export async function getHouseholdUsers(hhid) {
 
     return response.json();
 }
+
+export async function getActiveHouseholdUsers(hhid) {
+    const response = await fetch(`${API_HOST}/households/${hhid}/users/active`,{
+        method: "GET",
+        headers: getHeaders(),
+        credentials: "include",
+    })
+    if (!response.ok) {
+        throw new Error("Users not found");
+    }
+
+    return response.json();
+}

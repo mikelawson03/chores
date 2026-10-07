@@ -166,6 +166,20 @@ func (a *App) GetHouseholdUsers(ctx context.Context) ([]domain.HouseholdUser, er
 	return users, nil
 }
 
+func (a *App) GetActiveHouseholdUsers(ctx context.Context) ([]domain.HouseholdUser, error) {
+	hhUser, err := CheckAdmin(ctx)
+	if err != nil {
+		return []domain.HouseholdUser{}, err
+	}
+
+	users, err := a.Store.GetActiveHouseholdUsers(ctx, hhUser.HouseholdID)
+	if err != nil {
+		return []domain.HouseholdUser{}, err
+	}
+
+	return users, nil
+}
+
 func (a *App) EditHouseholdUser(ctx context.Context, req HouseholdUserRequest) (domain.HouseholdUser, error) {
 	user, err := auth.AuthenticatedUser(ctx)
 	if err != nil {

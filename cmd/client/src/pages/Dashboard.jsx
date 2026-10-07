@@ -6,7 +6,7 @@ import dayjs from "dayjs";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "../auth/useAuth";
 import { getAssignments } from "../utils/assignmentHelpers";
-import { getUsers } from "../utils/userHelpers";
+import { getActiveHouseholdUsers } from "../api/users";
 import isoWeek from "dayjs/plugin/isoWeek";
 
 
@@ -17,7 +17,7 @@ export default function Dashboard({ toggleTaskComplete }) {
     data: tasks = [],
     isPending,
   } = useQuery({
-    queryKey: ["assignments", user?.id],
+    queryKey: ["assignments", user?.user.id],
     queryFn: () => getAssignments(user),
     enabled: !!user,
   });
@@ -25,8 +25,8 @@ export default function Dashboard({ toggleTaskComplete }) {
   const {
     data: householdUsers = [],
   } = useQuery({
-    queryKey: ["householdUsers", user?.householdId],
-    queryFn: () => getUsers(user.householdId),
+    queryKey: ["activeHouseholdUsers", user?.householdId],
+    queryFn: () => getActiveHouseholdUsers(user.householdId),
     enabled: !!user?.householdId && user?.role === "admin",
   });
 

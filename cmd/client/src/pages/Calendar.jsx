@@ -13,7 +13,7 @@ import { DragDropProvider, DragOverlay } from "@dnd-kit/react";
 import { useNotificationStore } from "../stores/notificationStore";
 import { parseApiError } from "../utils/errorHelpers";
 import CalendarTask from "../components/calendar/CalendarTask";
-import { getHouseholdUsers } from "../api/users";
+import { getActiveHouseholdUsers } from "../api/users";
 import { useFilterStore } from "../stores/filterStore";
 import { CALENDAR_FILTER_CONFIG } from "../config/filterConfigs";
 
@@ -45,7 +45,7 @@ export default function Calendar({ toggleTaskComplete }) {
     data: tasks = [],
     isPending,
   } = useQuery({
-    queryKey: ["assignments", user?.id],
+    queryKey: ["assignments", user?.user.id],
     queryFn: () => getAssignments(user),
     enabled: !!user,
   });
@@ -53,8 +53,8 @@ export default function Calendar({ toggleTaskComplete }) {
   const {
     data: householdUsers = [],
   } = useQuery({
-    queryKey: ["householdUsers", user?.householdId],
-    queryFn: () => getHouseholdUsers(user.householdId),
+    queryKey: ["activeHouseholdUsers", user?.householdId],
+    queryFn: () => getActiveHouseholdUsers(user.householdId),
     enabled: !!user?.householdId && user?.role === "admin",
   });
 

@@ -60,6 +60,25 @@ JOIN users u ON u.id = hu.user_id
 WHERE hu.household_id = ?
 ORDER BY hu.joined_at, u.id;
 
+-- name: GetActiveHouseholdUsers :many
+SELECT 
+    hu.household_id,
+    hu.role,
+    hu.display_name,
+    hu.color_option,
+    hu.joined_at,
+    hu.is_active,
+    u.id,
+    u.username,
+    u.first_name,
+    u.created_at,
+    u.updated_at
+FROM household_users hu
+JOIN users u ON u.id = hu.user_id
+WHERE hu.household_id = ?
+AND hu.is_active = true
+ORDER BY hu.joined_at, u.id;
+
 -- name: GetHouseholdUserByID :one
 SELECT
     hu.household_id,

@@ -65,6 +65,17 @@ func (cfg *apiCfg) handlerGetHouseholdUsers(w http.ResponseWriter, r *http.Reque
 	RespondWithJSON(w, http.StatusOK, users)
 }
 
+func (cfg *apiCfg) handlerGetActiveHouseholdUsers(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	users, err := cfg.App.GetActiveHouseholdUsers(ctx)
+	if err != nil {
+		RespondWithError(w, err)
+		return
+	}
+
+	RespondWithJSON(w, http.StatusOK, users)
+}
+
 func (cfg *apiCfg) handlerEditHouseholdUser(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	householdId := r.PathValue("hhid")

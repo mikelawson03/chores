@@ -7,8 +7,7 @@ export async function getAssignments(user) {
         return await getTasks();
     }
 
-    const tasks = await getTasksForUser(user.id);
-    console.log(tasks);
+    const tasks = await getTasksForUser(user?.user.id);
     return tasks
 }
 

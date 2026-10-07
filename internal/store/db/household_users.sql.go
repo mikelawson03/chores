@@ -96,6 +96,75 @@ func (q *Queries) EditHouseholdUser(ctx context.Context, arg EditHouseholdUserPa
 	return i, err
 }
 
+const getActiveHouseholdUsers = `-- name: GetActiveHouseholdUsers :many
+SELECT 
+    hu.household_id,
+    hu.role,
+    hu.display_name,
+    hu.color_option,
+    hu.joined_at,
+    hu.is_active,
+    u.id,
+    u.username,
+    u.first_name,
+    u.created_at,
+    u.updated_at
+FROM household_users hu
+JOIN users u ON u.id = hu.user_id
+WHERE hu.household_id = ?
+AND hu.is_active = true
+ORDER BY hu.joined_at, u.id
+`
+
+type GetActiveHouseholdUsersRow struct {
+	HouseholdID string
+	Role        string
+	DisplayName sql.NullString
+	ColorOption int64
+	JoinedAt    time.Time
+	IsActive    bool
+	ID          string
+	Username    string
+	FirstName   string
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+}
+
+func (q *Queries) GetActiveHouseholdUsers(ctx context.Context, householdID string) ([]GetActiveHouseholdUsersRow, error) {
+	rows, err := q.db.QueryContext(ctx, getActiveHouseholdUsers, householdID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetActiveHouseholdUsersRow
+	for rows.Next() {
+		var i GetActiveHouseholdUsersRow
+		if err := rows.Scan(
+			&i.HouseholdID,
+			&i.Role,
+			&i.DisplayName,
+			&i.ColorOption,
+			&i.JoinedAt,
+			&i.IsActive,
+			&i.ID,
+			&i.Username,
+			&i.FirstName,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getHouseholdUserByID = `-- name: GetHouseholdUserByID :one
 SELECT
     hu.household_id,
