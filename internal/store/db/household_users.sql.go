@@ -12,8 +12,8 @@ import (
 )
 
 const addUserToHousehold = `-- name: AddUserToHousehold :exec
-INSERT INTO household_users (household_id, user_id, role, display_name, color_option, joined_at, is_active)
-VALUES (?, ?, ?, ?, ?, ?, ?)
+INSERT INTO household_users (household_id, user_id, role, display_name, color_option, joined_at, updated_at, is_active)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 `
 
 type AddUserToHouseholdParams struct {
@@ -23,6 +23,7 @@ type AddUserToHouseholdParams struct {
 	DisplayName sql.NullString
 	ColorOption int64
 	JoinedAt    time.Time
+	UpdatedAt   time.Time
 	IsActive    bool
 }
 
@@ -34,6 +35,7 @@ func (q *Queries) AddUserToHousehold(ctx context.Context, arg AddUserToHousehold
 		arg.DisplayName,
 		arg.ColorOption,
 		arg.JoinedAt,
+		arg.UpdatedAt,
 		arg.IsActive,
 	)
 	return err
@@ -59,10 +61,11 @@ UPDATE household_users
 SET role = ?,
 display_name = ?,
 color_option = ?,
-is_active = ?
+is_active = ?,
+updated_at = ?
 WHERE user_id = ?
 AND household_id = ?
-RETURNING household_id, user_id, role, display_name, color_option, joined_at, is_active
+RETURNING household_id, user_id, role, display_name, color_option, is_active, joined_at, updated_at
 `
 
 type EditHouseholdUserParams struct {
@@ -70,6 +73,7 @@ type EditHouseholdUserParams struct {
 	DisplayName sql.NullString
 	ColorOption int64
 	IsActive    bool
+	UpdatedAt   time.Time
 	UserID      string
 	HouseholdID string
 }
@@ -80,6 +84,7 @@ func (q *Queries) EditHouseholdUser(ctx context.Context, arg EditHouseholdUserPa
 		arg.DisplayName,
 		arg.ColorOption,
 		arg.IsActive,
+		arg.UpdatedAt,
 		arg.UserID,
 		arg.HouseholdID,
 	)
@@ -90,8 +95,9 @@ func (q *Queries) EditHouseholdUser(ctx context.Context, arg EditHouseholdUserPa
 		&i.Role,
 		&i.DisplayName,
 		&i.ColorOption,
-		&i.JoinedAt,
 		&i.IsActive,
+		&i.JoinedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
@@ -230,11 +236,12 @@ SELECT
     hu.color_option,
     hu.joined_at,
     hu.is_active,
+    hu.updated_at hhuser_updated_at,
     u.id,
     u.username,
     u.first_name,
     u.created_at,
-    u.updated_at
+    u.updated_at user_updated_at
 FROM household_users hu
 JOIN users u ON u.id = hu.user_id
 WHERE hu.household_id = ?
@@ -242,17 +249,18 @@ ORDER BY hu.joined_at, u.id
 `
 
 type GetHouseholdUsersRow struct {
-	HouseholdID string
-	Role        string
-	DisplayName sql.NullString
-	ColorOption int64
-	JoinedAt    time.Time
-	IsActive    bool
-	ID          string
-	Username    string
-	FirstName   string
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	HouseholdID     string
+	Role            string
+	DisplayName     sql.NullString
+	ColorOption     int64
+	JoinedAt        time.Time
+	IsActive        bool
+	HhuserUpdatedAt time.Time
+	ID              string
+	Username        string
+	FirstName       string
+	CreatedAt       time.Time
+	UserUpdatedAt   time.Time
 }
 
 func (q *Queries) GetHouseholdUsers(ctx context.Context, householdID string) ([]GetHouseholdUsersRow, error) {
@@ -271,11 +279,12 @@ func (q *Queries) GetHouseholdUsers(ctx context.Context, householdID string) ([]
 			&i.ColorOption,
 			&i.JoinedAt,
 			&i.IsActive,
+			&i.HhuserUpdatedAt,
 			&i.ID,
 			&i.Username,
 			&i.FirstName,
 			&i.CreatedAt,
-			&i.UpdatedAt,
+			&i.UserUpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -356,34 +365,38 @@ func (q *Queries) HouseholdUsersCount(ctx context.Context) (int64, error) {
 
 const setHouseholdUserActive = `-- name: SetHouseholdUserActive :exec
 UPDATE household_users
-SET is_active = true
+SET is_active = true,
+updated_at = ?
 WHERE household_id = ?
 AND user_id = ?
 `
 
 type SetHouseholdUserActiveParams struct {
+	UpdatedAt   time.Time
 	HouseholdID string
 	UserID      string
 }
 
 func (q *Queries) SetHouseholdUserActive(ctx context.Context, arg SetHouseholdUserActiveParams) error {
-	_, err := q.db.ExecContext(ctx, setHouseholdUserActive, arg.HouseholdID, arg.UserID)
+	_, err := q.db.ExecContext(ctx, setHouseholdUserActive, arg.UpdatedAt, arg.HouseholdID, arg.UserID)
 	return err
 }
 
 const setHouseholdUserInactive = `-- name: SetHouseholdUserInactive :exec
 UPDATE household_users
-SET is_active = false
+SET is_active = false,
+updated_at = ?
 WHERE household_id = ?
 AND user_id = ?
 `
 
 type SetHouseholdUserInactiveParams struct {
+	UpdatedAt   time.Time
 	HouseholdID string
 	UserID      string
 }
 
 func (q *Queries) SetHouseholdUserInactive(ctx context.Context, arg SetHouseholdUserInactiveParams) error {
-	_, err := q.db.ExecContext(ctx, setHouseholdUserInactive, arg.HouseholdID, arg.UserID)
+	_, err := q.db.ExecContext(ctx, setHouseholdUserInactive, arg.UpdatedAt, arg.HouseholdID, arg.UserID)
 	return err
 }

@@ -607,17 +607,27 @@ func (q *Queries) RescheduleAssignment(ctx context.Context, arg RescheduleAssign
 const updateAssignmentCompletion = `-- name: UpdateAssignmentCompletion :exec
 UPDATE assignments
 SET completed = ?,
-completed_at = ?
+completed_at = ?,
+scheduled_for = ?,
+updated_at = ?
 WHERE id = ?
 `
 
 type UpdateAssignmentCompletionParams struct {
-	Completed   bool
-	CompletedAt sql.NullTime
-	ID          string
+	Completed    bool
+	CompletedAt  sql.NullTime
+	ScheduledFor sql.NullTime
+	UpdatedAt    time.Time
+	ID           string
 }
 
 func (q *Queries) UpdateAssignmentCompletion(ctx context.Context, arg UpdateAssignmentCompletionParams) error {
-	_, err := q.db.ExecContext(ctx, updateAssignmentCompletion, arg.Completed, arg.CompletedAt, arg.ID)
+	_, err := q.db.ExecContext(ctx, updateAssignmentCompletion,
+		arg.Completed,
+		arg.CompletedAt,
+		arg.ScheduledFor,
+		arg.UpdatedAt,
+		arg.ID,
+	)
 	return err
 }

@@ -47,8 +47,9 @@ type HouseholdUser struct {
 	Role        string
 	DisplayName sql.NullString
 	ColorOption int64
-	JoinedAt    time.Time
 	IsActive    bool
+	JoinedAt    time.Time
+	UpdatedAt   time.Time
 }
 
 type User struct {

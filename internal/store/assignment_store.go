@@ -330,11 +330,13 @@ func (s *Store) BulkAssignmentAllocations(ctx context.Context, assignments []Bal
 	return tx.Commit()
 }
 
-func (s *Store) ToggleAssignmentCompletion(ctx context.Context, completion bool, completedAt *time.Time, id string) (domain.Assignment, error) {
+func (s *Store) ToggleAssignmentCompletion(ctx context.Context, completion bool, completedAt, scheduledFor *time.Time, updatedAt time.Time, id string) (domain.Assignment, error) {
 	err := s.Queries.UpdateAssignmentCompletion(ctx, db.UpdateAssignmentCompletionParams{
-		Completed:   completion,
-		CompletedAt: pointerTimeToNullTime(completedAt),
-		ID:          id,
+		Completed:    completion,
+		CompletedAt:  pointerTimeToNullTime(completedAt),
+		ScheduledFor: pointerTimeToNullTime(scheduledFor),
+		UpdatedAt:    updatedAt,
+		ID:           id,
 	})
 
 	if errors.Is(err, sql.ErrNoRows) {

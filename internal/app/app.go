@@ -81,6 +81,8 @@ func CheckAdmin(ctx context.Context) (domain.HouseholdUser, error) {
 
 func (a *App) Bootstrap(ctx context.Context, username, firstName, password string) (domain.HouseholdUser, error) {
 	userCount, err := a.Store.GetUserCount(ctx)
+	now := time.Now()
+
 	if err != nil {
 		return domain.HouseholdUser{}, err
 	}
@@ -103,8 +105,8 @@ func (a *App) Bootstrap(ctx context.Context, username, firstName, password strin
 		Username:  username,
 		HashedPW:  hashedPW,
 		FirstName: firstName,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		CreatedAt: now,
+		UpdatedAt: now,
 	})
 	if err != nil {
 		return domain.HouseholdUser{}, err
@@ -116,7 +118,8 @@ func (a *App) Bootstrap(ctx context.Context, username, firstName, password strin
 		Role:        string(domain.RoleAdmin),
 		DisplayName: user.FirstName,
 		ColorOption: 0,
-		JoinedAt:    time.Now(),
+		JoinedAt:    now,
+		UpdatedAt:   now,
 		IsActive:    true,
 	})
 

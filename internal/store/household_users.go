@@ -18,6 +18,7 @@ type EditHouseholdUserParams struct {
 	IsActive    bool
 	UserId      string
 	HouseholdId string
+	UpdatedAt   time.Time
 }
 
 type AddUserToHouseholdParams struct {
@@ -27,6 +28,7 @@ type AddUserToHouseholdParams struct {
 	DisplayName string
 	ColorOption int
 	JoinedAt    time.Time
+	UpdatedAt   time.Time
 	IsActive    bool
 }
 
@@ -49,12 +51,13 @@ func mapGetHouseholdUsersRow(user db.GetHouseholdUsersRow) (domain.HouseholdUser
 		ColorOption: int(user.ColorOption),
 		JoinedAt:    user.JoinedAt,
 		IsActive:    user.IsActive,
+		UpdatedAt:   user.HhuserUpdatedAt,
 		User: domain.User{
 			ID:        user.ID,
 			Username:  user.Username,
 			FirstName: user.FirstName,
 			CreatedAt: user.CreatedAt,
-			UpdatedAt: user.UpdatedAt,
+			UpdatedAt: user.UserUpdatedAt,
 		},
 	}, nil
 }
@@ -187,6 +190,7 @@ func (s *Store) AddUserToHousehold(ctx context.Context, req AddUserToHouseholdPa
 		DisplayName: stringToNullString(req.DisplayName),
 		ColorOption: int64(req.ColorOption),
 		JoinedAt:    req.JoinedAt,
+		UpdatedAt:   req.UpdatedAt,
 		IsActive:    req.IsActive,
 	})
 
@@ -210,6 +214,7 @@ func (s *Store) EditHouseholdUser(ctx context.Context, req EditHouseholdUserPara
 		IsActive:    req.IsActive,
 		UserID:      req.UserId,
 		HouseholdID: req.HouseholdId,
+		UpdatedAt:   req.UpdatedAt,
 	})
 
 	if errors.Is(err, sql.ErrNoRows) {
@@ -240,17 +245,19 @@ func (s *Store) HouseholdUsersCount(ctx context.Context) (int64, error) {
 	return s.Queries.HouseholdUsersCount(ctx)
 }
 
-func (s *Store) SetHouseholdUserActive(ctx context.Context, householdId, userId string) error {
+func (s *Store) SetHouseholdUserActive(ctx context.Context, householdId, userId string, updatedAt time.Time) error {
 	return s.Queries.SetHouseholdUserActive(ctx, db.SetHouseholdUserActiveParams{
 		HouseholdID: householdId,
 		UserID:      userId,
+		UpdatedAt:   updatedAt,
 	})
 }
 
-func (s *Store) SetHouseholdUserInactive(ctx context.Context, householdId, userId string) error {
+func (s *Store) SetHouseholdUserInactive(ctx context.Context, householdId, userId string, updatedAt time.Time) error {
 	return s.Queries.SetHouseholdUserInactive(ctx, db.SetHouseholdUserInactiveParams{
 		HouseholdID: householdId,
 		UserID:      userId,
+		UpdatedAt:   updatedAt,
 	})
 }
 

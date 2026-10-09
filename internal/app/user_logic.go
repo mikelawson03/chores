@@ -130,13 +130,15 @@ func (a *App) CreateNewUser(ctx context.Context, username, firstName, password s
 		return domain.User{}, err
 	}
 
+	now := time.Now()
+
 	user, err := a.Store.CreateUser(ctx, store.CreateUserParams{
 		ID:        uuid.NewString(),
 		Username:  username,
 		HashedPW:  hashedPW,
 		FirstName: firstName,
-		CreatedAt: time.Now(),
-		UpdatedAt: time.Now(),
+		CreatedAt: now,
+		UpdatedAt: now,
 	})
 	if err != nil {
 		return domain.User{}, err

@@ -9,7 +9,7 @@ type User struct {
 	Username  string    `json:"username"`
 	FirstName string    `json:"firstName"`
 	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"udpatedAt"`
+	UpdatedAt time.Time `json:"updatedAt"`
 }
 
 const (
@@ -24,6 +24,7 @@ type HouseholdUser struct {
 	ColorOption int       `json:"colorOption"`
 	JoinedAt    time.Time `json:"joinedAt"`
 	IsActive    bool      `json:"isActive"`
+	UpdatedAt   time.Time `json:"updatedAt"`
 	User        User      `json:"user"`
 }
 

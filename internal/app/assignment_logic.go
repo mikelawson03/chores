@@ -225,12 +225,15 @@ func (a *App) EditAssignment(ctx context.Context, editRequest EditAssignmentRequ
 
 	var completedAt *time.Time
 	var canceledAt *time.Time
+	scheduledFor := existing.ScheduledFor
 	updatedAt := time.Now()
 
 	if existing.Completed != editRequest.Completed {
 		if editRequest.Completed {
-			t := time.Now()
-			completedAt = &t
+			completedAt = &updatedAt
+			if scheduledFor == nil {
+				scheduledFor = &updatedAt
+			}
 		} else {
 			completedAt = nil
 		}
@@ -240,8 +243,7 @@ func (a *App) EditAssignment(ctx context.Context, editRequest EditAssignmentRequ
 
 	if existing.Canceled != editRequest.Canceled {
 		if editRequest.Canceled {
-			t := time.Now()
-			canceledAt = &t
+			canceledAt = &updatedAt
 		} else {
 			canceledAt = nil
 		}
@@ -253,7 +255,7 @@ func (a *App) EditAssignment(ctx context.Context, editRequest EditAssignmentRequ
 		ID:             editRequest.ID,
 		AssignedUserID: editRequest.AssignedUserID,
 		Notes:          editRequest.Notes,
-		ScheduledFor:   editRequest.ScheduledFor,
+		ScheduledFor:   scheduledFor,
 		Completed:      editRequest.Completed,
 		Canceled:       editRequest.Canceled,
 		CompletedAt:    completedAt,
@@ -337,13 +339,24 @@ func (a *App) ToggleAssignmentCompletion(ctx context.Context, id string) (domain
 	completion := !existing.Completed
 	now := time.Now()
 	var completedAt *time.Time
+	scheduledFor := existing.ScheduledFor
+
 	if !existing.Completed {
 		completedAt = &now
+		if scheduledFor == nil {
+			scheduledFor = &now
+		}
 	} else {
 		completedAt = nil
 	}
 
-	assignment, err := a.Store.ToggleAssignmentCompletion(ctx, completion, completedAt, id)
+	assignment, err := a.Store.ToggleAssignmentCompletion(
+		ctx,
+		completion,
+		completedAt,
+		scheduledFor,
+		now,
+		id)
 	if err != nil {
 		return domain.Assignment{}, err
 	}

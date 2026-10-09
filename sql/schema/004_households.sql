@@ -11,8 +11,9 @@ CREATE TABLE household_users (
     role TEXT NOT NULL,
     display_name TEXT,
     color_option INTEGER NOT NULL,
-    joined_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    joined_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     PRIMARY KEY(household_id, user_id),
     FOREIGN KEY (household_id) REFERENCES households(id),

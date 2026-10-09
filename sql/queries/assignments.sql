@@ -102,7 +102,9 @@ OR (ct.cadence = "monthly"
 -- name: UpdateAssignmentCompletion :exec
 UPDATE assignments
 SET completed = ?,
-completed_at = ?
+completed_at = ?,
+scheduled_for = ?,
+updated_at = ?
 WHERE id = ?;
 
 -- name: RescheduleAssignment :exec

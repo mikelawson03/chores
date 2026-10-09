@@ -132,6 +132,7 @@ func (a *App) AddUserToHousehold(ctx context.Context, req HouseholdUserRequest) 
 		DisplayName: req.DisplayName,
 		ColorOption: req.ColorOption,
 		JoinedAt:    now,
+		UpdatedAt:   now,
 		IsActive:    req.IsActive,
 	})
 	if err != nil {
@@ -215,6 +216,7 @@ func (a *App) EditHouseholdUser(ctx context.Context, req HouseholdUserRequest) (
 		IsActive:    req.IsActive,
 		UserId:      req.UserID,
 		HouseholdId: req.HouseholdID,
+		UpdatedAt:   now,
 	})
 	if err != nil {
 		return domain.HouseholdUser{}, err
@@ -241,7 +243,7 @@ func (a *App) ActivateHouseholdUser(ctx context.Context, householdId, userId str
 
 	now := time.Now()
 
-	err = a.Store.SetHouseholdUserActive(ctx, householdId, userId)
+	err = a.Store.SetHouseholdUserActive(ctx, householdId, userId, now)
 	if err != nil {
 		return domain.HouseholdUser{}, err
 	}
@@ -315,7 +317,7 @@ func (a *App) DeactivateHouseholdUser(ctx context.Context, householdId, userId s
 			updatedAssignments = append(updatedAssignments, updatedAsmt)
 		}
 
-		err = txStore.SetHouseholdUserInactive(ctx, householdId, userId)
+		err = txStore.SetHouseholdUserInactive(ctx, householdId, userId, now)
 		if err != nil {
 			return err
 		}
