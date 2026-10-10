@@ -36,8 +36,8 @@ func CanEditAssignment(user domain.HouseholdUser, assignment domain.Assignment) 
 	return true
 }
 
-func CanGetUser(reqUser domain.HouseholdUser, userID string) bool {
-	if reqUser.Role != domain.RoleAdmin && reqUser.User.ID != userID {
+func CanGetUser(reqUserID, userID string) bool {
+	if reqUserID != userID {
 		return false
 	}
 	return true

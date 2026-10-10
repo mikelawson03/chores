@@ -21,7 +21,7 @@ func (cfg *apiCfg) RegisterRoutes(mux *http.ServeMux) {
 	mux.Handle("POST /assignments/{id}/reschedule", cfg.requireHouseholdAuth(http.HandlerFunc(cfg.handlerRescheduleAssignment)))
 
 	// users
-	mux.Handle("POST /users", cfg.middlewareUserAuth(http.HandlerFunc(cfg.handlerCreateUser)))
+	mux.Handle("POST /users", http.HandlerFunc(cfg.handlerCreateUser))
 	mux.Handle("GET /users/{id}", cfg.middlewareUserAuth(http.HandlerFunc(cfg.handlerGetUserByID)))
 	mux.Handle("PUT /users/{id}", cfg.middlewareUserAuth(http.HandlerFunc(cfg.handlerEditUser)))
 	mux.Handle("GET /users", cfg.middlewareUserAuth(http.HandlerFunc(cfg.handlerGetHouseholdUsers)))

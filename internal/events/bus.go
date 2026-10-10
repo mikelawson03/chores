@@ -136,7 +136,7 @@ func shouldDeliver(event domain.DomainEvent, sub Subscriber) bool {
 		case domain.HouseholdUser:
 			return auth.CanGetHouseholdUser(sub.HouseholdUser, payload.User.ID)
 		case domain.User:
-			return auth.CanGetUser(sub.HouseholdUser, payload.ID)
+			return auth.CanGetUser(sub.HouseholdUser.User.ID, payload.ID)
 		default:
 			return false
 		}

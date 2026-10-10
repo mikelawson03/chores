@@ -115,12 +115,7 @@ func (a *App) validateEditUserRequest(ctx context.Context, newUsername, firstNam
 }
 
 func (a *App) CreateNewUser(ctx context.Context, username, firstName, password string) (domain.User, error) {
-	_, err := CheckAdmin(ctx)
-	if err != nil {
-		return domain.User{}, err
-	}
-
-	err = a.validateNewUserRequest(ctx, username, firstName, password)
+	err := a.validateNewUserRequest(ctx, username, firstName, password)
 	if err != nil {
 		return domain.User{}, err
 	}
@@ -147,17 +142,17 @@ func (a *App) CreateNewUser(ctx context.Context, username, firstName, password s
 	return user, nil
 }
 
-func (a *App) GetUserByID(ctx context.Context, id string) (domain.User, error) {
-	reqUser, err := auth.AuthenticatedUser(ctx)
-	if err != nil {
-		return domain.User{}, err
+func (a *App) GetUserByID(ctx context.Context, userID string) (domain.User, error) {
+	reqUserID, ok := auth.UserIDFromContext(ctx)
+	if !ok {
+		return domain.User{}, fmt.Errorf("%w: authenticated user ID missing from context", domain.ErrUnauthorized)
 	}
 
-	if !auth.CanGetUser(reqUser, id) {
+	if !auth.CanGetUser(reqUserID, userID) {
 		return domain.User{}, domain.ErrForbidden
 	}
 
-	user, err := a.Store.GetUserByID(ctx, id)
+	user, err := a.Store.GetUserByID(ctx, userID)
 	if errors.Is(err, domain.ErrNotFound) {
 		return domain.User{}, fmt.Errorf("%w: user", err)
 	}
