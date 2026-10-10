@@ -8,20 +8,32 @@ import (
 
 type contextKey string
 
-const userContextKey contextKey = "user"
+const (
+	userIdContextKey        contextKey = "userId"
+	householdUserContextKey contextKey = "householdUser"
+)
 
-func WithUser(ctx context.Context, user domain.HouseholdUser) context.Context {
-
-	return context.WithValue(ctx, userContextKey, user)
+func WithUserID(ctx context.Context, userID string) context.Context {
+	return context.WithValue(ctx, userIdContextKey, userID)
 }
 
-func UserFromContext(ctx context.Context) (domain.HouseholdUser, bool) {
-	user, ok := ctx.Value(userContextKey).(domain.HouseholdUser)
-	return user, ok
+func WithHouseholdUser(ctx context.Context, householdUser domain.HouseholdUser) context.Context {
+
+	return context.WithValue(ctx, householdUserContextKey, householdUser)
+}
+
+func UserIDFromContext(ctx context.Context) (string, bool) {
+	userID, ok := ctx.Value(userIdContextKey).(string)
+	return userID, ok
+}
+
+func HouseholdUserFromContext(ctx context.Context) (domain.HouseholdUser, bool) {
+	householdUser, ok := ctx.Value(householdUserContextKey).(domain.HouseholdUser)
+	return householdUser, ok
 }
 
 func AuthenticatedUser(ctx context.Context) (domain.HouseholdUser, error) {
-	user, ok := UserFromContext(ctx)
+	user, ok := HouseholdUserFromContext(ctx)
 	if !ok {
 		return domain.HouseholdUser{}, domain.ErrUnauthorized
 	}

@@ -3,13 +3,20 @@ package api
 import (
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/mikelawson03/chores/internal/auth"
 	"github.com/mikelawson03/chores/internal/domain"
 )
 
-func (cfg *apiCfg) middlewareAuth(next http.Handler) http.Handler {
+func (cfg *apiCfg) requireHouseholdAuth(next http.Handler) http.Handler {
+	return cfg.middlewareUserAuth(
+		cfg.middlewareHouseholdAuth(next),
+	)
+}
+
+func (cfg *apiCfg) middlewareUserAuth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
@@ -37,9 +44,32 @@ func (cfg *apiCfg) middlewareAuth(next http.Handler) http.Handler {
 			return
 		}
 
+		ctx = auth.WithUserID(ctx, uid)
+		r = r.WithContext(ctx)
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (cfg *apiCfg) middlewareHouseholdAuth(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		uid, ok := auth.UserIDFromContext(ctx)
+		if !ok {
+			err := fmt.Errorf("%w: authenticated user ID missing from context", domain.ErrUnauthorized)
+			log.Println(err)
+			RespondWithError(w, err)
+			return
+		}
+
 		user, err := cfg.App.Store.GetHouseholdUserByID(ctx, uid, domain.DefaultHouseholdID)
-		if errors.Is(err, domain.ErrNotFound) {
-			err = fmt.Errorf("%w: user not found", domain.ErrUnauthorized)
+		if err != nil {
+			if errors.Is(err, domain.ErrNotFound) {
+				err = fmt.Errorf("%w: user not found", domain.ErrUnauthorized)
+				RespondWithError(w, err)
+				return
+			}
+
 			RespondWithError(w, err)
 			return
 		}
@@ -50,12 +80,7 @@ func (cfg *apiCfg) middlewareAuth(next http.Handler) http.Handler {
 			return
 		}
 
-		if err != nil {
-			RespondWithError(w, err)
-			return
-		}
-
-		ctx = auth.WithUser(ctx, user)
+		ctx = auth.WithHouseholdUser(ctx, user)
 		r = r.WithContext(ctx)
 
 		next.ServeHTTP(w, r)
