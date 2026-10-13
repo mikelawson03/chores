@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net/http"
 	"time"
 
@@ -79,7 +78,6 @@ func (cfg *apiCfg) handlerGetUserByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err != nil {
-		fmt.Println(err)
 		RespondWithError(w, err)
 		return
 	}

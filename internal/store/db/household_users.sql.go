@@ -61,7 +61,6 @@ UPDATE household_users
 SET role = ?,
 display_name = ?,
 color_option = ?,
-is_active = ?,
 updated_at = ?
 WHERE user_id = ?
 AND household_id = ?
@@ -72,7 +71,6 @@ type EditHouseholdUserParams struct {
 	Role        string
 	DisplayName sql.NullString
 	ColorOption int64
-	IsActive    bool
 	UpdatedAt   time.Time
 	UserID      string
 	HouseholdID string
@@ -83,7 +81,6 @@ func (q *Queries) EditHouseholdUser(ctx context.Context, arg EditHouseholdUserPa
 		arg.Role,
 		arg.DisplayName,
 		arg.ColorOption,
-		arg.IsActive,
 		arg.UpdatedAt,
 		arg.UserID,
 		arg.HouseholdID,
@@ -110,11 +107,12 @@ SELECT
     hu.color_option,
     hu.joined_at,
     hu.is_active,
+    hu.updated_at hhuser_updated_at,
     u.id,
     u.username,
     u.first_name,
     u.created_at,
-    u.updated_at
+    u.updated_at user_updated_at
 FROM household_users hu
 JOIN users u ON u.id = hu.user_id
 WHERE hu.household_id = ?
@@ -123,17 +121,18 @@ ORDER BY hu.joined_at, u.id
 `
 
 type GetActiveHouseholdUsersRow struct {
-	HouseholdID string
-	Role        string
-	DisplayName sql.NullString
-	ColorOption int64
-	JoinedAt    time.Time
-	IsActive    bool
-	ID          string
-	Username    string
-	FirstName   string
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	HouseholdID     string
+	Role            string
+	DisplayName     sql.NullString
+	ColorOption     int64
+	JoinedAt        time.Time
+	IsActive        bool
+	HhuserUpdatedAt time.Time
+	ID              string
+	Username        string
+	FirstName       string
+	CreatedAt       time.Time
+	UserUpdatedAt   time.Time
 }
 
 func (q *Queries) GetActiveHouseholdUsers(ctx context.Context, householdID string) ([]GetActiveHouseholdUsersRow, error) {
@@ -152,11 +151,12 @@ func (q *Queries) GetActiveHouseholdUsers(ctx context.Context, householdID strin
 			&i.ColorOption,
 			&i.JoinedAt,
 			&i.IsActive,
+			&i.HhuserUpdatedAt,
 			&i.ID,
 			&i.Username,
 			&i.FirstName,
 			&i.CreatedAt,
-			&i.UpdatedAt,
+			&i.UserUpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -179,11 +179,12 @@ SELECT
     hu.color_option,
     hu.joined_at,
     hu.is_active,
+    hu.updated_at hhuser_updated_at,
     u.id,
     u.username,
     u.first_name,
     u.created_at,
-    u.updated_at
+    u.updated_at user_updated_at
 FROM household_users hu
 JOIN users u ON u.id = hu.user_id
 WHERE hu.household_id = ?
@@ -196,17 +197,18 @@ type GetHouseholdUserByIDParams struct {
 }
 
 type GetHouseholdUserByIDRow struct {
-	HouseholdID string
-	Role        string
-	DisplayName sql.NullString
-	ColorOption int64
-	JoinedAt    time.Time
-	IsActive    bool
-	ID          string
-	Username    string
-	FirstName   string
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	HouseholdID     string
+	Role            string
+	DisplayName     sql.NullString
+	ColorOption     int64
+	JoinedAt        time.Time
+	IsActive        bool
+	HhuserUpdatedAt time.Time
+	ID              string
+	Username        string
+	FirstName       string
+	CreatedAt       time.Time
+	UserUpdatedAt   time.Time
 }
 
 func (q *Queries) GetHouseholdUserByID(ctx context.Context, arg GetHouseholdUserByIDParams) (GetHouseholdUserByIDRow, error) {
@@ -219,11 +221,12 @@ func (q *Queries) GetHouseholdUserByID(ctx context.Context, arg GetHouseholdUser
 		&i.ColorOption,
 		&i.JoinedAt,
 		&i.IsActive,
+		&i.HhuserUpdatedAt,
 		&i.ID,
 		&i.Username,
 		&i.FirstName,
 		&i.CreatedAt,
-		&i.UpdatedAt,
+		&i.UserUpdatedAt,
 	)
 	return i, err
 }

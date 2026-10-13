@@ -37,14 +37,15 @@ func CanEditAssignment(user domain.HouseholdUser, assignment domain.Assignment) 
 }
 
 func CanGetUser(reqUserID, userID string) bool {
-	if reqUserID != userID {
-		return false
-	}
-	return true
+	return reqUserID == userID
 }
 
-func CanEditUser(reqUser domain.User, userID string) bool {
-	return reqUser.ID == userID
+func CanEditUser(reqUserID, userID string) bool {
+	return reqUserID == userID
+}
+
+func CanDeleteUser(reqUserID, userID string) bool {
+	return reqUserID == userID
 }
 
 func CanEditRole(reqUser domain.HouseholdUser) bool {

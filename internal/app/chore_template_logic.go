@@ -159,7 +159,6 @@ func (a *App) CreateChoreTemplate(ctx context.Context, name, cadence, assignee, 
 		hhUser.User.ID,
 	)
 
-	fmt.Println(event)
 	a.Bus.Publish(event)
 
 	return chore, nil

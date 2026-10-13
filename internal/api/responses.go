@@ -48,7 +48,9 @@ func RespondWithError(w http.ResponseWriter, err error) {
 		})
 
 	case errors.Is(err, domain.ErrConflict),
-		errors.Is(err, domain.ErrHouseholdFull):
+		errors.Is(err, domain.ErrHouseholdFull),
+		errors.Is(err, domain.ErrHasAssignments),
+		errors.Is(err, domain.ErrHasHouseholdMemberships):
 		RespondWithJSON(w, http.StatusConflict, errorResponse{
 			Error: err.Error(),
 		})

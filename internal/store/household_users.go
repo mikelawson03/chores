@@ -80,12 +80,13 @@ func mapGetHouseholdUserByIdRow(user db.GetHouseholdUserByIDRow) (domain.Househo
 		ColorOption: int(user.ColorOption),
 		JoinedAt:    user.JoinedAt,
 		IsActive:    user.IsActive,
+		UpdatedAt:   user.HhuserUpdatedAt,
 		User: domain.User{
 			ID:        user.ID,
 			Username:  user.Username,
 			FirstName: user.FirstName,
 			CreatedAt: user.CreatedAt,
-			UpdatedAt: user.UpdatedAt,
+			UpdatedAt: user.UserUpdatedAt,
 		},
 	}, nil
 }
@@ -108,12 +109,13 @@ func mapGetActiveHouseholdUsersRow(user db.GetActiveHouseholdUsersRow) (domain.H
 		ColorOption: int(user.ColorOption),
 		JoinedAt:    user.JoinedAt,
 		IsActive:    user.IsActive,
+		UpdatedAt:   user.HhuserUpdatedAt,
 		User: domain.User{
 			ID:        user.ID,
 			Username:  user.Username,
 			FirstName: user.FirstName,
 			CreatedAt: user.CreatedAt,
-			UpdatedAt: user.UpdatedAt,
+			UpdatedAt: user.UserUpdatedAt,
 		},
 	}, nil
 }
@@ -211,7 +213,6 @@ func (s *Store) EditHouseholdUser(ctx context.Context, req EditHouseholdUserPara
 		Role:        string(req.Role),
 		DisplayName: stringToNullString(req.DisplayName),
 		ColorOption: int64(req.ColorOption),
-		IsActive:    req.IsActive,
 		UserID:      req.UserId,
 		HouseholdID: req.HouseholdId,
 		UpdatedAt:   req.UpdatedAt,

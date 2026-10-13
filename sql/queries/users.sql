@@ -42,8 +42,28 @@ SELECT *
 FROM users
 WHERE username = ?;
 
--- name: UpdatePassword :exec
-UPDATE users
-SET password_hash = ?
+-- name: GetHashForID :one
+SELECT  *
+FROM users
 WHERE id = ?;
 
+-- name: UpdatePassword :exec
+UPDATE users
+SET 
+    password_hash = ?,
+    updated_at = ?
+WHERE id = ?;
+
+-- name: UserHasHouseholdMemberships :one
+SELECT EXISTS (
+    SELECT 1
+    FROM household_users
+    WHERE user_id = ?
+);
+
+-- name: UserHasAssignments :one
+SELECT EXISTS (
+    SELECT 1
+    FROM assignments
+    WHERE assigned_user_id = ?
+);

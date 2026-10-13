@@ -93,8 +93,8 @@ func (a *App) validateNewUserRequest(ctx context.Context, username, firstName, p
 	return nil
 }
 
-func (a *App) validateEditUserRequest(ctx context.Context, newUsername, firstName string, user, existing domain.User) error {
-	if !auth.CanEditUser(user, existing.ID) {
+func (a *App) validateEditUserRequest(ctx context.Context, newUsername, firstName, reqUserID string, existing domain.User) error {
+	if !auth.CanEditUser(reqUserID, existing.ID) {
 		return fmt.Errorf("%w: may not edit user", domain.ErrForbidden)
 	}
 
@@ -109,6 +109,32 @@ func (a *App) validateEditUserRequest(ctx context.Context, newUsername, firstNam
 
 	if firstName == "" {
 		return fmt.Errorf("%w: must provide first name", domain.ErrInvalidRequest)
+	}
+
+	return nil
+}
+
+func (a *App) validateDeleteUserRequest(ctx context.Context, reqUserID, userID string) error {
+	if !auth.CanDeleteUser(reqUserID, userID) {
+		return fmt.Errorf("%w: may not delete user", domain.ErrForbidden)
+	}
+
+	hasMemberships, err := a.Store.UserHasHouseholdMemberships(ctx, userID)
+	if err != nil {
+		return err
+	}
+
+	if hasMemberships {
+		return domain.ErrHasHouseholdMemberships
+	}
+
+	hasAssignments, err := a.Store.UserHasAssignments(ctx, userID)
+	if err != nil {
+		return err
+	}
+
+	if hasAssignments {
+		return domain.ErrHasAssignments
 	}
 
 	return nil
@@ -164,9 +190,9 @@ func (a *App) GetUserByID(ctx context.Context, userID string) (domain.User, erro
 }
 
 func (a *App) EditUser(ctx context.Context, id, newUsername, firstName string) (domain.User, error) {
-	user, err := auth.AuthenticatedUser(ctx)
-	if err != nil {
-		return domain.User{}, err
+	reqUserID, ok := auth.UserIDFromContext(ctx)
+	if !ok {
+		return domain.User{}, fmt.Errorf("%w: authenticated user ID missing from context", domain.ErrUnauthorized)
 	}
 
 	existing, err := a.Store.GetUserByID(ctx, id)
@@ -177,7 +203,7 @@ func (a *App) EditUser(ctx context.Context, id, newUsername, firstName string) (
 		return domain.User{}, err
 	}
 
-	err = a.validateEditUserRequest(ctx, newUsername, firstName, user.User, existing)
+	err = a.validateEditUserRequest(ctx, newUsername, firstName, reqUserID, existing)
 	if err != nil {
 		return domain.User{}, err
 	}
@@ -201,7 +227,7 @@ func (a *App) EditUser(ctx context.Context, id, newUsername, firstName string) (
 		domain.ActorTypeUser,
 		updatedUser,
 		domain.DefaultHouseholdID,
-		user.User.ID,
+		reqUserID,
 	)
 
 	a.Bus.Publish(event)
@@ -210,7 +236,12 @@ func (a *App) EditUser(ctx context.Context, id, newUsername, firstName string) (
 }
 
 func (a *App) DeleteUser(ctx context.Context, id string) error {
-	_, err := CheckAdmin(ctx)
+	reqUserID, ok := auth.UserIDFromContext(ctx)
+	if !ok {
+		return fmt.Errorf("%w: authenticated user ID missing from context", domain.ErrUnauthorized)
+	}
+
+	err := a.validateDeleteUserRequest(ctx, reqUserID, id)
 	if err != nil {
 		return err
 	}
@@ -254,12 +285,12 @@ func (a *App) LoginUser(ctx context.Context, username, password string) (LoginRe
 }
 
 func (a *App) ChangePassword(ctx context.Context, oldPassword, newPassword string) error {
-	user, err := auth.AuthenticatedUser(ctx)
-	if err != nil {
-		return err
+	reqUserID, ok := auth.UserIDFromContext(ctx)
+	if !ok {
+		return fmt.Errorf("%w: authenticated user ID missing from context", domain.ErrUnauthorized)
 	}
 
-	userWithHash, err := a.Store.GetUserWithHashedPW(ctx, user.User.Username)
+	userWithHash, err := a.Store.GetUserWithHashedPWByID(ctx, reqUserID)
 	if err != nil {
 		return err
 	}
@@ -283,7 +314,9 @@ func (a *App) ChangePassword(ctx context.Context, oldPassword, newPassword strin
 		return err
 	}
 
-	err = a.Store.ChangePassword(ctx, user.User.ID, newPWHash)
+	now := time.Now()
+
+	err = a.Store.ChangePassword(ctx, reqUserID, newPWHash, now)
 	if err != nil {
 		return err
 	}
@@ -291,8 +324,16 @@ func (a *App) ChangePassword(ctx context.Context, oldPassword, newPassword strin
 	return nil
 }
 
-func (a *App) ResetPassword(ctx context.Context, id, tempPassword string) error {
-	_, err := CheckAdmin(ctx)
+func (a *App) ResetPassword(ctx context.Context, userID, tempPassword string) error {
+	reqUser, err := CheckAdmin(ctx)
+	if err != nil {
+		return err
+	}
+
+	_, err = a.Store.GetHouseholdUserByID(ctx, userID, reqUser.HouseholdID)
+	if errors.Is(err, domain.ErrNotFound) {
+		return domain.ErrForbidden
+	}
 	if err != nil {
 		return err
 	}
@@ -302,7 +343,9 @@ func (a *App) ResetPassword(ctx context.Context, id, tempPassword string) error 
 		return err
 	}
 
-	err = a.Store.ChangePassword(ctx, id, tempPWHash)
+	now := time.Now()
+
+	err = a.Store.ChangePassword(ctx, userID, tempPWHash, now)
 	if err != nil {
 		return err
 	}

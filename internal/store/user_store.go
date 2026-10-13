@@ -157,9 +157,33 @@ func (s *Store) GetUserWithHashedPW(ctx context.Context, username string) (Login
 	return user, nil
 }
 
-func (s *Store) ChangePassword(ctx context.Context, id, newPWHash string) error {
+func (s *Store) GetUserWithHashedPWByID(ctx context.Context, userID string) (LoginUser, error) {
+	res, err := s.Queries.GetHashForID(ctx, userID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return LoginUser{}, domain.ErrNotFound
+	}
+	if err != nil {
+		return LoginUser{}, err
+	}
+
+	user := LoginUser{
+		PasswordHash: res.PasswordHash,
+		User: domain.User{
+			ID:        res.ID,
+			Username:  res.Username,
+			FirstName: res.FirstName,
+			CreatedAt: res.CreatedAt,
+			UpdatedAt: res.UpdatedAt,
+		},
+	}
+
+	return user, nil
+}
+
+func (s *Store) ChangePassword(ctx context.Context, id, newPWHash string, now time.Time) error {
 	err := s.Queries.UpdatePassword(ctx, db.UpdatePasswordParams{
 		PasswordHash: newPWHash,
+		UpdatedAt:    now,
 		ID:           id,
 	})
 
@@ -168,4 +192,12 @@ func (s *Store) ChangePassword(ctx context.Context, id, newPWHash string) error 
 	}
 
 	return nil
+}
+
+func (s *Store) UserHasHouseholdMemberships(ctx context.Context, userID string) (bool, error) {
+	return s.Queries.UserHasHouseholdMemberships(ctx, userID)
+}
+
+func (s *Store) UserHasAssignments(ctx context.Context, userID string) (bool, error) {
+	return s.Queries.UserHasAssignments(ctx, stringToNullString(userID))
 }

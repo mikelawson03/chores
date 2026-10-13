@@ -24,11 +24,10 @@ func (cfg *apiCfg) RegisterRoutes(mux *http.ServeMux) {
 	mux.Handle("POST /users", http.HandlerFunc(cfg.handlerCreateUser))
 	mux.Handle("GET /users/{id}", cfg.middlewareUserAuth(http.HandlerFunc(cfg.handlerGetUserByID)))
 	mux.Handle("PUT /users/{id}", cfg.middlewareUserAuth(http.HandlerFunc(cfg.handlerEditUser)))
-	mux.Handle("GET /users", cfg.middlewareUserAuth(http.HandlerFunc(cfg.handlerGetHouseholdUsers)))
 	mux.Handle("DELETE /users/{id}", cfg.middlewareUserAuth(http.HandlerFunc(cfg.handlerDeleteUser)))
 	mux.Handle("GET /me", cfg.requireHouseholdAuth(http.HandlerFunc(cfg.handlerGetMe)))
 	mux.Handle("PUT /me/password", cfg.middlewareUserAuth(http.HandlerFunc(cfg.handlerChangePassword)))
-	mux.Handle("PUT /users/{id}/reset-password", cfg.middlewareHouseholdAuth(http.HandlerFunc(cfg.handlerResetPassword)))
+	mux.Handle("PUT /users/{id}/reset-password", cfg.requireHouseholdAuth(http.HandlerFunc(cfg.handlerResetPassword)))
 
 	// households
 	mux.Handle("POST /households/{hhid}/users", cfg.requireHouseholdAuth(http.HandlerFunc(cfg.handlerAddUserToHousehold)))

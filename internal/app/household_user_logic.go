@@ -16,7 +16,6 @@ type HouseholdUserRequest struct {
 	Role        string
 	DisplayName string
 	ColorOption int
-	IsActive    bool
 	UserID      string
 	HouseholdID string
 }
@@ -87,10 +86,6 @@ func validateEditHouseholdUserRequest(req HouseholdUserRequest, existing, user d
 		return fmt.Errorf("%w: may not edit role", domain.ErrForbidden)
 	}
 
-	if req.IsActive != existing.IsActive && !auth.CanEditIsActive(user) {
-		return fmt.Errorf("%w: may not edit active state", domain.ErrForbidden)
-	}
-
 	return nil
 }
 
@@ -133,7 +128,7 @@ func (a *App) AddUserToHousehold(ctx context.Context, req HouseholdUserRequest) 
 		ColorOption: req.ColorOption,
 		JoinedAt:    now,
 		UpdatedAt:   now,
-		IsActive:    req.IsActive,
+		IsActive:    true,
 	})
 	if err != nil {
 		return domain.HouseholdUser{}, err
@@ -213,7 +208,6 @@ func (a *App) EditHouseholdUser(ctx context.Context, req HouseholdUserRequest) (
 		Role:        role,
 		DisplayName: req.DisplayName,
 		ColorOption: req.ColorOption,
-		IsActive:    req.IsActive,
 		UserId:      req.UserID,
 		HouseholdId: req.HouseholdID,
 		UpdatedAt:   now,

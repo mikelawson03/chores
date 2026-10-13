@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"time"
 )
 
@@ -82,6 +83,26 @@ func (q *Queries) EditUser(ctx context.Context, arg EditUserParams) (User, error
 		arg.UpdatedAt,
 		arg.ID,
 	)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Username,
+		&i.FirstName,
+		&i.PasswordHash,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getHashForID = `-- name: GetHashForID :one
+SELECT  id, username, first_name, password_hash, created_at, updated_at
+FROM users
+WHERE id = ?
+`
+
+func (q *Queries) GetHashForID(ctx context.Context, id string) (User, error) {
+	row := q.db.QueryRowContext(ctx, getHashForID, id)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -189,16 +210,49 @@ func (q *Queries) GetUserCount(ctx context.Context) (int64, error) {
 
 const updatePassword = `-- name: UpdatePassword :exec
 UPDATE users
-SET password_hash = ?
+SET 
+    password_hash = ?,
+    updated_at = ?
 WHERE id = ?
 `
 
 type UpdatePasswordParams struct {
 	PasswordHash string
+	UpdatedAt    time.Time
 	ID           string
 }
 
 func (q *Queries) UpdatePassword(ctx context.Context, arg UpdatePasswordParams) error {
-	_, err := q.db.ExecContext(ctx, updatePassword, arg.PasswordHash, arg.ID)
+	_, err := q.db.ExecContext(ctx, updatePassword, arg.PasswordHash, arg.UpdatedAt, arg.ID)
 	return err
+}
+
+const userHasAssignments = `-- name: UserHasAssignments :one
+SELECT EXISTS (
+    SELECT 1
+    FROM assignments
+    WHERE assigned_user_id = ?
+)
+`
+
+func (q *Queries) UserHasAssignments(ctx context.Context, assignedUserID sql.NullString) (bool, error) {
+	row := q.db.QueryRowContext(ctx, userHasAssignments, assignedUserID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
+const userHasHouseholdMemberships = `-- name: UserHasHouseholdMemberships :one
+SELECT EXISTS (
+    SELECT 1
+    FROM household_users
+    WHERE user_id = ?
+)
+`
+
+func (q *Queries) UserHasHouseholdMemberships(ctx context.Context, userID string) (bool, error) {
+	row := q.db.QueryRowContext(ctx, userHasHouseholdMemberships, userID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
 }

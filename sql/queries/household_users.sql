@@ -39,7 +39,6 @@ UPDATE household_users
 SET role = ?,
 display_name = ?,
 color_option = ?,
-is_active = ?,
 updated_at = ?
 WHERE user_id = ?
 AND household_id = ?
@@ -72,11 +71,12 @@ SELECT
     hu.color_option,
     hu.joined_at,
     hu.is_active,
+    hu.updated_at hhuser_updated_at,
     u.id,
     u.username,
     u.first_name,
     u.created_at,
-    u.updated_at
+    u.updated_at user_updated_at
 FROM household_users hu
 JOIN users u ON u.id = hu.user_id
 WHERE hu.household_id = ?
@@ -91,11 +91,12 @@ SELECT
     hu.color_option,
     hu.joined_at,
     hu.is_active,
+    hu.updated_at hhuser_updated_at,
     u.id,
     u.username,
     u.first_name,
     u.created_at,
-    u.updated_at
+    u.updated_at user_updated_at
 FROM household_users hu
 JOIN users u ON u.id = hu.user_id
 WHERE hu.household_id = ?

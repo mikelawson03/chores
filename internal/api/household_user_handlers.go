@@ -12,7 +12,6 @@ type AddHouseholdUserRequest struct {
 	Role        string `json:"role"`
 	DisplayName string `json:"displayName"`
 	ColorOption int    `json:"colorOption"`
-	IsActive    bool   `json:"isActive"`
 	UserID      string `json:"userID"`
 	HouseholdID string `json:"householdID"`
 }
@@ -21,7 +20,6 @@ type EditHouseholdUserRequest struct {
 	Role        string `json:"role"`
 	DisplayName string `json:"displayName"`
 	ColorOption int    `json:"colorOption"`
-	IsActive    bool   `json:"isActive"`
 }
 
 func (cfg *apiCfg) handlerAddUserToHousehold(w http.ResponseWriter, r *http.Request) {
@@ -41,7 +39,6 @@ func (cfg *apiCfg) handlerAddUserToHousehold(w http.ResponseWriter, r *http.Requ
 		Role:        req.Role,
 		DisplayName: req.DisplayName,
 		ColorOption: req.ColorOption,
-		IsActive:    req.IsActive,
 		UserID:      req.UserID,
 		HouseholdID: hhID,
 	})
@@ -94,7 +91,6 @@ func (cfg *apiCfg) handlerEditHouseholdUser(w http.ResponseWriter, r *http.Reque
 		Role:        req.Role,
 		DisplayName: req.DisplayName,
 		ColorOption: req.ColorOption,
-		IsActive:    req.IsActive,
 		UserID:      userId,
 		HouseholdID: householdId,
 	})
