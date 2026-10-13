@@ -10,7 +10,7 @@ import (
 	"github.com/mikelawson03/chores/internal/domain"
 )
 
-type AssignmentRequest struct {
+type NewAssignmentRequest struct {
 	TemplateID     string     `json:"templateId"`
 	AssignedUserID string     `json:"assignedUserId"`
 	Instructions   string     `json:"instructions"`
@@ -41,7 +41,7 @@ type RescheduleAssignmentRequest struct {
 }
 
 func (cfg *apiCfg) handlerCreateAssignment(w http.ResponseWriter, r *http.Request) {
-	req := AssignmentRequest{}
+	req := NewAssignmentRequest{}
 	err := decodeRequest(r, &req)
 	if err != nil {
 		RespondWithError(w, err)
@@ -119,6 +119,7 @@ func (cfg *apiCfg) handlerEditAssignment(w http.ResponseWriter, r *http.Request)
 	}
 
 	ctx := r.Context()
+	fmt.Println(req.ScheduledFor)
 	res, err := cfg.App.EditAssignment(ctx, app.EditAssignmentRequest{
 		ID:             assignmentID,
 		AssignedUserID: req.AssignedUserID,

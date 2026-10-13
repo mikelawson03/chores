@@ -80,6 +80,8 @@ func (a *App) dailyScheduler(ctx context.Context, horizonStart, horizonEnd time.
 					currentDay.Location(),
 				)
 
+				now := time.Now()
+
 				err := a.Store.AddAssignment(ctx, store.CreateAssignmentParams{
 					ID:             uuid.NewString(),
 					TemplateID:     template.ID,
@@ -87,8 +89,8 @@ func (a *App) dailyScheduler(ctx context.Context, horizonStart, horizonEnd time.
 					Instructions:   template.Instructions,
 					DueDate:        dueDate,
 					ScheduledFor:   &currentDay,
-					CreatedAt:      time.Now(),
-					UpdatedAt:      time.Now(),
+					CreatedAt:      now,
+					UpdatedAt:      now,
 				})
 
 				if err != nil {
@@ -125,6 +127,9 @@ func (a *App) weeklyScheduler(ctx context.Context, horizonStart, horizonEnd time
 					23, 59, 59, 0,
 					assignmentDate.Location(),
 				)
+
+				now := time.Now()
+
 				err := a.Store.AddAssignment(ctx, store.CreateAssignmentParams{
 					ID:             uuid.NewString(),
 					TemplateID:     template.ID,
@@ -132,8 +137,8 @@ func (a *App) weeklyScheduler(ctx context.Context, horizonStart, horizonEnd time
 					Instructions:   template.Instructions,
 					DueDate:        dueDate,
 					ScheduledFor:   nil,
-					CreatedAt:      time.Now(),
-					UpdatedAt:      time.Now(),
+					CreatedAt:      now,
+					UpdatedAt:      now,
 				})
 				if err != nil {
 					log.Printf("Weekly scheduler aborted after creating %d assignments: %v",
@@ -167,6 +172,9 @@ func (a *App) monthlyScheduler(ctx context.Context, horizonStart, horizonEnd tim
 					23, 59, 59, 0,
 					thisMonthEnd.Location(),
 				)
+
+				now := time.Now()
+
 				err := a.Store.AddAssignment(ctx, store.CreateAssignmentParams{
 					ID:             uuid.NewString(),
 					TemplateID:     template.ID,
@@ -174,8 +182,8 @@ func (a *App) monthlyScheduler(ctx context.Context, horizonStart, horizonEnd tim
 					Instructions:   template.Instructions,
 					DueDate:        dueDate,
 					ScheduledFor:   nil,
-					CreatedAt:      time.Now(),
-					UpdatedAt:      time.Now(),
+					CreatedAt:      now,
+					UpdatedAt:      now,
 				})
 				if err != nil {
 					log.Printf("Monthly scheduler aborted after creating %d assignments: %v",

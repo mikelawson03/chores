@@ -131,12 +131,12 @@ func (a *App) validateEditAssignmentRequest(ctx context.Context, user domain.Hou
 }
 
 func (a *App) CreateAssignmentFromTemplate(ctx context.Context, req CreateAsssignmentRequest) (domain.Assignment, error) {
-	user, err := auth.AuthenticatedUser(ctx)
+	reqUser, err := auth.AuthenticatedUser(ctx)
 	if err != nil {
 		return domain.Assignment{}, err
 	}
 
-	if err := a.validateCreateAssignment(ctx, user, req); err != nil {
+	if err := a.validateCreateAssignment(ctx, reqUser, req); err != nil {
 		return domain.Assignment{}, err
 	}
 
@@ -166,8 +166,8 @@ func (a *App) CreateAssignmentFromTemplate(ctx context.Context, req CreateAsssig
 		now,
 		domain.ActorTypeUser,
 		assignment,
-		user.HouseholdID,
-		user.User.ID,
+		reqUser.HouseholdID,
+		reqUser.User.ID,
 	)
 
 	a.Bus.Publish(event)
@@ -225,7 +225,7 @@ func (a *App) EditAssignment(ctx context.Context, editRequest EditAssignmentRequ
 
 	var completedAt *time.Time
 	var canceledAt *time.Time
-	scheduledFor := existing.ScheduledFor
+	scheduledFor := editRequest.ScheduledFor
 	updatedAt := time.Now()
 
 	if existing.Completed != editRequest.Completed {
