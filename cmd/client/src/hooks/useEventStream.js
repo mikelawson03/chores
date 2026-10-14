@@ -57,7 +57,7 @@ export function useEventStream(){
           break;
         case "choreTemplate.edited":
         case "choreTemplate.created":
-        case "choreTemplate.deleted":
+        case "choreTemplate.deactivated":
           scheduleChoreTemplateInvalidation();
           break;
         case "householdUser.edited":

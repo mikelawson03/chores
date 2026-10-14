@@ -9,6 +9,7 @@ type ChoreTemplate struct {
 	Assignee     string    `json:"assignee"`
 	Instructions string    `json:"instructions"`
 	Duration     int       `json:"duration"`
+	IsActive     bool      `json:"isActive"`
 	CreatedAt    time.Time `json:"createdAt"`
 	UpdatedAt    time.Time `json:"updatedAt"`
 }

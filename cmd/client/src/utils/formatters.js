@@ -23,3 +23,10 @@ export function formatDuration(duration) {
 export function formatTimestamp(timestamp) {
   return dayjs(timestamp).format("MMM DD, YYYY • h:mm A")
 }
+
+export function formatStatus(isActive) {
+  if (isActive) {
+    return "Active"
+  } 
+  return "Inactive"
+}

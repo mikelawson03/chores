@@ -46,9 +46,9 @@ export async function updateChoreTemplate(template) {
   return await response.json();
 }
 
-export async function deleteChoreTemplate(id) {
-  const response = await fetch(`${API_HOST}/chore-templates/${id}`, {
-    method: "DELETE",
+export async function deactivateChoreTemplate(id) {
+  const response = await fetch(`${API_HOST}/chore-templates/${id}/deactivate`, {
+    method: "POST",
     headers: getHeaders(),
     credentials: "include",
   })

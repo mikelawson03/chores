@@ -15,7 +15,8 @@ export default function ChoresTable({ choreTemplates, openEditChore, users }) {
   const filteredChores = [...choreTemplates];
   const displayedChores = sortChores(filteredChores, sort)
 
-  
+  console.log(filteredChores)
+
   function sortChores(chores, sort) {
     let comparison
     return chores.sort((a, b) => {
@@ -71,6 +72,11 @@ export default function ChoresTable({ choreTemplates, openEditChore, users }) {
       field: "assignee",
       sortable: false,
     }, 
+    {
+      displayName: "Status",
+      field: "isActive",
+      sortable: false,
+    },
     {
       displayName: "Duration",
       field: "duration",

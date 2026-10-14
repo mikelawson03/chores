@@ -41,17 +41,35 @@ func (q *Queries) CreateChoreTemplate(ctx context.Context, arg CreateChoreTempla
 	return err
 }
 
-const deleteChoreTemplate = `-- name: DeleteChoreTemplate :one
-DELETE FROM chore_templates
+const deactivateChoreTemplate = `-- name: DeactivateChoreTemplate :one
+UPDATE chore_templates
+SET is_active = false,
+updated_at = ?
 WHERE id = ?
-RETURNING id
+AND is_active = true
+RETURNING id, name, cadence, assignee, instructions, duration, created_at, updated_at, is_active
 `
 
-func (q *Queries) DeleteChoreTemplate(ctx context.Context, id string) (string, error) {
-	row := q.db.QueryRowContext(ctx, deleteChoreTemplate, id)
-	var id_2 string
-	err := row.Scan(&id_2)
-	return id_2, err
+type DeactivateChoreTemplateParams struct {
+	UpdatedAt time.Time
+	ID        string
+}
+
+func (q *Queries) DeactivateChoreTemplate(ctx context.Context, arg DeactivateChoreTemplateParams) (ChoreTemplate, error) {
+	row := q.db.QueryRowContext(ctx, deactivateChoreTemplate, arg.UpdatedAt, arg.ID)
+	var i ChoreTemplate
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Cadence,
+		&i.Assignee,
+		&i.Instructions,
+		&i.Duration,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.IsActive,
+	)
+	return i, err
 }
 
 const editChoreTemplate = `-- name: EditChoreTemplate :exec
@@ -88,8 +106,47 @@ func (q *Queries) EditChoreTemplate(ctx context.Context, arg EditChoreTemplatePa
 	return err
 }
 
+const getActiveChoreTemplates = `-- name: GetActiveChoreTemplates :many
+SELECT id, name, cadence, assignee, instructions, duration, created_at, updated_at, is_active
+FROM chore_templates
+WHERE is_active = true
+`
+
+func (q *Queries) GetActiveChoreTemplates(ctx context.Context) ([]ChoreTemplate, error) {
+	rows, err := q.db.QueryContext(ctx, getActiveChoreTemplates)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ChoreTemplate
+	for rows.Next() {
+		var i ChoreTemplate
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Cadence,
+			&i.Assignee,
+			&i.Instructions,
+			&i.Duration,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.IsActive,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getAllChoreTemplates = `-- name: GetAllChoreTemplates :many
-SELECT id, name, cadence, assignee, instructions, duration, created_at, updated_at
+SELECT id, name, cadence, assignee, instructions, duration, created_at, updated_at, is_active
 FROM chore_templates
 `
 
@@ -111,6 +168,7 @@ func (q *Queries) GetAllChoreTemplates(ctx context.Context) ([]ChoreTemplate, er
 			&i.Duration,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.IsActive,
 		); err != nil {
 			return nil, err
 		}
@@ -126,7 +184,7 @@ func (q *Queries) GetAllChoreTemplates(ctx context.Context) ([]ChoreTemplate, er
 }
 
 const getChoreTemplateByID = `-- name: GetChoreTemplateByID :one
-SELECT id, name, cadence, assignee, instructions, duration, created_at, updated_at
+SELECT id, name, cadence, assignee, instructions, duration, created_at, updated_at, is_active
 FROM chore_templates
 WHERE id = ?
 `
@@ -143,12 +201,13 @@ func (q *Queries) GetChoreTemplateByID(ctx context.Context, id string) (ChoreTem
 		&i.Duration,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.IsActive,
 	)
 	return i, err
 }
 
 const getChoreTemplateByName = `-- name: GetChoreTemplateByName :one
-SELECT id, name, cadence, assignee, instructions, duration, created_at, updated_at
+SELECT id, name, cadence, assignee, instructions, duration, created_at, updated_at, is_active
 FROM chore_templates
 WHERE name = ?
 `
@@ -165,12 +224,13 @@ func (q *Queries) GetChoreTemplateByName(ctx context.Context, name string) (Chor
 		&i.Duration,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.IsActive,
 	)
 	return i, err
 }
 
 const getChoreTemplatesForUser = `-- name: GetChoreTemplatesForUser :many
-SELECT id, name, cadence, assignee, instructions, duration, created_at, updated_at
+SELECT id, name, cadence, assignee, instructions, duration, created_at, updated_at, is_active
 FROM chore_templates
 WHERE assignee = ?
 `
@@ -193,6 +253,7 @@ func (q *Queries) GetChoreTemplatesForUser(ctx context.Context, assignee sql.Nul
 			&i.Duration,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.IsActive,
 		); err != nil {
 			return nil, err
 		}

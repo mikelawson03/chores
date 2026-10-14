@@ -13,6 +13,7 @@ CREATE TABLE assignments (
     updated_at TIMESTAMP NOT NULL,
     completed_at TIMESTAMP,
     canceled_at TIMESTAMP,
+    cancellation_reason TEXT,
     FOREIGN KEY (template_id) REFERENCES chore_templates(id),
     FOREIGN KEY (assigned_user_id) REFERENCES users(id)
 );

@@ -21,6 +21,7 @@ func dbTemplateToDomainTemplate(dbTmp db.ChoreTemplate) domain.ChoreTemplate {
 		Duration:     int(dbTmp.Duration),
 		CreatedAt:    dbTmp.CreatedAt,
 		UpdatedAt:    dbTmp.UpdatedAt,
+		IsActive:     dbTmp.IsActive,
 	}
 }
 
@@ -101,7 +102,22 @@ func (s *Store) GetChoreTemplates(ctx context.Context) ([]domain.ChoreTemplate, 
 		domainTmps = append(domainTmps, dbTemplateToDomainTemplate(tmp))
 	}
 
-	return domainTmps, err
+	return domainTmps, nil
+}
+
+func (s *Store) GetActiveChoreTemplates(ctx context.Context) ([]domain.ChoreTemplate, error) {
+	domainTmps := make([]domain.ChoreTemplate, 0)
+
+	dbTmps, err := s.Queries.GetActiveChoreTemplates(ctx)
+	if err != nil {
+		return []domain.ChoreTemplate{}, err
+	}
+
+	for _, tmp := range dbTmps {
+		domainTmps = append(domainTmps, dbTemplateToDomainTemplate(tmp))
+	}
+
+	return domainTmps, nil
 }
 
 func (s *Store) EditChoreTemplate(ctx context.Context, tmp domain.ChoreTemplate) error {
@@ -132,7 +148,7 @@ func (s *Store) EditChoreTemplate(ctx context.Context, tmp domain.ChoreTemplate)
 		Assignee:     assignee,
 		Instructions: instructions,
 		Duration:     int64(tmp.Duration),
-		UpdatedAt:    time.Now(),
+		UpdatedAt:    tmp.UpdatedAt,
 		ID:           tmp.ID,
 	})
 
@@ -143,16 +159,21 @@ func (s *Store) EditChoreTemplate(ctx context.Context, tmp domain.ChoreTemplate)
 	return nil
 }
 
-func (s *Store) DeleteChoreTemplate(ctx context.Context, id string) error {
-	_, err := s.Queries.DeleteChoreTemplate(ctx, id)
+func (s *Store) DeactivateChoreTemplate(ctx context.Context, id string, updatedAt time.Time) (domain.ChoreTemplate, error) {
+	dbTemp, err := s.Queries.DeactivateChoreTemplate(ctx, db.DeactivateChoreTemplateParams{
+		UpdatedAt: updatedAt,
+		ID:        id,
+	})
 	if errors.Is(err, sql.ErrNoRows) {
-		return domain.ErrNotFound
+		return domain.ChoreTemplate{}, domain.ErrNotFound
 	}
 	if err != nil {
-		return err
+		return domain.ChoreTemplate{}, err
 	}
 
-	return nil
+	template := dbTemplateToDomainTemplate(dbTemp)
+
+	return template, nil
 }
 
 func (s *Store) GetChoreTemplatesForUser(ctx context.Context, assignee string) ([]domain.ChoreTemplate, error) {

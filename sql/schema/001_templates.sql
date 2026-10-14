@@ -9,6 +9,7 @@ CREATE TABLE chore_templates (
     duration INTEGER NOT NULL,
     created_at TIMESTAMP NOT NULL,
     updated_at TIMESTAMP NOT NULL,
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
     FOREIGN KEY (assignee) REFERENCES users(id)
 );
 

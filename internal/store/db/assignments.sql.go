@@ -27,6 +27,47 @@ func (q *Queries) AllocateAssignments(ctx context.Context, arg AllocateAssignmen
 	return err
 }
 
+const cancelOutstandingAssignmentsByTemplateID = `-- name: CancelOutstandingAssignmentsByTemplateID :many
+UPDATE assignments
+SET canceled = true,
+    canceled_at = ?,
+    updated_at = ?,
+    cancellation_reason = 'template_deactivated'
+WHERE template_id = ?
+    AND completed = false
+    AND canceled = false
+RETURNING id
+`
+
+type CancelOutstandingAssignmentsByTemplateIDParams struct {
+	CanceledAt sql.NullTime
+	UpdatedAt  time.Time
+	TemplateID string
+}
+
+func (q *Queries) CancelOutstandingAssignmentsByTemplateID(ctx context.Context, arg CancelOutstandingAssignmentsByTemplateIDParams) ([]string, error) {
+	rows, err := q.db.QueryContext(ctx, cancelOutstandingAssignmentsByTemplateID, arg.CanceledAt, arg.UpdatedAt, arg.TemplateID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		items = append(items, id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const createAssignment = `-- name: CreateAssignment :exec
 INSERT INTO assignments (
     id, 
@@ -122,7 +163,7 @@ func (q *Queries) EditAssignment(ctx context.Context, arg EditAssignmentParams) 
 
 const getAllAssignments = `-- name: GetAllAssignments :many
 SELECT 
-    a.id, a.template_id, a.assigned_user_id, a.instructions, a.notes, a.due_date, a.scheduled_for, a.completed, a.canceled, a.created_at, a.updated_at, a.completed_at, a.canceled_at, 
+    a.id, a.template_id, a.assigned_user_id, a.instructions, a.notes, a.due_date, a.scheduled_for, a.completed, a.canceled, a.created_at, a.updated_at, a.completed_at, a.canceled_at, a.cancellation_reason, 
     ct.name,
     ct.duration, 
     ct.cadence,
@@ -133,23 +174,24 @@ LEFT JOIN users u ON a.assigned_user_id = u.id
 `
 
 type GetAllAssignmentsRow struct {
-	ID             string
-	TemplateID     string
-	AssignedUserID sql.NullString
-	Instructions   sql.NullString
-	Notes          sql.NullString
-	DueDate        time.Time
-	ScheduledFor   sql.NullTime
-	Completed      bool
-	Canceled       bool
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
-	CompletedAt    sql.NullTime
-	CanceledAt     sql.NullTime
-	Name           string
-	Duration       int64
-	Cadence        string
-	FirstName      sql.NullString
+	ID                 string
+	TemplateID         string
+	AssignedUserID     sql.NullString
+	Instructions       sql.NullString
+	Notes              sql.NullString
+	DueDate            time.Time
+	ScheduledFor       sql.NullTime
+	Completed          bool
+	Canceled           bool
+	CreatedAt          time.Time
+	UpdatedAt          time.Time
+	CompletedAt        sql.NullTime
+	CanceledAt         sql.NullTime
+	CancellationReason sql.NullString
+	Name               string
+	Duration           int64
+	Cadence            string
+	FirstName          sql.NullString
 }
 
 func (q *Queries) GetAllAssignments(ctx context.Context) ([]GetAllAssignmentsRow, error) {
@@ -175,6 +217,7 @@ func (q *Queries) GetAllAssignments(ctx context.Context) ([]GetAllAssignmentsRow
 			&i.UpdatedAt,
 			&i.CompletedAt,
 			&i.CanceledAt,
+			&i.CancellationReason,
 			&i.Name,
 			&i.Duration,
 			&i.Cadence,
@@ -195,7 +238,7 @@ func (q *Queries) GetAllAssignments(ctx context.Context) ([]GetAllAssignmentsRow
 
 const getAssignment = `-- name: GetAssignment :one
 SELECT 
-    a.id, a.template_id, a.assigned_user_id, a.instructions, a.notes, a.due_date, a.scheduled_for, a.completed, a.canceled, a.created_at, a.updated_at, a.completed_at, a.canceled_at, 
+    a.id, a.template_id, a.assigned_user_id, a.instructions, a.notes, a.due_date, a.scheduled_for, a.completed, a.canceled, a.created_at, a.updated_at, a.completed_at, a.canceled_at, a.cancellation_reason, 
     ct.name,
     ct.duration, 
     ct.cadence,
@@ -207,23 +250,24 @@ WHERE a.id = ?
 `
 
 type GetAssignmentRow struct {
-	ID             string
-	TemplateID     string
-	AssignedUserID sql.NullString
-	Instructions   sql.NullString
-	Notes          sql.NullString
-	DueDate        time.Time
-	ScheduledFor   sql.NullTime
-	Completed      bool
-	Canceled       bool
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
-	CompletedAt    sql.NullTime
-	CanceledAt     sql.NullTime
-	Name           string
-	Duration       int64
-	Cadence        string
-	FirstName      sql.NullString
+	ID                 string
+	TemplateID         string
+	AssignedUserID     sql.NullString
+	Instructions       sql.NullString
+	Notes              sql.NullString
+	DueDate            time.Time
+	ScheduledFor       sql.NullTime
+	Completed          bool
+	Canceled           bool
+	CreatedAt          time.Time
+	UpdatedAt          time.Time
+	CompletedAt        sql.NullTime
+	CanceledAt         sql.NullTime
+	CancellationReason sql.NullString
+	Name               string
+	Duration           int64
+	Cadence            string
+	FirstName          sql.NullString
 }
 
 func (q *Queries) GetAssignment(ctx context.Context, id string) (GetAssignmentRow, error) {
@@ -243,6 +287,7 @@ func (q *Queries) GetAssignment(ctx context.Context, id string) (GetAssignmentRo
 		&i.UpdatedAt,
 		&i.CompletedAt,
 		&i.CanceledAt,
+		&i.CancellationReason,
 		&i.Name,
 		&i.Duration,
 		&i.Cadence,
@@ -294,7 +339,7 @@ func (q *Queries) GetAssignmentsByDateRange(ctx context.Context, arg GetAssignme
 
 const getAssignmentsByTemplateID = `-- name: GetAssignmentsByTemplateID :many
 SELECT 
-    a.id, a.template_id, a.assigned_user_id, a.instructions, a.notes, a.due_date, a.scheduled_for, a.completed, a.canceled, a.created_at, a.updated_at, a.completed_at, a.canceled_at, 
+    a.id, a.template_id, a.assigned_user_id, a.instructions, a.notes, a.due_date, a.scheduled_for, a.completed, a.canceled, a.created_at, a.updated_at, a.completed_at, a.canceled_at, a.cancellation_reason, 
     ct.name,
     ct.duration, 
     ct.cadence,
@@ -306,23 +351,24 @@ WHERE a.template_id = ?
 `
 
 type GetAssignmentsByTemplateIDRow struct {
-	ID             string
-	TemplateID     string
-	AssignedUserID sql.NullString
-	Instructions   sql.NullString
-	Notes          sql.NullString
-	DueDate        time.Time
-	ScheduledFor   sql.NullTime
-	Completed      bool
-	Canceled       bool
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
-	CompletedAt    sql.NullTime
-	CanceledAt     sql.NullTime
-	Name           string
-	Duration       int64
-	Cadence        string
-	FirstName      sql.NullString
+	ID                 string
+	TemplateID         string
+	AssignedUserID     sql.NullString
+	Instructions       sql.NullString
+	Notes              sql.NullString
+	DueDate            time.Time
+	ScheduledFor       sql.NullTime
+	Completed          bool
+	Canceled           bool
+	CreatedAt          time.Time
+	UpdatedAt          time.Time
+	CompletedAt        sql.NullTime
+	CanceledAt         sql.NullTime
+	CancellationReason sql.NullString
+	Name               string
+	Duration           int64
+	Cadence            string
+	FirstName          sql.NullString
 }
 
 func (q *Queries) GetAssignmentsByTemplateID(ctx context.Context, templateID string) ([]GetAssignmentsByTemplateIDRow, error) {
@@ -348,6 +394,7 @@ func (q *Queries) GetAssignmentsByTemplateID(ctx context.Context, templateID str
 			&i.UpdatedAt,
 			&i.CompletedAt,
 			&i.CanceledAt,
+			&i.CancellationReason,
 			&i.Name,
 			&i.Duration,
 			&i.Cadence,
@@ -368,7 +415,7 @@ func (q *Queries) GetAssignmentsByTemplateID(ctx context.Context, templateID str
 
 const getAssignmentsByUserID = `-- name: GetAssignmentsByUserID :many
 SELECT 
-    a.id, a.template_id, a.assigned_user_id, a.instructions, a.notes, a.due_date, a.scheduled_for, a.completed, a.canceled, a.created_at, a.updated_at, a.completed_at, a.canceled_at, 
+    a.id, a.template_id, a.assigned_user_id, a.instructions, a.notes, a.due_date, a.scheduled_for, a.completed, a.canceled, a.created_at, a.updated_at, a.completed_at, a.canceled_at, a.cancellation_reason, 
     ct.name,
     ct.duration, 
     ct.cadence,
@@ -380,23 +427,24 @@ WHERE a.assigned_user_id = ?
 `
 
 type GetAssignmentsByUserIDRow struct {
-	ID             string
-	TemplateID     string
-	AssignedUserID sql.NullString
-	Instructions   sql.NullString
-	Notes          sql.NullString
-	DueDate        time.Time
-	ScheduledFor   sql.NullTime
-	Completed      bool
-	Canceled       bool
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
-	CompletedAt    sql.NullTime
-	CanceledAt     sql.NullTime
-	Name           string
-	Duration       int64
-	Cadence        string
-	FirstName      sql.NullString
+	ID                 string
+	TemplateID         string
+	AssignedUserID     sql.NullString
+	Instructions       sql.NullString
+	Notes              sql.NullString
+	DueDate            time.Time
+	ScheduledFor       sql.NullTime
+	Completed          bool
+	Canceled           bool
+	CreatedAt          time.Time
+	UpdatedAt          time.Time
+	CompletedAt        sql.NullTime
+	CanceledAt         sql.NullTime
+	CancellationReason sql.NullString
+	Name               string
+	Duration           int64
+	Cadence            string
+	FirstName          sql.NullString
 }
 
 func (q *Queries) GetAssignmentsByUserID(ctx context.Context, assignedUserID sql.NullString) ([]GetAssignmentsByUserIDRow, error) {
@@ -422,6 +470,7 @@ func (q *Queries) GetAssignmentsByUserID(ctx context.Context, assignedUserID sql
 			&i.UpdatedAt,
 			&i.CompletedAt,
 			&i.CanceledAt,
+			&i.CancellationReason,
 			&i.Name,
 			&i.Duration,
 			&i.Cadence,
@@ -512,7 +561,7 @@ func (q *Queries) GetAssignmentsWithMetadataForDateRange(ctx context.Context, ar
 
 const getCurrentUserAssignments = `-- name: GetCurrentUserAssignments :many
 SELECT 
-    a.id, a.template_id, a.assigned_user_id, a.instructions, a.notes, a.due_date, a.scheduled_for, a.completed, a.canceled, a.created_at, a.updated_at, a.completed_at, a.canceled_at,
+    a.id, a.template_id, a.assigned_user_id, a.instructions, a.notes, a.due_date, a.scheduled_for, a.completed, a.canceled, a.created_at, a.updated_at, a.completed_at, a.canceled_at, a.cancellation_reason,
     ct.name,
     ct.duration,
     ct.cadence,
@@ -526,23 +575,24 @@ AND a.assigned_user_id = ?
 `
 
 type GetCurrentUserAssignmentsRow struct {
-	ID             string
-	TemplateID     string
-	AssignedUserID sql.NullString
-	Instructions   sql.NullString
-	Notes          sql.NullString
-	DueDate        time.Time
-	ScheduledFor   sql.NullTime
-	Completed      bool
-	Canceled       bool
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
-	CompletedAt    sql.NullTime
-	CanceledAt     sql.NullTime
-	Name           string
-	Duration       int64
-	Cadence        string
-	FirstName      string
+	ID                 string
+	TemplateID         string
+	AssignedUserID     sql.NullString
+	Instructions       sql.NullString
+	Notes              sql.NullString
+	DueDate            time.Time
+	ScheduledFor       sql.NullTime
+	Completed          bool
+	Canceled           bool
+	CreatedAt          time.Time
+	UpdatedAt          time.Time
+	CompletedAt        sql.NullTime
+	CanceledAt         sql.NullTime
+	CancellationReason sql.NullString
+	Name               string
+	Duration           int64
+	Cadence            string
+	FirstName          string
 }
 
 func (q *Queries) GetCurrentUserAssignments(ctx context.Context, assignedUserID sql.NullString) ([]GetCurrentUserAssignmentsRow, error) {
@@ -568,6 +618,7 @@ func (q *Queries) GetCurrentUserAssignments(ctx context.Context, assignedUserID 
 			&i.UpdatedAt,
 			&i.CompletedAt,
 			&i.CanceledAt,
+			&i.CancellationReason,
 			&i.Name,
 			&i.Duration,
 			&i.Cadence,

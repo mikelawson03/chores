@@ -18,6 +18,7 @@ type Assignment struct {
 	ScheduledFor          *time.Time `json:"scheduledFor"`
 	Completed             bool       `json:"completed"`
 	Canceled              bool       `json:"canceled"`
+	CancellationReason    string     `json:"cancellationReason"`
 	CreatedAt             time.Time  `json:"createdAt"`
 	UpdatedAt             time.Time  `json:"updatedAt"`
 	CompletedAt           *time.Time `json:"completedAt"`

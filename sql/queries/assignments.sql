@@ -131,3 +131,14 @@ JOIN users u ON a.assigned_user_id = u.id
 WHERE a.completed = false
 AND a.canceled = false
 AND a.assigned_user_id = ?;
+
+-- name: CancelOutstandingAssignmentsByTemplateID :many
+UPDATE assignments
+SET canceled = true,
+    canceled_at = ?,
+    updated_at = ?,
+    cancellation_reason = 'template_deactivated'
+WHERE template_id = ?
+    AND completed = false
+    AND canceled = false
+RETURNING id;

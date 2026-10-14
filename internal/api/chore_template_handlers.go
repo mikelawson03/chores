@@ -87,11 +87,11 @@ func (cfg *apiCfg) handlerEditChoreTemplate(w http.ResponseWriter, r *http.Reque
 	RespondWithJSON(w, http.StatusOK, c)
 }
 
-func (cfg *apiCfg) handlerDeleteChoreTemplate(w http.ResponseWriter, r *http.Request) {
+func (cfg *apiCfg) handlerDeactivateChoreTemplate(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	ctx := r.Context()
 
-	err := cfg.App.DeleteChoreTemplate(ctx, id)
+	err := cfg.App.DeactivateChoreTemplate(ctx, id)
 	if err != nil {
 		RespondWithError(w, err)
 		return

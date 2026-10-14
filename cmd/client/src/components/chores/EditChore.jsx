@@ -6,7 +6,7 @@ import DetailRowLargeText from "../details/DetailRowLargeText";
 import DetailRowTitle from "../details/DetailRowTitle";
 import { formatTimestamp } from "../../utils/formatters";
 import { useMutation } from "@tanstack/react-query";
-import { deleteChore } from "../../utils/choreHelpers";
+import { deactivateChore } from "../../utils/choreHelpers";
 
 
 
@@ -28,8 +28,8 @@ export default function EditChore({ open, chore, closeEditChore, editChoreMode, 
         }))
     
 
-    const deleteChoreMutation = useMutation({
-        mutationFn: deleteChore,
+    const deactivateChoreMutation = useMutation({
+        mutationFn: deactivateChore,
         onSuccess: () => {
             closeEditChore();
         },
@@ -75,7 +75,7 @@ export default function EditChore({ open, chore, closeEditChore, editChoreMode, 
                     >
                         {editChoreMode === "edit" ? "Save" : "Create"}
                     </Button>
-                    {editChoreMode === "edit" && <Button variant="text" onClick={() => {deleteChoreMutation.mutate(chore.id);}}>Delete</Button>}
+                    {editChoreMode === "edit" && <Button variant="text" onClick={() => {deactivateChoreMutation.mutate(chore.id);}}>Deactivate</Button>}
                     {editChoreMode === "create" && <Button variant="text" onClick={() => {closeEditChore();}}>Discard</Button>}
                 </Stack>
                 {editChoreMode === "edit" && <Stack direction="column" spacing={0.25} sx={{borderBottom: 1, borderColor: "divider", pb: 4}}>

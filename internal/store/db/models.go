@@ -10,19 +10,20 @@ import (
 )
 
 type Assignment struct {
-	ID             string
-	TemplateID     string
-	AssignedUserID sql.NullString
-	Instructions   sql.NullString
-	Notes          sql.NullString
-	DueDate        time.Time
-	ScheduledFor   sql.NullTime
-	Completed      bool
-	Canceled       bool
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
-	CompletedAt    sql.NullTime
-	CanceledAt     sql.NullTime
+	ID                 string
+	TemplateID         string
+	AssignedUserID     sql.NullString
+	Instructions       sql.NullString
+	Notes              sql.NullString
+	DueDate            time.Time
+	ScheduledFor       sql.NullTime
+	Completed          bool
+	Canceled           bool
+	CreatedAt          time.Time
+	UpdatedAt          time.Time
+	CompletedAt        sql.NullTime
+	CanceledAt         sql.NullTime
+	CancellationReason sql.NullString
 }
 
 type ChoreTemplate struct {
@@ -34,6 +35,7 @@ type ChoreTemplate struct {
 	Duration     int64
 	CreatedAt    time.Time
 	UpdatedAt    time.Time
+	IsActive     bool
 }
 
 type Household struct {

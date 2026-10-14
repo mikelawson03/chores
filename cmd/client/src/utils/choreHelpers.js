@@ -1,4 +1,4 @@
-import { createChoreTemplate, deleteChoreTemplate, getChoreTemplates, updateChoreTemplate } from "../api/choreTemplates";
+import { createChoreTemplate, deactivateChoreTemplate, getChoreTemplates, updateChoreTemplate } from "../api/choreTemplates";
 
 function prepareChoreForSave(chore) {
     return {
@@ -21,8 +21,8 @@ export async function updateChore(chore) {
     return await updateChoreTemplate(prepareChoreForSave(chore));
 }
 
-export async function deleteChore(id) {
-    return await deleteChoreTemplate(id);
+export async function deactivateChore(id) {
+    return await deactivateChoreTemplate(id);
 }
 
 export const choreTemplateValidationErrors = {

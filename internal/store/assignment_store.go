@@ -62,6 +62,7 @@ func mapGetAssignmentsByTemplateID(r db.GetAssignmentsByTemplateIDRow) domain.As
 		UpdatedAt:             r.UpdatedAt,
 		CompletedAt:           NullTimeToPointerTime(r.CompletedAt),
 		CanceledAt:            NullTimeToPointerTime(r.CanceledAt),
+		CancellationReason:    NullStringToString(r.CancellationReason),
 	}
 }
 
@@ -84,6 +85,7 @@ func mapGetAssignmentsByUserIDRow(r db.GetAssignmentsByUserIDRow) domain.Assignm
 		UpdatedAt:             r.UpdatedAt,
 		CompletedAt:           NullTimeToPointerTime(r.CompletedAt),
 		CanceledAt:            NullTimeToPointerTime(r.CanceledAt),
+		CancellationReason:    NullStringToString(r.CancellationReason),
 	}
 }
 
@@ -106,6 +108,7 @@ func mapGetAssignmentRow(r db.GetAssignmentRow) domain.Assignment {
 		UpdatedAt:             r.UpdatedAt,
 		CompletedAt:           NullTimeToPointerTime(r.CompletedAt),
 		CanceledAt:            NullTimeToPointerTime(r.CanceledAt),
+		CancellationReason:    NullStringToString(r.CancellationReason),
 	}
 }
 
@@ -128,6 +131,7 @@ func mapGetAllAssignmentsRow(r db.GetAllAssignmentsRow) domain.Assignment {
 		UpdatedAt:             r.UpdatedAt,
 		CompletedAt:           NullTimeToPointerTime(r.CompletedAt),
 		CanceledAt:            NullTimeToPointerTime(r.CanceledAt),
+		CancellationReason:    NullStringToString(r.CancellationReason),
 	}
 }
 
@@ -405,4 +409,32 @@ func (s *Store) GetCurrentUserAssignments(ctx context.Context, userId string) ([
 	}
 
 	return assignments, nil
+}
+
+func (s *Store) CancelOutstandingAssignmentsByTemplateID(
+	ctx context.Context,
+	canceledAt *time.Time,
+	updatedAt time.Time,
+	templateID string) ([]domain.Assignment, error) {
+	res, err := s.Queries.CancelOutstandingAssignmentsByTemplateID(ctx, db.CancelOutstandingAssignmentsByTemplateIDParams{
+		CanceledAt: pointerTimeToNullTime(canceledAt),
+		UpdatedAt:  updatedAt,
+		TemplateID: templateID,
+	})
+	if err != nil {
+		return []domain.Assignment{}, err
+	}
+
+	canceledAssignments := make([]domain.Assignment, 0, len(res))
+
+	for _, id := range res {
+		assignment, err := s.GetAssignment(ctx, id)
+		if err != nil {
+			return []domain.Assignment{}, err
+		}
+
+		canceledAssignments = append(canceledAssignments, assignment)
+	}
+
+	return canceledAssignments, nil
 }

@@ -216,7 +216,7 @@ func (a *App) RunScheduler(ctx context.Context) error {
 		return fmt.Errorf("%w: no users available for scheduling", domain.ErrInvalidRequest)
 	}
 
-	tmps, err := a.Store.GetChoreTemplates(ctx)
+	tmps, err := a.Store.GetActiveChoreTemplates(ctx)
 	if err != nil {
 		return err
 	}

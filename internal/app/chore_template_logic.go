@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/uuid"
 	domain "github.com/mikelawson03/chores/internal/domain"
+	"github.com/mikelawson03/chores/internal/store"
 )
 
 func newChoreTemplateEvent(eventType domain.ChoreTemplateEventType, occurredAt time.Time, actorType domain.ActorType, choreTemplate domain.ChoreTemplate, householdID, userID string) domain.Event[domain.ChoreTemplate] {
@@ -141,6 +142,7 @@ func (a *App) CreateChoreTemplate(ctx context.Context, name, cadence, assignee, 
 		Cadence:      domain.Cadence(cadence),
 		Assignee:     assignee,
 		Instructions: instructions,
+		IsActive:     true,
 		Duration:     *duration,
 		CreatedAt:    now,
 		UpdatedAt:    now,
@@ -189,6 +191,7 @@ func (a *App) EditChoreTemplate(ctx context.Context, id, name, cadence, assignee
 		Assignee:     assignee,
 		Instructions: instructions,
 		Duration:     *duration,
+		IsActive:     tmp.IsActive,
 		CreatedAt:    tmp.CreatedAt,
 		UpdatedAt:    now,
 	}
@@ -211,35 +214,61 @@ func (a *App) EditChoreTemplate(ctx context.Context, id, name, cadence, assignee
 	return updatedTmp, nil
 }
 
-func (a *App) DeleteChoreTemplate(ctx context.Context, id string) error {
-	user, err := CheckAdmin(ctx)
+func (a *App) DeactivateChoreTemplate(ctx context.Context, id string) error {
+	reqUser, err := CheckAdmin(ctx)
 	if err != nil {
 		return err
 	}
 
-	template, err := a.GetChoreTemplateByID(ctx, id)
+	now := time.Now()
+	var deactivatedTemplate domain.ChoreTemplate
+	var canceledAssignments []domain.Assignment
+
+	err = a.Store.WithTx(ctx, func(txStore *store.Store) error {
+		deactivatedTemplate, err = txStore.DeactivateChoreTemplate(ctx, id, now)
+		if errors.Is(err, domain.ErrNotFound) {
+			return fmt.Errorf("%w: chore template", err)
+		}
+
+		if err != nil {
+			return err
+		}
+
+		canceledAssignments, err = txStore.CancelOutstandingAssignmentsByTemplateID(ctx, &now, now, id)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+
 	if err != nil {
 		return err
 	}
 
-	err = a.Store.DeleteChoreTemplate(ctx, id)
-	if errors.Is(err, domain.ErrNotFound) {
-		return fmt.Errorf("%w: chore template", err)
-	}
-
-	if err != nil {
-		return err
-	}
-
-	event := newChoreTemplateEvent(domain.ChoreTemplateDeleted,
-		time.Now(),
+	event := newChoreTemplateEvent(
+		domain.ChoreTemplateDeactivated,
+		now,
 		domain.ActorTypeUser,
-		template,
-		domain.DefaultHouseholdID,
-		user.User.ID,
+		deactivatedTemplate,
+		reqUser.HouseholdID,
+		reqUser.User.ID,
 	)
 
 	a.Bus.Publish(event)
+
+	for _, assignment := range canceledAssignments {
+		event := newAssignmentEvent(
+			domain.AssignmentEdited,
+			now,
+			domain.ActorTypeUser,
+			assignment,
+			reqUser.HouseholdID,
+			reqUser.User.ID,
+		)
+
+		a.Bus.Publish(event)
+	}
 
 	return nil
 }

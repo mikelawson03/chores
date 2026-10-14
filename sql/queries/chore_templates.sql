@@ -16,6 +16,11 @@ WHERE id = ?;
 SELECT *
 FROM chore_templates;
 
+-- name: GetActiveChoreTemplates :many
+SELECT *
+FROM chore_templates
+WHERE is_active = true;
+
 -- name: GetChoreTemplatesForUser :many
 SELECT *
 FROM chore_templates
@@ -31,7 +36,10 @@ duration = ?,
 updated_at = ?
 WHERE id = ?;
 
--- name: DeleteChoreTemplate :one
-DELETE FROM chore_templates
+-- name: DeactivateChoreTemplate :one
+UPDATE chore_templates
+SET is_active = false,
+updated_at = ?
 WHERE id = ?
-RETURNING id;
+AND is_active = true
+RETURNING *;

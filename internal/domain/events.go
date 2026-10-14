@@ -34,9 +34,9 @@ const (
 type ChoreTemplateEventType string
 
 const (
-	ChoreTemplateCreated ChoreTemplateEventType = "choreTemplate.created"
-	ChoreTemplateEdited  ChoreTemplateEventType = "choreTemplate.edited"
-	ChoreTemplateDeleted ChoreTemplateEventType = "choreTemplate.deleted"
+	ChoreTemplateCreated     ChoreTemplateEventType = "choreTemplate.created"
+	ChoreTemplateEdited      ChoreTemplateEventType = "choreTemplate.edited"
+	ChoreTemplateDeactivated ChoreTemplateEventType = "choreTemplate.deactivated"
 )
 
 type HouseholdUserEventType string

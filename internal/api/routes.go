@@ -10,7 +10,7 @@ func (cfg *apiCfg) RegisterRoutes(mux *http.ServeMux) {
 	mux.Handle("GET /chore-templates/{id}", cfg.requireHouseholdAuth(http.HandlerFunc(cfg.handlerGetChoreTemplateByID)))
 	mux.Handle("POST /chore-templates", cfg.requireHouseholdAuth(http.HandlerFunc(cfg.handlerAddChoreTemplate)))
 	mux.Handle("PUT /chore-templates/{id}", cfg.requireHouseholdAuth(http.HandlerFunc(cfg.handlerEditChoreTemplate)))
-	mux.Handle("DELETE /chore-templates/{id}", cfg.requireHouseholdAuth(http.HandlerFunc(cfg.handlerDeleteChoreTemplate)))
+	mux.Handle("POST /chore-templates/{id}/deactivate", cfg.requireHouseholdAuth(http.HandlerFunc(cfg.handlerDeactivateChoreTemplate)))
 
 	// assigned chores
 	mux.Handle("POST /assignments", cfg.requireHouseholdAuth(http.HandlerFunc(cfg.handlerCreateAssignment)))
