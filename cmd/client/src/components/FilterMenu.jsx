@@ -83,7 +83,11 @@ export default function FilterMenu({
                             <ListItem 
                                 key={user.user.id} 
                                 onClick={() => toggleFilterItem("users", user.user.id)}
-                                sx={{p:0,}}>
+                                sx={{
+                                    p:0,
+                                    cursor:"pointer",
+                                }}
+                            >
                                 <ListItemIcon>
                                     <Checkbox 
                                         checked={!hiddenUserIds.has(user.user.id)}
@@ -127,11 +131,14 @@ export default function FilterMenu({
                     </Stack>
                     <List sx={{pt: 0, pl: 4}}>
                         {Object.entries(CADENCES).map(([cadence, cadenceConfig]) => (
-                            <ListItem key={cadence} sx={{p:0}}>
+                            <ListItem 
+                                key={cadence} 
+                                onClick={() => toggleFilterItem("cadences", cadence)}
+                                sx={{p:0,cursor:"pointer"}}
+                            >
                                 <ListItemIcon>
                                     <Checkbox 
                                         checked={!hiddenCadences.has(cadence)}
-                                        onChange={() => toggleFilterItem("cadences", cadence)}
                                     />
                                 </ListItemIcon>
                                 <Chip 
@@ -179,11 +186,13 @@ export default function FilterMenu({
                     </Stack>
                     <List sx={{pt: 0, pl: 4}}>
                         {Object.entries(TASK_STATUSES).map(([status, statusConfig]) => (
-                            <ListItem key={status} sx={{p:0}}>
+                            <ListItem 
+                                key={status}
+                                onClick={() => toggleFilterItem("statuses", status)}
+                                sx={{p:0, cursor:"pointer"}}>
                                 <ListItemIcon>
                                     <Checkbox 
                                         checked={!hiddenStatuses.has(status)}
-                                        onChange={() => toggleFilterItem("statuses", status)}
                                     />
                                 </ListItemIcon>
                                 <ListItemText 

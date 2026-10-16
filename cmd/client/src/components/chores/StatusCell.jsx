@@ -4,7 +4,8 @@ import RemoveCircleOutlinedIcon from "@mui/icons-material/RemoveCircleOutlined";
 
 export default function StatusCell({ isActive }) {
   return(
-    <Stack direction = "row" alignItems="center" spacing={0.75} sx={{flex: 1, }}>
+    <Stack direction = "row" spacing={0.75} sx={{flex: 1, borderBottom: 1, p: 2,
+            borderColor: "divider", alignItems: "center"}}>
         {isActive ? (
             <CheckCircleIcon color="success" fontSize="small" />
         ) : (
@@ -14,8 +15,6 @@ export default function StatusCell({ isActive }) {
         <Typography 
         sx={{
             flex: 1, 
-            borderBottom: 1, 
-            borderColor: "divider", 
             overflow: "hidden",
             textOverflow: "ellipsis",
             whiteSpace: "nowrap"

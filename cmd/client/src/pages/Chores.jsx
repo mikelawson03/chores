@@ -22,6 +22,7 @@ export default function Chores() {
   const [templateErrors, setTemplateErrors] = useState({});
   const [hiddenUserIds, setHiddenUserIds] = useState(new Set());
   const [hiddenCadences, setHiddenCadences] = useState(new Set());
+  const [hiddenStatuses, setHiddenStatuses] = useState(new Set());
 
   const resetFilters = () => {
     setHiddenUserIds(new Set());
@@ -76,6 +77,10 @@ export default function Chores() {
   let filteredTemplates=choreTemplates
   filteredTemplates=filteredTemplates.filter(template => !hiddenUserIds.has(template.assignee));
   filteredTemplates=filteredTemplates.filter(template => !hiddenCadences.has(template.cadence));
+  filteredTemplates=filteredTemplates.filter(template => 
+    !hiddenStatuses.has(template.isActive ? "active" : "inactive")
+  );
+
 
   function openEditChore(choreTemplate) {
     setEditedChoreTemplate({
@@ -235,8 +240,10 @@ export default function Chores() {
           editNewChore={editNewChore}
           hiddenUserIds={hiddenUserIds}
           hiddenCadences={hiddenCadences}
+          hiddenStatuses={hiddenStatuses}
           setHiddenUserIds={setHiddenUserIds}
           setHiddenCadences={setHiddenCadences}
+          setHiddenStatuses={setHiddenStatuses}
           resetFilters={resetFilters}
           toggleFilterItem={toggleFilterItem}
           toggleAllFilters={toggleAllFilters}

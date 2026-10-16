@@ -15,8 +15,6 @@ export default function ChoresTable({ choreTemplates, openEditChore, users }) {
   const filteredChores = [...choreTemplates];
   const displayedChores = sortChores(filteredChores, sort)
 
-  console.log(filteredChores)
-
   function sortChores(chores, sort) {
     let comparison
     return chores.sort((a, b) => {
@@ -93,7 +91,7 @@ export default function ChoresTable({ choreTemplates, openEditChore, users }) {
   return (
     <Stack direction="column" sx={{
         flex: 1, 
-        width: "95%"
+        width: "95%",
       }
     }>
       {/* <TableToolbar editNewChore={editNewChore}/> */}

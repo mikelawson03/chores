@@ -75,7 +75,7 @@ export default function EditChore({ open, chore, closeEditChore, editChoreMode, 
                     >
                         {editChoreMode === "edit" ? "Save" : "Create"}
                     </Button>
-                    {editChoreMode === "edit" && <Button variant="text" onClick={() => {deactivateChoreMutation.mutate(chore.id);}}>Deactivate</Button>}
+                    {editChoreMode === "edit" && <Button variant="text" disabled={deactivateChoreMutation.isPending || !chore.isActive} onClick={() => {deactivateChoreMutation.mutate(chore.id);}}>Deactivate</Button>}
                     {editChoreMode === "create" && <Button variant="text" onClick={() => {closeEditChore();}}>Discard</Button>}
                 </Stack>
                 {editChoreMode === "edit" && <Stack direction="column" spacing={0.25} sx={{borderBottom: 1, borderColor: "divider", pb: 4}}>

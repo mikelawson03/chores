@@ -9,8 +9,10 @@ export default function ChoresToolbar({
   editNewChore,
   hiddenUserIds,
   hiddenCadences,
+  hiddenStatuses,
   setHiddenUserIds,
   setHiddenCadences,
+  setHiddenStatuses,
   resetFilters,
   toggleFilterItem,
   toggleAllFilters,
@@ -78,8 +80,10 @@ export default function ChoresToolbar({
             anchorEl={anchorEl}
             hiddenUserIds={hiddenUserIds}
             hiddenCadences={hiddenCadences}
+            hiddenStatuses={hiddenStatuses}
             setHiddenUserIds={setHiddenUserIds}
             setHiddenCadences={setHiddenCadences}
+            setHiddenStatuses={setHiddenStatuses}
             toggleFilterItem={toggleFilterItem}
             toggleAllFilters={toggleAllFilters}
             resetFilters={resetFilters}

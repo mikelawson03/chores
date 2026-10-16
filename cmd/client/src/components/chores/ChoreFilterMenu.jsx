@@ -2,6 +2,7 @@ import { Box, Button, Checkbox, Chip, List, ListItem, ListItemIcon, ListItemText
 import { CADENCES } from "../../constants/cadences";
 import { HOUSEHOLD_USER_COLORS } from "../../constants/colorPalette";
 import { grey } from "@mui/material/colors";
+import { TEMPLATE_STATUSES } from "../../constants/templateStatuses";
 
 export default function FilterMenu({
     users,
@@ -10,8 +11,10 @@ export default function FilterMenu({
     anchorEl,
     hiddenUserIds,
     hiddenCadences,
+    hiddenStatuses,
     setHiddenUserIds,
     setHiddenCadences,
+    setHiddenStatuses,
     toggleFilterItem,
     toggleAllFilters,
     resetFilters,
@@ -28,6 +31,7 @@ export default function FilterMenu({
 
     const userIds = users.map(user => user.user.id)
     const cadences = Object.keys(CADENCES);
+    const statuses = Object.keys(TEMPLATE_STATUSES)
     
     return (
         <Popover
@@ -70,7 +74,7 @@ export default function FilterMenu({
                             <ListItem
                                 key={user.id}
                                 onClick={() => toggleFilterItem(setHiddenUserIds, user.id)}
-                                sx={{ p:0 }}
+                                sx={{ p:0, cursor: "pointer" }}
                             >
                                 <ListItemIcon>
                                     <Checkbox 
@@ -120,12 +124,12 @@ export default function FilterMenu({
                         {Object.entries(CADENCES).map(([cadence, cadenceConfig]) => (
                             <ListItem 
                                 key={cadence} 
-                                sx={{p: 0}}
+                                onClick={() => toggleFilterItem(setHiddenCadences, cadence)}
+                                sx={{p: 0, cursor: "pointer"}}
                             >
                                 <ListItemIcon>
                                     <Checkbox 
                                         checked={!hiddenCadences.has(cadence)}
-                                        onChange={() => toggleFilterItem(setHiddenCadences, cadence)}
                                     />
                                 </ListItemIcon>
                                 <Chip 
@@ -153,6 +157,55 @@ export default function FilterMenu({
                                     }}
                                     primary={cadenceConfig.label}
                                 />
+                            </ListItem>
+                        ))}
+                    </List>
+                </Box>
+                <Box>
+                    <Stack
+                        onClick={() => toggleAllFilters(setHiddenStatuses, statuses)}
+                        direction="row"
+                        sx={{
+                            alignItems: "center",
+                            p: 0,
+                        }}
+                    >
+                        <Checkbox 
+                            checked={hiddenStatuses.size === 0}
+                            indeterminate={hiddenStatuses.size > 0 && hiddenStatuses.size < statuses.length}
+                        />
+                        <Typography variant="h6">
+                            Statuses
+                        </Typography>
+                    </Stack>
+                    <List sx={{ pt: 0, pl: 4}}>
+                        {Object.entries(TEMPLATE_STATUSES).map(([status, statusConfig]) => (
+                            <ListItem 
+                                key={status}
+                                onClick={() => toggleFilterItem(setHiddenStatuses, status)}
+                                sx={{p:0, cursor: "pointer"}}
+                            >
+                                <ListItemIcon>
+                                    <Checkbox 
+                                        checked={!hiddenStatuses.has(status)}
+                                    />
+                                </ListItemIcon>
+                                <ListItemText
+                                    sx={{
+                                        py:0.75,
+                                        borderRadius: 1,
+                                    }}
+                                    slotProps={{
+                                        primary:{
+                                            variant: "body2",
+                                            sx: {
+                                                fontWeight: 500,
+                                            }
+                                        }
+                                    }}
+                                    primary={statusConfig.label}
+                                />
+
                             </ListItem>
                         ))}
                     </List>
