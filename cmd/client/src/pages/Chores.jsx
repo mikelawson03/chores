@@ -10,6 +10,7 @@ import { parseApiError } from "../utils/errorHelpers";
 import ChoresToolbar from "../components/chores/ChoresToolbar";
 import { useAuth } from "../auth/useAuth";
 import { getActiveHouseholdUsers } from "../api/users";
+import { CHORES_FILTER_CONFIG } from "../config/filterConfigs";
 
 
 
@@ -20,13 +21,20 @@ export default function Chores() {
   const [editChoreOpen, setEditChoreOpen] = useState(false);
   const [editChoreMode, setEditChoreMode] = useState(null);
   const [templateErrors, setTemplateErrors] = useState({});
-  const [hiddenUserIds, setHiddenUserIds] = useState(new Set());
-  const [hiddenCadences, setHiddenCadences] = useState(new Set());
-  const [hiddenStatuses, setHiddenStatuses] = useState(new Set());
+  const [hiddenUserIds, setHiddenUserIds] = useState(
+    () => new Set(CHORES_FILTER_CONFIG.hiddenUserIds)
+  );
+  const [hiddenCadences, setHiddenCadences] = useState(
+    () => new Set(CHORES_FILTER_CONFIG.hiddenCadences)
+  );
+  const [hiddenStatuses, setHiddenStatuses] = useState(
+    () => new Set(CHORES_FILTER_CONFIG.hiddenStatuses)
+  );
 
-  const resetFilters = () => {
-    setHiddenUserIds(new Set());
-    setHiddenCadences(new Set());
+  const resetFilters = (config) => {
+    setHiddenUserIds(new Set(config.hiddenUserIds));
+    setHiddenCadences(new Set(config.hiddenCadences));
+    setHiddenStatuses(new Set(config.hiddenStatuses))
   }
 
   const toggleFilterItem = (setter, value) => {

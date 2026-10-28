@@ -9,3 +9,9 @@ export const CALENDAR_FILTER_CONFIG = {
     hiddenCadences: new Set(),
     hiddenStatuses: new Set(["completed", "canceled"]),
 }
+
+export const CHORES_FILTER_CONFIG = {
+    hiddenUserIds: new Set(),
+    hiddenCadences: new Set(),
+    hiddenStatuses: new Set(["inactive"]),
+}

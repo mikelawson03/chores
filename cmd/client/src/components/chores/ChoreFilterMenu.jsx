@@ -3,6 +3,7 @@ import { CADENCES } from "../../constants/cadences";
 import { HOUSEHOLD_USER_COLORS } from "../../constants/colorPalette";
 import { grey } from "@mui/material/colors";
 import { TEMPLATE_STATUSES } from "../../constants/templateStatuses";
+import { CHORES_FILTER_CONFIG } from "../../config/filterConfigs";
 
 export default function FilterMenu({
     users,
@@ -32,6 +33,7 @@ export default function FilterMenu({
     const userIds = users.map(user => user.user.id)
     const cadences = Object.keys(CADENCES);
     const statuses = Object.keys(TEMPLATE_STATUSES)
+    const filterConfig = CHORES_FILTER_CONFIG
     
     return (
         <Popover
@@ -215,7 +217,7 @@ export default function FilterMenu({
                     spacing={4}
                 >
                     <Button
-                        onClick={resetFilters}
+                        onClick={() => resetFilters(filterConfig)}
                     >
                         Reset All
                     </Button>
