@@ -4,18 +4,31 @@ import { useTaskStore } from "../../stores/taskStore";
 import CompletionCheckbox from "../CompletionCheckbox";
 import { HOUSEHOLD_USER_COLORS } from "../../constants/colorPalette";
 import { CADENCES } from "../../constants/cadences";
+import { getTaskStatusStyles } from "../../styles/taskStatus";
 
 
 export default function AgendaCard({ task }) {
+    const { bgColor, txtColor, txtDecoration } = getTaskStatusStyles(task);
     
     const openTaskDetails = useTaskStore(
         (state) => state.openTaskDetails
     );
 
     const ownerColor = HOUSEHOLD_USER_COLORS[task.userColorOption]?.bgColor ?? null;
+    
+    let checkboxVisible;
+
+    if (task.canceled) {
+        checkboxVisible = false
+    } else if (task.completed) {
+        checkboxVisible = false
+    } else {
+        checkboxVisible = true
+    };
+
     return (
         <Card sx={[clickableSurface, {
-            backgroundColor: "background.paper",
+            backgroundColor: bgColor,
             position: "relative",
             overflow: "hidden",
             "&::before": {
@@ -45,6 +58,8 @@ export default function AgendaCard({ task }) {
                             textOverflow: "ellipsis",
                             flex: 1,
                             minWidth: 0,
+                            color: txtColor,
+                            textDecoration: txtDecoration,
                         }}>
                         {task.templateName}
                     </Typography>
@@ -62,14 +77,15 @@ export default function AgendaCard({ task }) {
                 <Typography 
                     variant="body1" 
                     sx={{
-                        color: "text.secondary"
+                        color: "text.secondary",
+                        textDecoration: txtDecoration,
                         }}
                 >
                     Assigned to: {task.userDisplayName}
                 </Typography>
                 <Stack 
                     direction="row"
-                    sx={{ width: "100%", justifyContent: "space-between", color: "text.secondary"}}
+                    sx={{ width: "100%", justifyContent: "space-between", color: "text.secondary", textDecoration: txtDecoration,}}
                 >
                 <Typography 
                     variant="body1"
@@ -79,6 +95,7 @@ export default function AgendaCard({ task }) {
                 {task.instructions === "" && <CompletionCheckbox
                     checked={task.completed}
                     taskId={task.id}
+                    visible={checkboxVisible}
                 />}
                 </Stack>
                 {task.instructions != "" && <Stack 
@@ -96,6 +113,7 @@ export default function AgendaCard({ task }) {
                     <CompletionCheckbox 
                         checked={task.completed}
                         taskId={task.id}
+                        visible={checkboxVisible}
                     />
                 </Stack>}
             </Stack>

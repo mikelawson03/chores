@@ -119,7 +119,6 @@ func (cfg *apiCfg) handlerEditAssignment(w http.ResponseWriter, r *http.Request)
 	}
 
 	ctx := r.Context()
-	fmt.Println(req.ScheduledFor)
 	res, err := cfg.App.EditAssignment(ctx, app.EditAssignmentRequest{
 		ID:             assignmentID,
 		AssignedUserID: req.AssignedUserID,

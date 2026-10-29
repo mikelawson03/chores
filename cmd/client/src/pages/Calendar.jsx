@@ -5,7 +5,7 @@ import CalendarContent from "../components/calendar/CalendarContent";
 import DailyAgenda from "../components/dailyAgenda/DailyAgenda";
 import { useEffect, useState } from "react";
 import { Box, CircularProgress, Stack } from "@mui/material";
-import { getActiveTasks, getMonthlyTasks, getUnscheduledTasks, getTasksDueInMonth, getWeeklyTasks } from "../utils/taskHelpers";
+import { getMonthlyTasks, getUnscheduledTasks, getTasksDueInMonth, getWeeklyTasks } from "../utils/taskHelpers";
 import { useAuth } from "../auth/useAuth";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { getAssignments, rescheduleTask } from "../utils/assignmentHelpers";
@@ -123,12 +123,11 @@ export default function Calendar({ toggleTaskComplete }) {
   }));
 
   
-  let filterTasks = getActiveTasks(calendarTasks);
-  filterTasks = getUnscheduledTasks(filterTasks);
-  filterTasks = getTasksDueInMonth(currentDate, filterTasks);
+  let shelfTasks = getUnscheduledTasks(filteredTasks);
+  shelfTasks = getTasksDueInMonth(currentDate, shelfTasks);
 
-  const weeklyTasks = getWeeklyTasks(filterTasks);
-  const monthlyTasks = getMonthlyTasks(filterTasks);
+  const weeklyTasks = getWeeklyTasks(shelfTasks);
+  const monthlyTasks = getMonthlyTasks(shelfTasks);
 
   const handlePreviousMonth = () => {
     setCurrentDate(currentDate.subtract(1, "month"))

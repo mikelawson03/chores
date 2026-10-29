@@ -3,6 +3,7 @@ import { clickableSurface } from "../../styles/surfaces";
 import { useTaskStore } from "../../stores/taskStore";
 import { HOUSEHOLD_USER_COLORS } from "../../constants/colorPalette";
 import { CADENCES } from "../../constants/cadences"
+import { getTaskStatusStyles } from "../../styles/taskStatus";
 
 export default function CalendarTask( {task, isDragging} ) {
     const openTaskDetails = useTaskStore(
@@ -10,7 +11,9 @@ export default function CalendarTask( {task, isDragging} ) {
     );
 
     const ownerColor = HOUSEHOLD_USER_COLORS[task.userColorOption]?.bgColor ?? null;
-    const cadenceColor = CADENCES[task.cadence].outlineColor
+    const cadenceColor = CADENCES[task.cadence].outlineColor 
+
+    const { bgColor, txtColor, txtDecoration } = getTaskStatusStyles(task);
 
     return(
         <Box 
@@ -25,6 +28,7 @@ export default function CalendarTask( {task, isDragging} ) {
                     border: 1,
                     borderColor: cadenceColor,
                     borderRadius: 1,
+                    backgroundColor: bgColor,
                     opacity: isDragging ? 0.5 : 1,
                     
 
@@ -46,7 +50,9 @@ export default function CalendarTask( {task, isDragging} ) {
                 sx={{
                     textOverflow: "ellipsis",
                     overflow: "hidden",
-                    px: 1
+                    px: 1,
+                    color: txtColor,
+                    textDecoration: txtDecoration,
                 }}
             >
                     {task.templateName}

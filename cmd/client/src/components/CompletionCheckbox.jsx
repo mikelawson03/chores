@@ -1,12 +1,9 @@
 import { useMutation } from "@tanstack/react-query";
-import { queryClient } from "../query/queryClient";
 import { toggleTaskCompletion } from "../utils/assignmentHelpers";
-import { useAuth } from "../auth/useAuth";
 import { Checkbox } from "@mui/material";
 import { useNotificationStore } from "../stores/notificationStore";
 
 export default function CompletionCheckbox({ checked, taskId, visible = true, size = "medium" }) {
-    const { user } = useAuth();
 
     const showErrorNotification = useNotificationStore(
         (state) => state.showNotification

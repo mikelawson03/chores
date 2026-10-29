@@ -3,8 +3,10 @@ import dayjs from "dayjs";
 import { HOUSEHOLD_USER_COLORS } from "../../constants/colorPalette";
 import { clickableSurface } from "../../styles/surfaces";
 import { CADENCES } from "../../constants/cadences";
+import { getTaskStatusStyles } from "../../styles/taskStatus";
 
 export default function ShelfTask({ task, isDragging, openTaskDetails }) {
+    const { bgColor, txtColor, txtDecoration } = getTaskStatusStyles(task);
     return (
         <Box 
             onClick = {() => openTaskDetails(task)} 
@@ -16,6 +18,7 @@ export default function ShelfTask({ task, isDragging, openTaskDetails }) {
                 border: 1,
                 borderColor: CADENCES[task.cadence].outlineColor,
                 borderRadius: 1,
+                backgroundColor: bgColor,
                 opacity: isDragging ? 0.5 : 1,
                 "&::before": {
                     content: '""',
@@ -34,6 +37,8 @@ export default function ShelfTask({ task, isDragging, openTaskDetails }) {
                 sx={{
                     textOverflow: "ellipsis",
                     overflow: "hidden",
+                    color: txtColor,
+                    textDecoration: txtDecoration,
                 }}
             >
                 {dayjs(task.dueDate).format("MMM DD")} - {task.templateName}
