@@ -259,7 +259,7 @@ func (s *Store) GetAssignmentsByUserID(ctx context.Context, id string) ([]domain
 		return []domain.Assignment{}, err
 	}
 
-	var assignments []domain.Assignment
+	assignments := []domain.Assignment{}
 	for _, assignment := range dbAssignments {
 		assignments = append(assignments, mapGetAssignmentsByUserIDRow(assignment))
 	}

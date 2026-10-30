@@ -94,6 +94,12 @@ func (cfg *apiCfg) handlerGetAssignments(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
+	fmt.Printf(
+		"Assignments: %v | nil: %t | len: %d\n",
+		assignments,
+		assignments == nil,
+		len(assignments),
+	)
 	RespondWithJSON(w, http.StatusOK, assignments)
 }
 
