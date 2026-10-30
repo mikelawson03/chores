@@ -7,6 +7,7 @@ export function useEventStream(){
     const { user, refreshUser } = useAuth();
     const assignmentInvalidationTimer = useRef(null);
     const choreTemplateInvalidationTimer = useRef(null);
+    const householdUserInvalidationTimer = useRef(null);
 
     useEffect(() => {
     if (!user) {
@@ -19,8 +20,11 @@ export function useEventStream(){
     );
 
     function scheduleAssignmentInvalidation() {
+
       if (assignmentInvalidationTimer.current == null) {
         assignmentInvalidationTimer.current = setTimeout(() => {
+          console.log("Invalidating assignments");
+
           queryClient.invalidateQueries({
             queryKey: ["assignments", user?.user.id]
           });
@@ -38,6 +42,21 @@ export function useEventStream(){
           });
 
           choreTemplateInvalidationTimer.current = null;
+        }, 50);
+      }
+    }
+
+    function scheduleHouseholdUserInvalidation() {
+
+      if (householdUserInvalidationTimer.current == null) {
+        householdUserInvalidationTimer.current = setTimeout(() => {
+          
+          
+          queryClient.invalidateQueries({
+            queryKey: ["activeHouseholdUsers", user?.householdId],
+          });
+
+          householdUserInvalidationTimer.current = null;
         }, 50);
       }
     }
@@ -65,19 +84,19 @@ export function useEventStream(){
         case "householdUser.deactivated":
         case "householdUser.activated":
         case "householdUser.removed":
-          queryClient.invalidateQueries({
-            queryKey: ["activeHouseholdUsers", user?.householdId],
-          });
+          scheduleHouseholdUserInvalidation();
 
           if (event.payload.user.id === user?.user.id) {
             await refreshUser();
           }
           break;
-        case "user.edited":
-          queryClient.invalidateQueries({
-            queryKey: ["activeHouseholdUsers", user?.householdId],
-          });
 
+        case "householdUser.profileUpdated":
+          scheduleHouseholdUserInvalidation();
+          scheduleAssignmentInvalidation();
+          break;
+        
+        case "user.edited":
           if (event.payload.id === user?.user.id) {
             await refreshUser();
           }
@@ -99,4 +118,4 @@ export function useEventStream(){
       assignmentInvalidationTimer.current = null;
       choreTemplateInvalidationTimer.current = null;
     };
-  }, [user, queryClient]);}
+  }, [user?.user.id, user?.householdId, user?.role, queryClient]);}
