@@ -283,3 +283,7 @@ func (s *Store) DeleteHouseholdUser(ctx context.Context, householdId, userId str
 
 	return nil
 }
+
+func (s *Store) GetHouseholdIDsForUser(ctx context.Context, userId string) ([]string, error) {
+	return s.Queries.GetHouseholdIDsForUser(ctx, userId)
+}

@@ -19,7 +19,7 @@ type Event[T EventPayload] struct {
 }
 
 type EventPayload interface {
-	Assignment | ChoreTemplate | User | HouseholdUser
+	Assignment | ChoreTemplate | User | HouseholdUser | HouseholdUserProfileUpdatedPayload
 }
 
 type AssignmentEventType string
@@ -42,11 +42,12 @@ const (
 type HouseholdUserEventType string
 
 const (
-	HouseholdUserAdded       HouseholdUserEventType = "householdUser.added"
-	HouseholdUserEdited      HouseholdUserEventType = "householdUser.edited"
-	HouseholdUserDeactivated HouseholdUserEventType = "householdUser.deactivated"
-	HouseholdUserActivated   HouseholdUserEventType = "householdUser.activated"
-	HouseholdUserRemoved     HouseholdUserEventType = "householdUser.removed"
+	HouseholdUserAdded          HouseholdUserEventType = "householdUser.added"
+	HouseholdUserEdited         HouseholdUserEventType = "householdUser.edited"
+	HouseholdUserDeactivated    HouseholdUserEventType = "householdUser.deactivated"
+	HouseholdUserActivated      HouseholdUserEventType = "householdUser.activated"
+	HouseholdUserRemoved        HouseholdUserEventType = "householdUser.removed"
+	HouseholdUserProfileUpdated HouseholdUserEventType = "householdUser.profileUpdated"
 )
 
 type UserEventType string
@@ -66,6 +67,10 @@ const (
 	ActorTypeUser   ActorType = "user"
 	ActorTypeSystem ActorType = "system"
 )
+
+type HouseholdUserProfileUpdatedPayload struct {
+	UserID string `json:"userId"`
+}
 
 func (e Event[T]) EventType() string {
 	return e.Type

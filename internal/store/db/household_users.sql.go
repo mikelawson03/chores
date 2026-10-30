@@ -171,6 +171,36 @@ func (q *Queries) GetActiveHouseholdUsers(ctx context.Context, householdID strin
 	return items, nil
 }
 
+const getHouseholdIDsForUser = `-- name: GetHouseholdIDsForUser :many
+SELECT household_id
+FROM household_users
+WHERE user_id = ?
+AND is_active = true
+`
+
+func (q *Queries) GetHouseholdIDsForUser(ctx context.Context, userID string) ([]string, error) {
+	rows, err := q.db.QueryContext(ctx, getHouseholdIDsForUser, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var household_id string
+		if err := rows.Scan(&household_id); err != nil {
+			return nil, err
+		}
+		items = append(items, household_id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getHouseholdUserByID = `-- name: GetHouseholdUserByID :one
 SELECT
     hu.household_id,
@@ -292,35 +322,6 @@ func (q *Queries) GetHouseholdUsers(ctx context.Context, householdID string) ([]
 			return nil, err
 		}
 		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const getHouseholdsForUser = `-- name: GetHouseholdsForUser :many
-SELECT household_id
-FROM household_users
-WHERE user_id = ?
-`
-
-func (q *Queries) GetHouseholdsForUser(ctx context.Context, userID string) ([]string, error) {
-	rows, err := q.db.QueryContext(ctx, getHouseholdsForUser, userID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []string
-	for rows.Next() {
-		var household_id string
-		if err := rows.Scan(&household_id); err != nil {
-			return nil, err
-		}
-		items = append(items, household_id)
 	}
 	if err := rows.Close(); err != nil {
 		return nil, err

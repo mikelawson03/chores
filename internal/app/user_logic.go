@@ -37,6 +37,24 @@ func newUserEvent(eventType domain.UserEventType,
 	}
 }
 
+func newHouseholdUserProfileUpdatedEvent(
+	occurredAt time.Time,
+	actorType domain.ActorType,
+	payload domain.HouseholdUserProfileUpdatedPayload,
+	householdID,
+	reqUserID string) domain.Event[domain.HouseholdUserProfileUpdatedPayload] {
+	return domain.Event[domain.HouseholdUserProfileUpdatedPayload]{
+		Type:        string(domain.HouseholdUserProfileUpdated),
+		OccurredAt:  occurredAt,
+		HouseholdID: householdID,
+		Actor: domain.Actor{
+			Type: actorType,
+			ID:   reqUserID,
+		},
+		Payload: payload,
+	}
+}
+
 func hashPassword(password string) (string, error) {
 	return argon2id.CreateHash(password, argon2id.DefaultParams)
 }
@@ -195,42 +213,66 @@ func (a *App) EditUser(ctx context.Context, id, newUsername, firstName string) (
 		return domain.User{}, fmt.Errorf("%w: authenticated user ID missing from context", domain.ErrUnauthorized)
 	}
 
-	existing, err := a.Store.GetUserByID(ctx, id)
-	if errors.Is(err, domain.ErrNotFound) {
-		return domain.User{}, fmt.Errorf("%w: user", err)
-	}
-	if err != nil {
-		return domain.User{}, err
-	}
-
-	err = a.validateEditUserRequest(ctx, newUsername, firstName, reqUserID, existing)
-	if err != nil {
-		return domain.User{}, err
-	}
-
+	var householdIDs []string
+	var updatedUser domain.User
 	now := time.Now()
 
-	updatedUser, err := a.Store.EditUser(ctx, store.EditUserParams{
-		ID:        id,
-		Username:  newUsername,
-		FirstName: firstName,
-		UpdatedAt: now,
+	err := a.Store.WithTx(ctx, func(txStore *store.Store) error {
+
+		existing, err := txStore.GetUserByID(ctx, id)
+		if errors.Is(err, domain.ErrNotFound) {
+			return fmt.Errorf("%w: user", err)
+		}
+		if err != nil {
+			return err
+		}
+
+		err = a.validateEditUserRequest(ctx, newUsername, firstName, reqUserID, existing)
+		if err != nil {
+			return err
+		}
+
+		updatedUser, err = txStore.EditUser(ctx, store.EditUserParams{
+			ID:        id,
+			Username:  newUsername,
+			FirstName: firstName,
+			UpdatedAt: now,
+		})
+		if err != nil {
+			return err
+		}
+
+		householdIDs, err = txStore.GetHouseholdIDsForUser(ctx, id)
+		return err
 	})
+
 	if err != nil {
 		return domain.User{}, err
 	}
 
-	// TODO: When multiple households are supported, publish this event
-	// once for each household the user belongs to.
-	event := newUserEvent(domain.UserEdited,
-		now,
-		domain.ActorTypeUser,
-		updatedUser,
-		domain.DefaultHouseholdID,
-		reqUserID,
-	)
+	for _, householdID := range householdIDs {
+		userEvent := newUserEvent(domain.UserEdited,
+			now,
+			domain.ActorTypeUser,
+			updatedUser,
+			householdID,
+			reqUserID,
+		)
 
-	a.Bus.Publish(event)
+		a.Bus.Publish(userEvent)
+
+		profileEvent := newHouseholdUserProfileUpdatedEvent(
+			now,
+			domain.ActorTypeUser,
+			domain.HouseholdUserProfileUpdatedPayload{
+				UserID: updatedUser.ID,
+			},
+			householdID,
+			reqUserID,
+		)
+
+		a.Bus.Publish(profileEvent)
+	}
 
 	return updatedUser, nil
 }

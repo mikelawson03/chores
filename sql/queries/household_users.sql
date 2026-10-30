@@ -15,10 +15,11 @@ SELECT EXISTS (
 SELECT COUNT(*)
 FROM household_users;
 
--- name: GetHouseholdsForUser :many
+-- name: GetHouseholdIDsForUser :many
 SELECT household_id
 FROM household_users
-WHERE user_id = ?;
+WHERE user_id = ?
+AND is_active = true;
 
 -- name: SetHouseholdUserActive :exec
 UPDATE household_users
