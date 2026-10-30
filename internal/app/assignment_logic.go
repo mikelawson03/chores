@@ -30,21 +30,6 @@ type EditAssignmentRequest struct {
 	Canceled       bool
 }
 
-func newAssignmentEvent(eventType domain.AssignmentEventType, occurredAt time.Time, actorType domain.ActorType, assignment domain.Assignment, householdID, userID string) domain.Event[domain.Assignment] {
-	e := domain.Event[domain.Assignment]{
-		Type:        string(eventType),
-		OccurredAt:  occurredAt,
-		HouseholdID: householdID,
-		Actor: domain.Actor{
-			Type: actorType,
-			ID:   userID,
-		},
-		Payload: assignment,
-	}
-
-	return e
-}
-
 func (a *App) validateTemplateID(ctx context.Context, templateID string) error {
 	if strings.TrimSpace(templateID) == "" {
 		return fmt.Errorf("%w: template ID required", domain.ErrInvalidRequest)
@@ -162,7 +147,7 @@ func (a *App) CreateAssignmentFromTemplate(ctx context.Context, req CreateAsssig
 		return domain.Assignment{}, err
 	}
 
-	event := newAssignmentEvent(domain.AssignmentCreated,
+	event := domain.NewAssignmentEvent(domain.AssignmentCreated,
 		now,
 		domain.ActorTypeUser,
 		assignment,
@@ -266,7 +251,7 @@ func (a *App) EditAssignment(ctx context.Context, editRequest EditAssignmentRequ
 		return domain.Assignment{}, err
 	}
 
-	event := newAssignmentEvent(domain.AssignmentEdited,
+	event := domain.NewAssignmentEvent(domain.AssignmentEdited,
 		updatedAt,
 		domain.ActorTypeUser,
 		assignment,
@@ -361,7 +346,7 @@ func (a *App) ToggleAssignmentCompletion(ctx context.Context, id string) (domain
 		return domain.Assignment{}, err
 	}
 
-	event := newAssignmentEvent(domain.AssignmentCompleted,
+	event := domain.NewAssignmentEvent(domain.AssignmentCompleted,
 		now,
 		domain.ActorTypeUser,
 		assignment,
@@ -404,7 +389,7 @@ func (a *App) RescheduleAssignment(ctx context.Context, assignmentID string, sch
 		return domain.Assignment{}, err
 	}
 
-	event := newAssignmentEvent(domain.AssignmentRescheduled,
+	event := domain.NewAssignmentEvent(domain.AssignmentRescheduled,
 		now,
 		domain.ActorTypeUser,
 		assignment,

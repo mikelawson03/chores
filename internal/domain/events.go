@@ -19,42 +19,13 @@ type Event[T EventPayload] struct {
 }
 
 type EventPayload interface {
-	Assignment | ChoreTemplate | User | HouseholdUser | HouseholdUserProfileUpdatedPayload
+	Assignment |
+		ChoreTemplate |
+		User |
+		HouseholdUser |
+		HouseholdUserProfileUpdatedPayload |
+		AssignmentRefreshRequiredPayload
 }
-
-type AssignmentEventType string
-
-const (
-	AssignmentCreated     AssignmentEventType = "assignment.created"
-	AssignmentEdited      AssignmentEventType = "assignment.edited"
-	AssignmentCompleted   AssignmentEventType = "assignment.completed"
-	AssignmentRescheduled AssignmentEventType = "assignment.rescheduled"
-)
-
-type ChoreTemplateEventType string
-
-const (
-	ChoreTemplateCreated     ChoreTemplateEventType = "choreTemplate.created"
-	ChoreTemplateEdited      ChoreTemplateEventType = "choreTemplate.edited"
-	ChoreTemplateDeactivated ChoreTemplateEventType = "choreTemplate.deactivated"
-)
-
-type HouseholdUserEventType string
-
-const (
-	HouseholdUserAdded          HouseholdUserEventType = "householdUser.added"
-	HouseholdUserEdited         HouseholdUserEventType = "householdUser.edited"
-	HouseholdUserDeactivated    HouseholdUserEventType = "householdUser.deactivated"
-	HouseholdUserActivated      HouseholdUserEventType = "householdUser.activated"
-	HouseholdUserRemoved        HouseholdUserEventType = "householdUser.removed"
-	HouseholdUserProfileUpdated HouseholdUserEventType = "householdUser.profileUpdated"
-)
-
-type UserEventType string
-
-const (
-	UserEdited UserEventType = "user.edited"
-)
 
 type Actor struct {
 	Type ActorType `json:"type"`
@@ -67,10 +38,6 @@ const (
 	ActorTypeUser   ActorType = "user"
 	ActorTypeSystem ActorType = "system"
 )
-
-type HouseholdUserProfileUpdatedPayload struct {
-	UserID string `json:"userId"`
-}
 
 func (e Event[T]) EventType() string {
 	return e.Type

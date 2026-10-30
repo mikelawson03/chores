@@ -20,24 +20,6 @@ type HouseholdUserRequest struct {
 	HouseholdID string
 }
 
-func newHouseholdUserEvent(eventType domain.HouseholdUserEventType,
-	occurredAt time.Time,
-	actorType domain.ActorType,
-	hhUser domain.HouseholdUser,
-	householdID,
-	userID string) domain.Event[domain.HouseholdUser] {
-	return domain.Event[domain.HouseholdUser]{
-		Type:        string(eventType),
-		OccurredAt:  occurredAt,
-		HouseholdID: householdID,
-		Actor: domain.Actor{
-			Type: actorType,
-			ID:   userID,
-		},
-		Payload: hhUser,
-	}
-}
-
 func (a *App) HouseholdUserExists(ctx context.Context, userID, householdID string) (bool, error) {
 	_, err := a.Store.GetHouseholdUserByID(ctx, userID, householdID)
 	if errors.Is(err, domain.ErrNotFound) {
@@ -134,7 +116,7 @@ func (a *App) AddUserToHousehold(ctx context.Context, req HouseholdUserRequest) 
 		return domain.HouseholdUser{}, err
 	}
 
-	event := newHouseholdUserEvent(
+	event := domain.NewHouseholdUserEvent(
 		domain.HouseholdUserAdded,
 		now,
 		domain.ActorTypeUser,
@@ -216,7 +198,7 @@ func (a *App) EditHouseholdUser(ctx context.Context, req HouseholdUserRequest) (
 		return domain.HouseholdUser{}, err
 	}
 
-	event := newHouseholdUserEvent(domain.HouseholdUserEdited,
+	event := domain.NewHouseholdUserEvent(domain.HouseholdUserEdited,
 		now,
 		domain.ActorTypeUser,
 		updatedHouseholdUser,
@@ -247,7 +229,7 @@ func (a *App) ActivateHouseholdUser(ctx context.Context, householdId, userId str
 		return domain.HouseholdUser{}, err
 	}
 
-	event := newHouseholdUserEvent(domain.HouseholdUserActivated,
+	event := domain.NewHouseholdUserEvent(domain.HouseholdUserActivated,
 		now,
 		domain.ActorTypeUser,
 		updatedUser,
@@ -329,7 +311,7 @@ func (a *App) DeactivateHouseholdUser(ctx context.Context, householdId, userId s
 	}
 
 	for _, template := range updatedTemplates {
-		event := newChoreTemplateEvent(
+		event := domain.NewChoreTemplateEvent(
 			domain.ChoreTemplateEdited,
 			now,
 			domain.ActorTypeUser,
@@ -342,7 +324,7 @@ func (a *App) DeactivateHouseholdUser(ctx context.Context, householdId, userId s
 	}
 
 	for _, assignment := range updatedAssignments {
-		event := newAssignmentEvent(
+		event := domain.NewAssignmentEvent(
 			domain.AssignmentEdited,
 			now,
 			domain.ActorTypeUser,
@@ -354,7 +336,7 @@ func (a *App) DeactivateHouseholdUser(ctx context.Context, householdId, userId s
 		a.Bus.Publish(event)
 	}
 
-	event := newHouseholdUserEvent(
+	event := domain.NewHouseholdUserEvent(
 		domain.HouseholdUserDeactivated,
 		now,
 		domain.ActorTypeUser,
@@ -438,7 +420,7 @@ func (a *App) RemoveUserFromHousehold(ctx context.Context, householdId, userId s
 	}
 
 	for _, template := range updatedTemplates {
-		event := newChoreTemplateEvent(
+		event := domain.NewChoreTemplateEvent(
 			domain.ChoreTemplateEdited,
 			now,
 			domain.ActorTypeUser,
@@ -451,7 +433,7 @@ func (a *App) RemoveUserFromHousehold(ctx context.Context, householdId, userId s
 	}
 
 	for _, assignment := range updatedAssignments {
-		event := newAssignmentEvent(
+		event := domain.NewAssignmentEvent(
 			domain.AssignmentEdited,
 			now,
 			domain.ActorTypeUser,
@@ -463,7 +445,7 @@ func (a *App) RemoveUserFromHousehold(ctx context.Context, householdId, userId s
 		a.Bus.Publish(event)
 	}
 
-	event := newHouseholdUserEvent(
+	event := domain.NewHouseholdUserEvent(
 		domain.HouseholdUserRemoved,
 		now,
 		domain.ActorTypeUser,

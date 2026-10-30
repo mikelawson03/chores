@@ -23,7 +23,6 @@ export function useEventStream(){
 
       if (assignmentInvalidationTimer.current == null) {
         assignmentInvalidationTimer.current = setTimeout(() => {
-          console.log("Invalidating assignments");
 
           queryClient.invalidateQueries({
             queryKey: ["assignments", user?.user.id]
@@ -72,6 +71,7 @@ export function useEventStream(){
         case "assignment.created":
         case "assignment.completed":
         case "assignment.rescheduled":
+        case "assignment.refreshRequired":
           scheduleAssignmentInvalidation();
           break;
         case "choreTemplate.edited":

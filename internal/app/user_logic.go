@@ -19,42 +19,6 @@ type LoginResult struct {
 	Token string
 }
 
-func newUserEvent(eventType domain.UserEventType,
-	occurredAt time.Time,
-	actorType domain.ActorType,
-	user domain.User,
-	householdID,
-	userID string) domain.Event[domain.User] {
-	return domain.Event[domain.User]{
-		Type:        string(eventType),
-		OccurredAt:  occurredAt,
-		HouseholdID: householdID,
-		Actor: domain.Actor{
-			Type: actorType,
-			ID:   userID,
-		},
-		Payload: user,
-	}
-}
-
-func newHouseholdUserProfileUpdatedEvent(
-	occurredAt time.Time,
-	actorType domain.ActorType,
-	payload domain.HouseholdUserProfileUpdatedPayload,
-	householdID,
-	reqUserID string) domain.Event[domain.HouseholdUserProfileUpdatedPayload] {
-	return domain.Event[domain.HouseholdUserProfileUpdatedPayload]{
-		Type:        string(domain.HouseholdUserProfileUpdated),
-		OccurredAt:  occurredAt,
-		HouseholdID: householdID,
-		Actor: domain.Actor{
-			Type: actorType,
-			ID:   reqUserID,
-		},
-		Payload: payload,
-	}
-}
-
 func hashPassword(password string) (string, error) {
 	return argon2id.CreateHash(password, argon2id.DefaultParams)
 }
@@ -251,7 +215,7 @@ func (a *App) EditUser(ctx context.Context, id, newUsername, firstName string) (
 	}
 
 	for _, householdID := range householdIDs {
-		userEvent := newUserEvent(domain.UserEdited,
+		userEvent := domain.NewUserEvent(domain.UserEdited,
 			now,
 			domain.ActorTypeUser,
 			updatedUser,
@@ -261,7 +225,7 @@ func (a *App) EditUser(ctx context.Context, id, newUsername, firstName string) (
 
 		a.Bus.Publish(userEvent)
 
-		profileEvent := newHouseholdUserProfileUpdatedEvent(
+		profileEvent := domain.NewHouseholdUserProfileUpdatedEvent(
 			now,
 			domain.ActorTypeUser,
 			domain.HouseholdUserProfileUpdatedPayload{

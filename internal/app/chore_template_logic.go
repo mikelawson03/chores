@@ -13,21 +13,6 @@ import (
 	"github.com/mikelawson03/chores/internal/store"
 )
 
-func newChoreTemplateEvent(eventType domain.ChoreTemplateEventType, occurredAt time.Time, actorType domain.ActorType, choreTemplate domain.ChoreTemplate, householdID, userID string) domain.Event[domain.ChoreTemplate] {
-	e := domain.Event[domain.ChoreTemplate]{
-		Type:        string(eventType),
-		OccurredAt:  occurredAt,
-		HouseholdID: householdID,
-		Actor: domain.Actor{
-			Type: actorType,
-			ID:   userID,
-		},
-		Payload: choreTemplate,
-	}
-
-	return e
-}
-
 func (a *App) choreNameExists(ctx context.Context, name, id string) error {
 	ct, err := a.Store.GetTemplateByName(ctx, name)
 
@@ -153,7 +138,7 @@ func (a *App) CreateChoreTemplate(ctx context.Context, name, cadence, assignee, 
 		return domain.ChoreTemplate{}, err
 	}
 
-	event := newChoreTemplateEvent(domain.ChoreTemplateCreated,
+	event := domain.NewChoreTemplateEvent(domain.ChoreTemplateCreated,
 		now,
 		domain.ActorTypeUser,
 		chore,
@@ -201,15 +186,26 @@ func (a *App) EditChoreTemplate(ctx context.Context, id, name, cadence, assignee
 		return domain.ChoreTemplate{}, err
 	}
 
-	event := newChoreTemplateEvent(domain.ChoreTemplateEdited,
-		now,
-		domain.ActorTypeUser,
-		updatedTmp,
-		hhUser.HouseholdID,
-		hhUser.User.ID,
+	a.Bus.Publish(
+		domain.NewChoreTemplateEvent(
+			domain.ChoreTemplateEdited,
+			now,
+			domain.ActorTypeUser,
+			updatedTmp,
+			hhUser.HouseholdID,
+			hhUser.User.ID,
+		),
 	)
 
-	a.Bus.Publish(event)
+	a.Bus.Publish(
+		domain.NewAssignmentsRefreshRequiredEvent(
+			hhUser.HouseholdID,
+			domain.ActorTypeUser,
+			domain.AssignmentRefreshTemplateUpdated,
+			now,
+			hhUser.User.ID,
+		),
+	)
 
 	return updatedTmp, nil
 }
@@ -246,7 +242,7 @@ func (a *App) DeactivateChoreTemplate(ctx context.Context, id string) error {
 		return err
 	}
 
-	event := newChoreTemplateEvent(
+	event := domain.NewChoreTemplateEvent(
 		domain.ChoreTemplateDeactivated,
 		now,
 		domain.ActorTypeUser,
@@ -258,7 +254,7 @@ func (a *App) DeactivateChoreTemplate(ctx context.Context, id string) error {
 	a.Bus.Publish(event)
 
 	for _, assignment := range canceledAssignments {
-		event := newAssignmentEvent(
+		event := domain.NewAssignmentEvent(
 			domain.AssignmentEdited,
 			now,
 			domain.ActorTypeUser,
