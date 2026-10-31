@@ -374,6 +374,13 @@ func (a *App) RescheduleAssignment(ctx context.Context, assignmentID string, sch
 		return domain.Assignment{}, fmt.Errorf("%w: daily tasks cannot be rescheduled", domain.ErrInvalidRequest)
 	}
 
+	if scheduledFor == nil {
+		return domain.Assignment{}, fmt.Errorf(
+			"%w: scheduled date is required",
+			domain.ErrInvalidRequest,
+		)
+	}
+
 	if existing.DueDate.Before(*scheduledFor) {
 		return domain.Assignment{}, fmt.Errorf("%w: cannot schedule assignment after due date", domain.ErrInvalidRequest)
 	}
