@@ -17,7 +17,7 @@ export const useTaskStore = create((set) => ({
         selectedTask: null,
         taskDraft: null,
         taskDetailsOpen: false,
-        taskErorrs: {},
+        taskErrors: {},
     }),
 
     updateTaskDraft: (field, value) => set((state) => ({

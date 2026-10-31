@@ -264,19 +264,18 @@ export default function Chores() {
           editNewChore={editNewChore} 
           users={householdUsers}
         />
-        {editedChoreTemplate && 
-          <EditChore 
-            open={editChoreOpen} 
-            chore={editedChoreTemplate} 
-            closeEditChore={closeEditChore} 
-            editChoreMode={editChoreMode}
-            onChoreDetailChange={onChoreDetailChange} 
-            users={householdUsers}
-            errors={templateErrors}
-            validateChoreField={validateChoreField}
-            handleSave={handleSave}
-            isSaving={isSaving}
-          />}
+        <EditChore 
+          open={editChoreOpen} 
+          chore={editedChoreTemplate} 
+          closeEditChore={closeEditChore} 
+          editChoreMode={editChoreMode}
+          onChoreDetailChange={onChoreDetailChange} 
+          users={householdUsers}
+          errors={templateErrors}
+          validateChoreField={validateChoreField}
+          handleSave={handleSave}
+          isSaving={isSaving}
+        />
       </Stack>
 )
 }

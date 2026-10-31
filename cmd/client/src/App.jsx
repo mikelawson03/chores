@@ -129,14 +129,11 @@ function App() {
             </Route>
           </Route>
         </Routes>
-        
-        {selectedTask && (
-          <TaskDetails 
-            task={selectedTask} 
-            saveTask={saveTask}
-            onTaskClose={onTaskClose}
-          />
-        )}
+        <TaskDetails 
+          task={selectedTask} 
+          saveTask={saveTask}
+          onTaskClose={onTaskClose}
+        />
         </Box>
         <CloseDetailsAlert 
           dialogOpen={dialogOpen}

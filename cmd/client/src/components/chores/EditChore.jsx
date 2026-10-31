@@ -42,47 +42,49 @@ export default function EditChore({ open, chore, closeEditChore, editChoreMode, 
                 boxSizing: "border-box",
             }
         }}>
-            <Stack direction="column" spacing={4} sx={{ p: 5 }}>
-                <DetailRowTitle field="name" value={chore.name} error={errors.name} placeholder="Enter chore name..." onValueChange={onChoreDetailChange} required={true} validateChoreField={validateChoreField} />
-                {/* <Stack direction="row" spacing={1} sx={{ alignItems: "center"}}>
-                    <Box sx={{ width: 25, height: 25, borderRadius: "50%", backgroundColor: statusColor}} />
-                    <Typography variant="h6">{statusName}</Typography>
-                </Stack> */}
-                <Stack direction="column" spacing={2}>
-                    <DetailRowSelect label="Frequency" field="cadence" value={chore.cadence} error={errors.cadence} options={cadenceOptions} onValueChange={onChoreDetailChange} required={true} validateChoreField={validateChoreField}/>
-                    <DetailRowSelect label="Assigned To" field="assignee" value={chore.assignee ?? "unassigned"} error={errors.assignee} options={userOptions} onValueChange={onChoreDetailChange} validateChoreField={validateChoreField} />
-                    <DetailRowNumber label="Duration" field="duration" value={chore.duration} error={errors.duration} onValueChange={onChoreDetailChange} units="mins" required={true} validateChoreField={validateChoreField} />
+            {chore && (
+                <Stack direction="column" spacing={4} sx={{ p: 5 }}>
+                    <DetailRowTitle field="name" value={chore.name} error={errors.name} placeholder="Enter chore name..." onValueChange={onChoreDetailChange} required={true} validateChoreField={validateChoreField} />
+                    {/* <Stack direction="row" spacing={1} sx={{ alignItems: "center"}}>
+                        <Box sx={{ width: 25, height: 25, borderRadius: "50%", backgroundColor: statusColor}} />
+                        <Typography variant="h6">{statusName}</Typography>
+                    </Stack> */}
+                    <Stack direction="column" spacing={2}>
+                        <DetailRowSelect label="Frequency" field="cadence" value={chore.cadence} error={errors.cadence} options={cadenceOptions} onValueChange={onChoreDetailChange} required={true} validateChoreField={validateChoreField}/>
+                        <DetailRowSelect label="Assigned To" field="assignee" value={chore.assignee ?? "unassigned"} error={errors.assignee} options={userOptions} onValueChange={onChoreDetailChange} validateChoreField={validateChoreField} />
+                        <DetailRowNumber label="Duration" field="duration" value={chore.duration} error={errors.duration} onValueChange={onChoreDetailChange} units="mins" required={true} validateChoreField={validateChoreField} />
+                    </Stack>
+                    <Stack>
+                        <DetailRowLargeText label="Instructions" field="instructions" value={chore.instructions} onValueChange={onChoreDetailChange} />
+                    </Stack>
+                    <Stack direction="column" spacing={2}>
+                        <Typography
+                            variant="body2"
+                            sx={{
+                                color: "error.main",
+                                textAlign: "center",
+                                mt: 1,
+                            }}
+                        >
+                            {errors.form}
+                        </Typography>
+                        <Button 
+                            variant="contained" 
+                            onClick={handleSave} 
+                            disabled={isSaving}
+                            startIcon={isSaving ? <CircularProgress size={16} /> : null}
+                        >
+                            {editChoreMode === "edit" ? "Save" : "Create"}
+                        </Button>
+                        {editChoreMode === "edit" && <Button variant="text" disabled={deactivateChoreMutation.isPending || !chore.isActive} onClick={() => {deactivateChoreMutation.mutate(chore.id);}}>Deactivate</Button>}
+                        {editChoreMode === "create" && <Button variant="text" onClick={() => {closeEditChore();}}>Discard</Button>}
+                    </Stack>
+                    {editChoreMode === "edit" && <Stack direction="column" spacing={0.25} sx={{borderBottom: 1, borderColor: "divider", pb: 4}}>
+                        <Typography variant="body2" sx={{fontStyle: 'italic' }}>Last updated at {formatTimestamp(chore.updatedAt)}</Typography>
+                        <Typography variant="body2" sx={{fontStyle: 'italic' }}>Created at {formatTimestamp(chore.createdAt)}</Typography>
+                    </Stack >}
                 </Stack>
-                <Stack>
-                    <DetailRowLargeText label="Instructions" field="instructions" value={chore.instructions} onValueChange={onChoreDetailChange} />
-                </Stack>
-                <Stack direction="column" spacing={2}>
-                    <Typography
-                        variant="body2"
-                        sx={{
-                            color: "error.main",
-                            textAlign: "center",
-                            mt: 1,
-                        }}
-                    >
-                        {errors.form}
-                    </Typography>
-                    <Button 
-                        variant="contained" 
-                        onClick={handleSave} 
-                        disabled={isSaving}
-                        startIcon={isSaving ? <CircularProgress size={16} /> : null}
-                    >
-                        {editChoreMode === "edit" ? "Save" : "Create"}
-                    </Button>
-                    {editChoreMode === "edit" && <Button variant="text" disabled={deactivateChoreMutation.isPending || !chore.isActive} onClick={() => {deactivateChoreMutation.mutate(chore.id);}}>Deactivate</Button>}
-                    {editChoreMode === "create" && <Button variant="text" onClick={() => {closeEditChore();}}>Discard</Button>}
-                </Stack>
-                {editChoreMode === "edit" && <Stack direction="column" spacing={0.25} sx={{borderBottom: 1, borderColor: "divider", pb: 4}}>
-                    <Typography variant="body2" sx={{fontStyle: 'italic' }}>Last updated at {formatTimestamp(chore.updatedAt)}</Typography>
-                    <Typography variant="body2" sx={{fontStyle: 'italic' }}>Created at {formatTimestamp(chore.createdAt)}</Typography>
-                </Stack >}
-            </Stack>
+            )}
         </Drawer>
     )
     
