@@ -11,15 +11,17 @@ export default function Login() {
 
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
+    const [loginError, setLoginError] = useState("");
 
     const handleLogin = async (event) => {
         event.preventDefault();
+        setLoginError("");
 
         try {
             await loginUser(username, password);
             navigate("/");
         } catch (err) {
-            console.log(err);
+            setLoginError(err.message)
         }
     }
 
@@ -27,11 +29,11 @@ export default function Login() {
         <Box 
             component="form" onSubmit={handleLogin} sx={{ width: "100%", height: "100vh", display: "flex", justifyContent:"center", alignItems:"center"}}
         >
-            <Stack spacing={3} sx={{border: 1, borderRadius: 2, p:5 }}>
+            <Stack spacing={3} sx={{border: 1, borderRadius: 2, p:5, width: 300 }}>
                 <Box>
                     <Typography>Username</Typography>
                     <TextField 
-                        // label="Username"
+                        fullWidth
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
                     />
@@ -39,12 +41,17 @@ export default function Login() {
                 <Box>
                     <Typography>Password</Typography>
                     <TextField 
-                        // label="Password"
+                        fullWidth
                         type="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                     />
                 </Box>
+                {loginError && (
+                    <Typography variant="body2" color="error">
+                        {loginError}
+                    </Typography>
+                )}
                 <Button type="submit">Login</Button>
             </Stack>
         </Box>

@@ -26,7 +26,8 @@ func RespondWithError(w http.ResponseWriter, err error) {
 		})
 
 	case errors.Is(err, domain.ErrInvalidCredentials),
-		errors.Is(err, domain.ErrInactiveHouseholdUser):
+		errors.Is(err, domain.ErrInactiveHouseholdUser),
+		errors.Is(err, domain.ErrNoHouseholdMembership):
 		RespondWithJSON(w, http.StatusUnauthorized, errorResponse{
 			Error: err.Error(),
 		})

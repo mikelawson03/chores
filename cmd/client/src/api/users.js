@@ -15,7 +15,7 @@ export async function login(username, password) {
     });
 
     if (!response.ok) {
-        throw new Error("Invalid credentials");
+        throw new Error("Invalid username or password.");
     }
 
 }

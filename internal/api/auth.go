@@ -65,7 +65,7 @@ func (cfg *apiCfg) middlewareHouseholdAuth(next http.Handler) http.Handler {
 		user, err := cfg.App.Store.GetHouseholdUserByID(ctx, uid, domain.DefaultHouseholdID)
 		if err != nil {
 			if errors.Is(err, domain.ErrNotFound) {
-				err = fmt.Errorf("%w: user not found", domain.ErrUnauthorized)
+				err = fmt.Errorf("%w: user has no household membership", domain.ErrNoHouseholdMembership)
 				RespondWithError(w, err)
 				return
 			}

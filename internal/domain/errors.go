@@ -19,4 +19,5 @@ var (
 	ErrUnauthorized            = errors.New("unauthorized")
 	ErrHasHouseholdMemberships = errors.New("user_has_household_memberships")
 	ErrHasAssignments          = errors.New("user_has_assignments")
+	ErrNoHouseholdMembership   = errors.New("no_household_membership")
 )

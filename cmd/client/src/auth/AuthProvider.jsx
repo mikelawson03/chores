@@ -1,5 +1,6 @@
 import { createContext, useEffect, useState } from "react";
 import { getMe, login, logout } from "../api/users";
+import { parseApiError } from "../utils/errorHelpers";
 
 export const AuthContext = createContext(null);
 
@@ -30,8 +31,18 @@ export default function AuthProvider({ children }) {
     const loginUser = async (username, password) => {
         await login(username, password);
         
+        try {
         const user = await getMe();
-        setUser(user);        
+        setUser(user);
+        } catch (err) {
+            const { type } = parseApiError(err);
+            if (
+                type === "no_household_membership" ||
+                type === "inactive_household_user"
+            ) {
+                throw new Error("You are not an active member of a household.");
+            }
+        }
     };
 
     const refreshUser = async () => {
