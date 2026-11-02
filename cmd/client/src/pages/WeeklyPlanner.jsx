@@ -246,10 +246,6 @@ export default function WeeklyPlanner({ toggleTaskComplete }) {
         <WeeklyGrid
           plannerDays = {plannerDays}
           toggleTaskComplete={toggleTaskComplete}
-          sx = {{
-            flex: 1,
-            minHeight:600
-          }}
         />
         <StagingArea 
           weeklyTasks = {weeklyBacklog}

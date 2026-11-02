@@ -10,7 +10,7 @@ export default function AppLayout() {
         >
             <Stack direction="row" sx= {{flex: 1, minHeight: 0}}>
                 <Sidebar />
-                <Box sx={{ overflow: "hidden", flex: 1, minHeight: 0, display: "flex", flexDirection: "column", }}>
+                <Box sx={{ overflowY:   "auto", overflowX: "hidden", flex: 1, minHeight: 0, display: "flex", flexDirection: "column", }}>
                     <Outlet />
                 </Box>
             </Stack>
