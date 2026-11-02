@@ -15,6 +15,7 @@ type Bus struct {
 	subscribers map[string]Subscriber
 	subscribe   chan SubscribeRequest
 	unsubscribe chan string
+	revokeUser  chan RevokeUserRequest
 }
 
 type Subscriber struct {
@@ -37,12 +38,19 @@ type SubscribeRequest struct {
 	Done       chan struct{}
 }
 
+type RevokeUserRequest struct {
+	HouseholdID string
+	UserID      string
+	Done        chan struct{}
+}
+
 func NewBus() *Bus {
 	return &Bus{
 		events:      make(chan domain.DomainEvent),
 		subscribers: make(map[string]Subscriber),
 		subscribe:   make(chan SubscribeRequest),
 		unsubscribe: make(chan string),
+		revokeUser:  make(chan RevokeUserRequest),
 	}
 }
 
@@ -69,8 +77,19 @@ func (b *Bus) Listen() {
 				}
 
 			}
+
 		case req := <-b.subscribe:
 			b.subscribers[req.Subscriber.SubscriberId] = req.Subscriber
+			close(req.Done)
+		case req := <-b.revokeUser:
+			for id, subscriber := range b.subscribers {
+				if subscriber.Type == SubscriberTypeClient &&
+					subscriber.HouseholdId == req.HouseholdID &&
+					subscriber.HouseholdUser.User.ID == req.UserID {
+					b.removeSubscriber(id)
+				}
+			}
+
 			close(req.Done)
 		case subscriberID := <-b.unsubscribe:
 			b.removeSubscriber(subscriberID)
@@ -108,6 +127,18 @@ func (b *Bus) Subscribe(user domain.HouseholdUser, subType SubscriberType) (stri
 
 func (b *Bus) Unsubscribe(subscriberId string) {
 	b.unsubscribe <- subscriberId
+}
+
+func (b *Bus) RevokeUserSubscriptions(householdID, userID string) {
+	done := make(chan struct{})
+
+	b.revokeUser <- RevokeUserRequest{
+		HouseholdID: householdID,
+		UserID:      userID,
+		Done:        done,
+	}
+
+	<-done
 }
 
 func (b *Bus) removeSubscriber(subscriberId string) {

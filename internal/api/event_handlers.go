@@ -3,6 +3,7 @@ package api
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/mikelawson03/chores/internal/auth"
@@ -41,12 +42,14 @@ func (cfg *apiCfg) handlerGetEvents(w http.ResponseWriter, r *http.Request) {
 		select {
 		case event, ok := <-eventCh:
 			if !ok {
+				fmt.Println("SSE subscription revoked")
 				return
 			}
 
 			data, err := json.Marshal(event)
 			if err != nil {
-				RespondWithError(w, domain.ErrInvalidRequest)
+				log.Printf("failed to marshal SSE event: %v", err)
+				continue
 			}
 			fmt.Fprintf(w, "data: %s\n\n", data)
 			flusher.Flush()

@@ -208,6 +208,10 @@ func (a *App) EditHouseholdUser(ctx context.Context, req HouseholdUserRequest) (
 
 	a.Bus.Publish(event)
 
+	if existing.Role != role {
+		a.Bus.RevokeUserSubscriptions(req.HouseholdID, req.UserID)
+	}
+
 	return updatedHouseholdUser, nil
 }
 
@@ -245,7 +249,7 @@ func (a *App) ActivateHouseholdUser(ctx context.Context, householdId, userId str
 func (a *App) DeactivateHouseholdUser(ctx context.Context, householdId, userId string) (domain.HouseholdUser, error) {
 	reqUser, err := CheckAdmin(ctx)
 	if err != nil {
-		return domain.HouseholdUser{}, nil
+		return domain.HouseholdUser{}, err
 	}
 
 	now := time.Now()
@@ -256,7 +260,7 @@ func (a *App) DeactivateHouseholdUser(ctx context.Context, householdId, userId s
 	err = a.Store.WithTx(ctx, func(txStore *store.Store) error {
 		templates, err := txStore.GetChoreTemplatesForUser(ctx, userId)
 		if err != nil {
-			return nil
+			return err
 		}
 
 		for _, tmp := range templates {
@@ -346,6 +350,8 @@ func (a *App) DeactivateHouseholdUser(ctx context.Context, householdId, userId s
 	)
 
 	a.Bus.Publish(event)
+
+	a.Bus.RevokeUserSubscriptions(householdId, userId)
 
 	return updatedUser, nil
 }
@@ -455,6 +461,8 @@ func (a *App) RemoveUserFromHousehold(ctx context.Context, householdId, userId s
 	)
 
 	a.Bus.Publish(event)
+
+	a.Bus.RevokeUserSubscriptions(householdId, userId)
 
 	return nil
 }
