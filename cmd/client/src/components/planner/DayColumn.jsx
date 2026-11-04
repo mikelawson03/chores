@@ -11,7 +11,6 @@ export default function DayColumn({ day, tasks, toggleTaskComplete, isLast}) {
       direction="column" 
       sx={{
         flex: 1,
-        height: "100%",
         borderRight: isLast ? 0 : 1,
         borderColor: "divider",
         minWidth: 0,

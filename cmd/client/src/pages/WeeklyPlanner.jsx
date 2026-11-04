@@ -232,7 +232,7 @@ export default function WeeklyPlanner({ toggleTaskComplete }) {
         setDragTask(null);
       }}
     >
-      <Stack spacing={2} direction="column" sx={{height: "100%"}}>
+      <Stack spacing={2} direction="column" sx={{ minHeight: "100%" }}>
         <PlannerToolbar 
           weekStart={weekStart} 
           weekEnd={weekEnd}

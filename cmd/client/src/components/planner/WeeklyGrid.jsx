@@ -9,7 +9,8 @@ export default function WeeklyGrid({plannerDays, toggleTaskComplete }) {
       sx = {{
         border: 1,
         borderColor: "divider",
-        minHeight: "clamp(350px, 55vh, 600px)"
+        minHeight: "clamp(350px, 55vh, 600px)",
+        flexShrink: 0,
       }}>
       {plannerDays.map(({ day, tasks }, index) => (
         <DroppableDay  key={day.format("YYYY-MM-DD")} day={day}>
